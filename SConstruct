@@ -39,14 +39,14 @@ def setupEnv(target, **kw_args):
 
     return env
 
-i586_env      = setupEnv('i586-pc-elf',   YASMFLAGS = '-f elf',   GDCFLAGS = '')
+i586_env = setupEnv('i586-pc-elf',   YASMFLAGS = '-f elf',   GDCFLAGS = '')
 
 # Set up the x86_64 environment
-x86_64_env    = setupEnv('x86_64-pc-elf', YASMFLAGS = '-f elf64', GDCFLAGS =    ' -Itriton/runtime' +
-                                                                                ' -mno-red-zone' +
-                                                                                ' -fno-exceptions' +
-                                                                                ' -O4' +
-                                                                                ' -mcmodel=kernel')
+x86_64_env = setupEnv('x86_64-pc-elf', YASMFLAGS = '-f elf64', GDCFLAGS =   ' -Itriton/runtime' +
+                                                                            ' -mno-red-zone' +
+                                                                            ' -fno-exceptions' +
+                                                                            ' -O4' +
+                                                                            ' -mcmodel=kernel')
 
 x86_64_env['CXXFLAGS']  += ['-mcmodel=kernel',
                             '-O4',
@@ -55,23 +55,16 @@ x86_64_env['CXXFLAGS']  += ['-mcmodel=kernel',
 
 x86_64_env['CPPPATH'] = [Dir('.').get_abspath(), Dir('common').get_abspath()]
 
-# Do the build
+# Build the Loader
 loader = SConscript('loader/SConscript', exports='i586_env')
 
-# Build sub-directories
-kernel_obj  = SConscript('boot/SConscript',         exports='x86_64_env')
-kernel_obj += SConscript('dev/SConscript',          exports='x86_64_env')
-kernel_obj += SConscript('interrupt/SConscript',    exports='x86_64_env')
-kernel_obj += SConscript('mem/SConscript',          exports='x86_64_env')
-
-# Link in the kernel's D runtime library
-lib = SConscript('triton/SConscript',      exports='x86_64_env')
+# Build Triton
+triton = SConscript('triton/SConscript', exports='x86_64_env')
 
 # Link the kernel
-kernel = x86_64_env.Link('kernel', kernel_obj, LINKSCRIPTS = ['link/linker.ld'], _LIBDIRFLAGS = '-L./triton', _LIBFLAGS = '-lgphobos')
+kernel = SConscript('kernel/SConscript', exports='x86_64_env')
 
-Depends(kernel, 'link/linker.ld')
-Depends(kernel, lib)
+Depends(kernel, triton)
 
 # Build the CD
 cd_env = Environment(BUILDERS={'CD': CDBuilder})

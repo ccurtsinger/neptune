@@ -26,7 +26,7 @@ def setupEnv(target, **kw_args):
 
     # Our custom builders
     env['BUILDERS']['yasm']        = yasm
-    env['BUILDERS']['gdc']         = gdc
+    env['BUILDERS']['gdc']         = Builder(action = '%s-gdc $GDCFLAGS -c -o $TARGET $SOURCE' % target)
     env['BUILDERS']['obj']         = obj
     env['BUILDERS']['Link']        = link
     env['BUILDERS']['PartialLink'] = partial_link
@@ -39,7 +39,11 @@ def setupEnv(target, **kw_args):
 
     return env
 
-i586_env = setupEnv('i586-pc-elf',   YASMFLAGS = '-f elf',   GDCFLAGS = '')
+i586_env = setupEnv('i586-pc-elf',   YASMFLAGS = '-f elf', GDCFLAGS =   ' -Itriton' +
+                                                                        ' -Ikernel' +
+                                                                        ' -mno-red-zone' +
+                                                                        ' -fno-exceptions' +
+                                                                        ' -O4')
 
 # Set up the x86_64 environment
 env = setupEnv('x86_64-pc-elf', YASMFLAGS = '-f elf64', GDCFLAGS =  ' -Itriton' +

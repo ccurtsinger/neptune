@@ -51,7 +51,7 @@ struct PageTable
         }
     }
 
-    new(ulong size, void* pos)
+    new(size_t size, void* pos)
     {
         return pos;
     }

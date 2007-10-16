@@ -1,0 +1,100 @@
+module interrupt.isr;
+
+import dev.screen;
+import interrupt.idt;
+
+extern(C) void _isr0();
+extern(C) void _isr1();
+extern(C) void _isr2();
+extern(C) void _isr3();
+extern(C) void _isr4();
+extern(C) void _isr5();
+extern(C) void _isr6();
+extern(C) void _isr7();
+extern(C) void _isr8();
+extern(C) void _isr9();
+extern(C) void _isr10();
+extern(C) void _isr11();
+extern(C) void _isr12();
+extern(C) void _isr13();
+extern(C) void _isr14();
+extern(C) void _isr15();
+extern(C) void _isr16();
+extern(C) void _isr17();
+extern(C) void _isr18();
+extern(C) void _isr19();
+extern(C) void _isr20();
+extern(C) void _isr21();
+extern(C) void _isr22();
+extern(C) void _isr23();
+extern(C) void _isr24();
+extern(C) void _isr25();
+extern(C) void _isr26();
+extern(C) void _isr27();
+extern(C) void _isr28();
+extern(C) void _isr29();
+extern(C) void _isr30();
+extern(C) void _isr31();
+extern(C) void _isr32();
+extern(C) void _isr33();
+extern(C) void _isr34();
+extern(C) void _isr35();
+extern(C) void _isr36();
+extern(C) void _isr37();
+extern(C) void _isr38();
+extern(C) void _isr39();
+extern(C) void _isr40();
+extern(C) void _isr41();
+extern(C) void _isr42();
+extern(C) void _isr43();
+extern(C) void _isr44();
+extern(C) void _isr45();
+extern(C) void _isr46();
+extern(C) void _isr47();
+
+/*extern(C) void _isr33()
+{
+    asm
+    {
+        naked;
+        "pushq  $0x0";
+        "push   %%rbp";
+        "push   %%r15";
+        "push   %%r14";
+        "push   %%r13";
+        "push   %%r12";
+        "push   %%r11";
+        "push   %%r10";
+        "push   %%r9";
+        "push   %%r8";
+        "push   %%rdi";
+        "push   %%rsi";
+        "push   %%rdx";
+        "push   %%rcx";
+        "push   %%rbx";
+        "push   %%rax";
+        "mov    $33,%%rsi";
+        "mov    %%rsp,%%rcx";
+        "mov    %[handler],%%rax" : : [handler] "a" &(_int_handlers[33]);
+        "mov    %[ptr],%%rdi" : : [ptr] "D" &(_int_handlers[33].pThis);
+        "mov    (%%rdi),%%rdi";
+        "callq  *(%%rax)";
+        "pop    %%rax";
+        "pop    %%rbx";
+        "pop    %%rcx";
+        "pop    %%rdx";
+        "pop    %%rsi";
+        "pop    %%rdi";
+        "pop    %%r8";
+        "pop    %%r9";
+        "pop    %%r10";
+        "pop    %%r11";
+        "pop    %%r12";
+        "pop    %%r13";
+        "pop    %%r14";
+        "pop    %%r15";
+        "pop    %%rbp";
+        "add    $0x8,%%rsp";
+        "iretq";
+    }
+}*/

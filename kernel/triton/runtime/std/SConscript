@@ -1,0 +1,10 @@
+# Grab the build environment
+Import('x86_64_env')
+env = x86_64_env
+
+obj_list  = [env.gdc('bitarray.o', 'bitarray.d')]
+obj_list += [env.gdc('intrinsic.o', 'intrinsic.d')]
+obj_list += [env.gdc('stdarg.o', 'stdarg.d')]
+obj_list += SConscript('typeinfo/SConscript', exports='x86_64_env')
+
+Return('obj_list')

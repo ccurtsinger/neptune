@@ -1,0 +1,11 @@
+# Grab the build environment
+Import('x86_64_env')
+env    = x86_64_env
+
+obj_list = [env.gdc('screen.o', 'screen.d')]
+obj_list += [env.gdc('port.o', 'port.d')]
+obj_list += [env.gdc('kb.o', 'kb.d')]
+
+dev = env.PartialLink('dev.o', obj_list)
+
+Return('dev')

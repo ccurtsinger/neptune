@@ -1,0 +1,9 @@
+default saved
+timeout 1
+
+title  verto
+root   (cd)
+kernel /boot/loader
+module /boot/kernel
+boot
+savedefault

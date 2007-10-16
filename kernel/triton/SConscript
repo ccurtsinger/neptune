@@ -1,0 +1,10 @@
+# Grab the build environment
+Import('x86_64_env')
+env    = x86_64_env
+
+obj_list  = SConscript('runtime/SConscript', exports='x86_64_env')
+obj_list += SConscript('support/SConscript', exports='x86_64_env')
+
+lib = env.StaticLibrary('gphobos', obj_list)
+
+Return('lib')

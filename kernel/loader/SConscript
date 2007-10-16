@@ -1,0 +1,19 @@
+# Grab the build environment
+
+Import('i586_env')
+env = i586_env
+
+# Set up build flags
+env['CXXFLAGS']  += ['-fno-exceptions']
+#env['LINKFLAGS'] += ['-nostdlib',
+#                     '-nostartfiles',
+#                     '-nodefaultlibs']
+
+# Build object files
+obj_list  = [env.yasm('loader.o', 'loader.asm')]
+obj_list += [env.Object('main.cpp'), env.Object('util.cpp')]
+
+# Build the loader
+loader = env.Link('loader', obj_list, LINKSCRIPTS=[env.File('linker.ld')])
+
+Return('loader')

@@ -42,28 +42,21 @@ def setupEnv(target, **kw_args):
 i586_env = setupEnv('i586-pc-elf',   YASMFLAGS = '-f elf',   GDCFLAGS = '')
 
 # Set up the x86_64 environment
-x86_64_env = setupEnv('x86_64-pc-elf', YASMFLAGS = '-f elf64', GDCFLAGS =   ' -Itriton' +
-																			' -Ikernel' +
-                                                                            ' -mno-red-zone' +
-                                                                            ' -fno-exceptions' +
-                                                                            ' -O4' +
-                                                                            ' -mcmodel=kernel')
-
-x86_64_env['CXXFLAGS']  += ['-mcmodel=kernel',
-                            '-O4',
-                            '-mno-red-zone',
-                            '-fno-rtti']
-
-x86_64_env['CPPPATH'] = [Dir('.').get_abspath(), Dir('common').get_abspath()]
+env = setupEnv('x86_64-pc-elf', YASMFLAGS = '-f elf64', GDCFLAGS =  ' -Itriton' +
+                                                                    ' -Ikernel' +
+                                                                    ' -mno-red-zone' +
+                                                                    ' -fno-exceptions' +
+                                                                    ' -O4' +
+                                                                    ' -mcmodel=kernel')
 
 # Build the Loader
 loader = SConscript('loader/SConscript', exports='i586_env')
 
 # Build Triton
-triton = SConscript('triton/SConscript', exports='x86_64_env')
+triton = SConscript('triton/SConscript', exports='env', build_dir='triton/bin/x86_64-pc-elf')
 
-# Link the kernel
-kernel = SConscript('kernel/SConscript', exports='x86_64_env')
+# Build the Kernel
+kernel = SConscript('kernel/SConscript', exports='env')
 
 Depends(kernel, triton)
 

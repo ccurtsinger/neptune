@@ -1,6 +1,5 @@
 # Grab the build environment
-Import('x86_64_env')
-env    = x86_64_env
+Import('env')
 
 obj_list  = [env.gdc('ti_AC.o',         'ti_AC.d')]
 obj_list += [env.gdc('ti_Acdouble.o',   'ti_Acdouble.d')]

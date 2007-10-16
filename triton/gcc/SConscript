@@ -1,6 +1,5 @@
 # Grab the build environment
-Import('x86_64_env')
-env = x86_64_env
+Import('env')
 
 obj_list = [env.gdc('builtins.o', 'builtins.d')]
 

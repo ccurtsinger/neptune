@@ -1,12 +1,11 @@
 # Grab the build environment
-Import('x86_64_env')
-env    = x86_64_env
+Import('env')
 
-kernel_obj  = SConscript('boot/SConscript',         exports='x86_64_env')
-kernel_obj += SConscript('dev/SConscript',          exports='x86_64_env')
-kernel_obj += SConscript('interrupt/SConscript',    exports='x86_64_env')
-kernel_obj += SConscript('mem/SConscript',          exports='x86_64_env')
+kernel_obj  = SConscript('boot/SConscript',         exports='env')
+kernel_obj += SConscript('dev/SConscript',          exports='env')
+kernel_obj += SConscript('interrupt/SConscript',    exports='env')
+kernel_obj += SConscript('mem/SConscript',          exports='env')
 
-kernel = x86_64_env.Link('kernel', kernel_obj, LINKSCRIPTS = ['kernel/link/linker.ld'], _LIBDIRFLAGS = '-Ltriton', _LIBFLAGS = '-lgphobos')
+kernel = env.Link('kernel', kernel_obj, LINKSCRIPTS = ['kernel/link/linker.ld'], _LIBDIRFLAGS = '-Ltriton/bin/x86_64-pc-elf', _LIBFLAGS = '-lgphobos')
 
 Return('kernel')

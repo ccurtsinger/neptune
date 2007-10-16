@@ -1,8 +1,0 @@
-# Grab the build environment
-Import('x86_64_env')
-env    = x86_64_env
-
-obj_list  = SConscript('gcc/SConscript', exports='x86_64_env')
-obj_list += SConscript('std/SConscript', exports='x86_64_env')
-
-Return('obj_list')

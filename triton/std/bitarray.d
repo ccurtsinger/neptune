@@ -19,6 +19,13 @@ struct BitArray
     size_t off;
     uint* ptr;
 
+    static BitArray opCall(void* p, size_t bits, size_t offset = 0)
+    {
+        BitArray b;
+        b.init(p, bits, offset);
+        return b;
+    }
+
     /**
      * Initialize to a pointer, bit count, and base offset
      */

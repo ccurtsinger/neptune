@@ -48,6 +48,18 @@ extern(C) void _main(LoaderData* loader)
     kb_install();
     pagefault_install();
 
+    int x = 255;
+
+    auto xbits = BitArray(&x, 32);
+
+    foreach_reverse(bool b; xbits)
+    {
+        if(b)
+            writef("1");
+        else
+            writef("0");
+    }
+
     for(;;){}
 }
 

@@ -1,6 +1,6 @@
 module boot.kernel;
 
-import boot.gdt;
+import neptune.arch.gdt;
 import dev.screen;
 import dev.kb;
 import interrupt.idt;

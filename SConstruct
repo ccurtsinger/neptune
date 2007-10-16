@@ -43,6 +43,7 @@ i586_env = setupEnv('i586-pc-elf',   YASMFLAGS = '-f elf',   GDCFLAGS = '')
 
 # Set up the x86_64 environment
 x86_64_env = setupEnv('x86_64-pc-elf', YASMFLAGS = '-f elf64', GDCFLAGS =   ' -Itriton/runtime' +
+																			' -Ikernel' +
                                                                             ' -mno-red-zone' +
                                                                             ' -fno-exceptions' +
                                                                             ' -O4' +

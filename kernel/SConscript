@@ -7,6 +7,6 @@ kernel_obj += SConscript('dev/SConscript',          exports='x86_64_env')
 kernel_obj += SConscript('interrupt/SConscript',    exports='x86_64_env')
 kernel_obj += SConscript('mem/SConscript',          exports='x86_64_env')
 
-kernel = x86_64_env.Link('kernel', kernel_obj, LINKSCRIPTS = ['link/linker.ld'], _LIBDIRFLAGS = '-L../triton', _LIBFLAGS = '-lgphobos')
+kernel = x86_64_env.Link('kernel', kernel_obj, LINKSCRIPTS = ['kernel/link/linker.ld'], _LIBDIRFLAGS = '-Ltriton', _LIBFLAGS = '-lgphobos')
 
 Return('kernel')

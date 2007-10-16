@@ -42,7 +42,7 @@ def setupEnv(target, **kw_args):
 i586_env = setupEnv('i586-pc-elf',   YASMFLAGS = '-f elf',   GDCFLAGS = '')
 
 # Set up the x86_64 environment
-x86_64_env = setupEnv('x86_64-pc-elf', YASMFLAGS = '-f elf64', GDCFLAGS =   ' -Itriton/runtime' +
+x86_64_env = setupEnv('x86_64-pc-elf', YASMFLAGS = '-f elf64', GDCFLAGS =   ' -Itriton' +
 																			' -Ikernel' +
                                                                             ' -mno-red-zone' +
                                                                             ' -fno-exceptions' +

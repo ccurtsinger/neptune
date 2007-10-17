@@ -59,10 +59,10 @@ env = setupEnv('x86_64-pc-elf', YASMFLAGS = '-f elf64', GDCFLAGS =  ' -fversion=
 loader = SConscript('loader/SConscript', exports='i586_env')
 
 # Build Triton
-triton = SConscript('triton/SConscript', exports='env', build_dir='triton/bin/x86_64-pc-elf')
+triton = SConscript('triton/SConscript', exports='env')
 
 # Build Neptune
-neptune = SConscript('neptune/SConscript', exports='env', build_dir='neptune/bin/x86_64-pc-elf')
+neptune = SConscript('neptune/SConscript', exports='env')
 
 # Build the Kernel
 kernel = SConscript('kernel/SConscript', exports='env')

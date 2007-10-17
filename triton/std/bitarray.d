@@ -174,4 +174,21 @@ struct BitArray
         }
 
     }
+
+    void opSliceAssign(ulong v, size_t x, size_t y)
+    in
+    {
+        assert(x >= 0);
+        assert(y <= len);
+        assert(y > x);
+    }
+    body
+    {
+        auto b = BitArray(&v, 8*v.sizeof);
+
+        for(size_t i = x; i<y; i++)
+        {
+            opIndexAssign(b[i-x], i);
+        }
+    }
 }

@@ -7,6 +7,8 @@ import interrupt.idt;
 import mem.util;
 import mem.allocator;
 
+GDT gdt;
+
 FixedAllocator pmem;
 
 import mem.paging;
@@ -16,8 +18,6 @@ PageTable L4;
 import mem.heap;
 
 Heap heap;
-
-import std.bitarray;
 
 extern(C) void _main(LoaderData* loader)
 {
@@ -43,21 +43,14 @@ extern(C) void _main(LoaderData* loader)
     heap.init();
 
     clear_screen();
-    gdt_install();
+    gdt.install();
     idt_install();
     kb_install();
     pagefault_install();
 
-    int x = 255;
-
-    auto xbits = BitArray(&x, 32);
-
-    foreach_reverse(bool b; xbits)
+    for(ubyte i=0; i<gdt.index; i++)
     {
-        if(b)
-            writef("1");
-        else
-            writef("0");
+        writefln("%02u: %016#X", i*0x8, gdt.entries[i]);
     }
 
     for(;;){}

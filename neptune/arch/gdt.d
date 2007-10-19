@@ -18,19 +18,29 @@ enum DPL
     USER
 }
 
+struct GDTPtr
+{
+    align(1):
+    ushort limit;
+    ulong address;
+}
+
 struct GDTEntry
 {
     ulong data1;
     ulong data2;
     GDTEntryType type;
 
+    /**
+     * Create a TSS Descriptor Entry for the GDT
+     */
     static GDTEntry opCall(ulong tss)
     {
         GDTEntry entry;
 
         entry.type = GDTEntryType.TSS;
 
-        // Set limit
+        // Set limit (this will change when port restrictions are supported)
         entry.data1 = 0x67;
 
         // Set base bytes 1, 2, and 3
@@ -48,6 +58,9 @@ struct GDTEntry
         return entry;
     }
 
+    /**
+     * Create a code/data segment entry for the GDT
+     */
     static GDTEntry opCall(GDTEntryType t, DPL p = DPL.KERNEL)
     {
         GDTEntry entry;
@@ -162,11 +175,4 @@ struct GDT
             "lgdt (%[gdtp])" : : [gdtp] "b" &gdtp;
         }
     }
-}
-
-struct GDTPtr
-{
-    align(1):
-    ushort limit;
-    ulong address;
 }

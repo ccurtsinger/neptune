@@ -11,7 +11,6 @@ import mem.allocator;
 
 GDT gdt;
 TSS tss;
-
 FixedAllocator pmem;
 
 import mem.paging;
@@ -26,6 +25,27 @@ extern(C) void _main(LoaderData* loader)
 {
     clear_screen();
 
+    // Initialize important data structures
+    mem_setup(loader);
+    gdt_setup();
+    tss_setup();
+
+    // Install GDT, IDT, and TSS
+    gdt.install();
+    tss.install();
+    idt_install();
+
+    // Install interrupt handlers
+    kb_install();
+    pagefault_install();
+
+    writefln("Hello D!");
+
+    for(;;){}
+}
+
+void mem_setup(LoaderData* loader)
+{
     // Create a new in-place physical memory allocator
     pmem = new(cast(void*)(LINEAR_MEM_BASE + loader.lowerMemBase)) FixedAllocator();
 
@@ -46,18 +66,6 @@ extern(C) void _main(LoaderData* loader)
 
     // Initialize the heap allocator object
     heap.init();
-
-    gdt_setup();
-    tss_setup();
-
-    gdt.install();
-    tss.install();
-
-    idt_install();
-    kb_install();
-    pagefault_install();
-
-    for(;;){}
 }
 
 void gdt_setup()

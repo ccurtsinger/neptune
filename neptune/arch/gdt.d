@@ -1,6 +1,7 @@
 module neptune.arch.gdt;
 
 import std.bitarray;
+import neptune.arch.tss;
 
 enum GDTEntryType
 {
@@ -22,6 +23,30 @@ struct GDTEntry
     ulong data1;
     ulong data2;
     GDTEntryType type;
+
+    static GDTEntry opCall(ulong tss)
+    {
+        GDTEntry entry;
+
+        entry.type = GDTEntryType.TSS;
+
+        // Set limit
+        entry.data1 = 0x67;
+
+        // Set base bytes 1, 2, and 3
+        entry.data1 |= (tss << 16) & 0xFFFFFF0000L;
+
+        // Set base byte 4
+        entry.data1 |= (tss << 32) & 0xFF00000000000000L;
+
+        // Set P, DPL, and type
+        entry.data1 |= 0x0000890000000000L;
+
+        entry.data2 = 0;
+        entry.data2 = (tss >> 32) & 0xFFFFFFFFL;
+
+        return entry;
+    }
 
     static GDTEntry opCall(GDTEntryType t, DPL p = DPL.KERNEL)
     {
@@ -97,82 +122,44 @@ struct GDT
     ulong[256] entries;
     GDTPtr gdtp;
 
-    ubyte index = 0;
+    ubyte index;
+    ubyte offset;
 
-    TSS tss;
-    ushort tssSel;
-
-    void addEntry(GDTEntry e)
+    void init()
     {
+        index = 0;
+        offset = 0;
+    }
+
+    /**
+     * Adds an entry to the next available spot in the GDT, and returns the GDT selector index
+     */
+    ubyte addEntry(GDTEntry e)
+    {
+        ubyte ret = offset;
+
         entries[index] = e.data1;
 
         if(e.type == GDTEntryType.TSS)
         {
             entries[index+1] = e.data2;
             index++;
+            offset += 8;
         }
         index++;
+        offset += 8;
+
+        return ret;
     }
 
     void install()
     {
-        GDTEntry e;
-
-        addEntry(GDTEntry(GDTEntryType.NULL));
-
-        addEntry(GDTEntry(GDTEntryType.CODE, DPL.KERNEL));
-
-        addEntry(GDTEntry(GDTEntryType.DATA, DPL.KERNEL));
-
-        addEntry(GDTEntry(GDTEntryType.CODE, DPL.USER));
-
-        addEntry(GDTEntry(GDTEntryType.DATA, DPL.USER));
-
-        //TSS Descriptor
-
-        // Set limit
-        entries[5] = 0x67;
-
-        // Set base bytes 1, 2, and 3
-        entries[5] |= (cast(ulong)&tss << 16) & 0xFFFFFF0000L;
-
-        // Set base byte 4
-        entries[5] |= (cast(ulong)&tss << 32) & 0xFF00000000000000L;
-
-        // Set P, DPL, and type
-        entries[5] |= 0x0000890000000000L;
-
-        entries[6] = 0;
-        entries[6] = (cast(ulong)&tss >> 32) & 0xFFFFFFFFL;
-
-        gdtp.limit = 7 * ulong.sizeof - 1;
+        gdtp.limit = (index + 1) * ulong.sizeof - 1;
         gdtp.address = cast(ulong)(&(entries[0]));
-
-        // Set up TSS
-        tss.res1 = 0;
-        tss.res2 = 0;
-        tss.res3 = 0;
-        tss.res4 = 0;
-        tss.iomap = 0;
-
-        tss.rsp0 = 0xFFFF810000000000;
-        tss.rsp1 = 0xFFFF810000000000;
-        tss.rsp2 = 0xFFFF810000000000;
-
-        tss.ist[0] = 0x7FFFFFF8;
-        tss.ist[1] = 0x7FFFFFF8;
-        tss.ist[2] = 0x7FFFFFF8;
-        tss.ist[3] = 0x7FFFFFF8;
-        tss.ist[4] = 0x7FFFFFF8;
-        tss.ist[5] = 0x7FFFFFF8;
-        tss.ist[6] = 0x7FFFFFF8;
-
-        tssSel = 0x28;
 
         asm
         {
             "lgdt (%[gdtp])" : : [gdtp] "b" &gdtp;
-            "ltr %[tssSel]" : : [tssSel] "b" tssSel;
         }
     }
 }
@@ -182,24 +169,4 @@ struct GDTPtr
     align(1):
     ushort limit;
     ulong address;
-}
-
-struct TSS
-{
-    align(1):
-
-    uint res1;
-
-    ulong rsp0;
-    ulong rsp1;
-    ulong rsp2;
-
-    ulong res2;
-
-    ulong[7] ist;
-
-    ulong res3;
-    ushort res4;
-
-    ushort iomap;
 }

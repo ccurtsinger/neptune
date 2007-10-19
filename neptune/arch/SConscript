@@ -2,5 +2,6 @@
 Import('env')
 
 obj_list  = [env.gdc('gdt.o', 'gdt.d')]
+obj_list += [env.gdc('tss.o', 'tss.d')]
 
 Return('obj_list')

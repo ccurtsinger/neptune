@@ -41,7 +41,7 @@ void printc(char c)
 
         cursor_x += t;
     }
-    else
+    else if(c != '\0')
     {
         uint pos = cursor_y*SCREEN_WIDTH + cursor_x;
         SCREEN_MEM[2*pos] = c;

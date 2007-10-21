@@ -127,15 +127,13 @@ void pagefault_handler(void* p, ulong interrupt, ulong error, InterruptStack* st
 	    "mov %%cr2, %[addr]" : [addr] "=a" vAddr;
     }
 
-    write("\nPage Fault: 0x");
-    print_uint_hex(vAddr);
-    write("\nMapping...");
+    writef("\nPage Fault: %016#X\nMapping...", vAddr);
 
     if(L4.map(vAddr))
-        write("done\n");
+        writeln("done");
     else
     {
-        write("failed\n");
+        writeln("failed");
         for(;;){}
     }
 }

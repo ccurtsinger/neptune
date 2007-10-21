@@ -660,9 +660,7 @@ void _int_handler(void* p, ulong interrupt, ulong error, InterruptStack* stack)
 
 void _irq_handler(void* p, ulong interrupt, ulong error, InterruptStack* stack)
 {
-    write("\nIRQ ");
-    print_uint_dec(interrupt);
-    write("\n");
+    writefln("\nIRQ %u", interrupt);
 
     // Acknowledge irq on PIC1
     outp(PIC1, PIC_EOI);

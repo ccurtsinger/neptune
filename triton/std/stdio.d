@@ -1,9 +1,13 @@
 module std.stdio;
 
+import std.integer;
 import std.stdarg;
 
 extern(C) void putc(char c);
 
+/**
+ * Write a string to screen
+ */
 void write(char[] s)
 {
     foreach(char c; s)
@@ -11,92 +15,53 @@ void write(char[] s)
         putc(c);
     }
 }
-
+/**
+ * Write a string to screen, followed by a newline
+ */
 void writeln(char[] s)
 {
     write(s);
     putc('\n');
 }
 
+/**
+ * Write a formatted string to screen
+ */
 void writef(...)
 {
     doFormat(_arguments, _argptr);
 }
 
+/**
+ * Write a formatted string to screen, followed by a newline
+ */
 void writefln(...)
 {
     doFormat(_arguments, _argptr);
     putc('\n');
 }
 
-void print_uint_dec(ulong i, int pad = 0, char padchar = '0')
+/**
+ * Print 'c' 'n' times
+ *
+ * Used by doFormat for padding values
+ */
+void pad(char c, long n)
 {
-    print_uint(i, 10, true, pad, padchar);
-}
-
-void print_uint_hex(ulong i, int pad = 0, char padchar = '0')
-{
-    print_uint(i, 16, true, pad, padchar);
-}
-
-void print_int(long i, uint base, bool uc = true, int pad = 0, char padchar = '0')
-{
-    if(i < 0)
-    {
-        putc('-');
-        if(pad != 0)
-            pad--;
-
-        i = -i;
-    }
-
-    print_uint(i, base, uc, pad, padchar);
-}
-
-void print_uint(ulong i, uint base, bool uc = true, int pad = 0, char padchar = '0')
-{
-    ulong t = 1;
-
-    for(int l=0; l<pad; l++)
-    {
-        if(i < t-1)
-            putc(padchar);
-
-        t *= base;
-    }
-
-    if(i < base)
-    {
-        if(i < 10)
-        {
-            putc(i+'0');
-        }
-        else
-        {
-            if(uc == true)
-            {
-                putc((i-10)+'A');
-            }
-            else
-            {
-                putc((i-10)+'a');
-            }
-        }
-
+    if(n == 0)
         return;
-    }
-    else
+
+    for(long i = 0; i<n; i++)
     {
-        byte digit = i%base;
-        i -= digit;
-        i /= base;
-
-        print_uint(i, base, uc);
-
-        print_uint(digit, base, uc);
+        putc(c);
     }
 }
 
+/**
+ * Parse a set of arguments using standard formatting rules for printf
+ *
+ * Some types have default display options (strings, pointers, etc...)
+ */
 void doFormat(TypeInfo[] args, va_list argptr)
 {
     // Iterate through arguments
@@ -116,7 +81,7 @@ void doFormat(TypeInfo[] args, va_list argptr)
                 {
                     bool parse = true;
                     bool prefix = false;
-                    ulong pad = 0;
+                    long padlen = 0;
                     char padchar = ' ';
 
                     // Loop until the format has been completely specified
@@ -135,33 +100,33 @@ void doFormat(TypeInfo[] args, va_list argptr)
                         else if(a[j] >= '0' && a[j] <= '9')
                         {
                             // If the pad length starts with 0, set the pad character to '0'
-                            if(a[j] == '0' && pad == 0)
+                            if(a[j] == '0' && padlen == 0)
                             {
                                 padchar = '0';
                             }
                             // Add digits to the pad length
                             else
                             {
-                                pad *= 10;
+                                padlen *= 10;
 
                                 if(a[j] == '1')
-                                    pad += 1;
+                                    padlen += 1;
                                 else if(a[j] == '2')
-                                    pad += 2;
+                                    padlen += 2;
                                 else if(a[j] == '3')
-                                    pad += 3;
+                                    padlen += 3;
                                 else if(a[j] == '4')
-                                    pad += 4;
+                                    padlen += 4;
                                 else if(a[j] == '5')
-                                    pad += 5;
+                                    padlen += 5;
                                 else if(a[j] == '6')
-                                    pad += 6;
+                                    padlen += 6;
                                 else if(a[j] == '7')
-                                    pad += 7;
+                                    padlen += 7;
                                 else if(a[j] == '8')
-                                    pad += 8;
+                                    padlen += 8;
                                 else if(a[j] == '9')
-                                    pad += 9;
+                                    padlen += 9;
                             }
                         }
                         // Pad is specified by the next argument
@@ -171,22 +136,22 @@ void doFormat(TypeInfo[] args, va_list argptr)
                             if(args[i] == typeid(ubyte) || args[i] == typeid(byte))
                             {
                                 ubyte x = va_arg!(ubyte)(argptr);
-                                pad = x;
+                                padlen = x;
                             }
                             else if(args[i] == typeid(ushort) || args[i] == typeid(short))
                             {
                                 ushort x = va_arg!(ushort)(argptr);
-                                pad = x;
+                                padlen = x;
                             }
                             else if(args[i] == typeid(uint) || args[i] == typeid(int))
                             {
                                 uint x = va_arg!(uint)(argptr);
-                                pad = x;
+                                padlen = x;
                             }
                             else if(args[i] == typeid(ulong) || args[i] == typeid(long))
                             {
                                 ulong x = va_arg!(ulong)(argptr);
-                                pad = x;
+                                padlen = x;
                             }
                             else
                             {
@@ -199,7 +164,7 @@ void doFormat(TypeInfo[] args, va_list argptr)
                             prefix = true;
                         }
                         // Print a signed integer
-                        else if(a[j] == 'd' || a[j] == 'i')
+                        /*else if(a[j] == 'd' || a[j] == 'i')
                         {
                             i++;
                             if(args[i] == typeid(ubyte) || args[i] == typeid(byte))
@@ -234,43 +199,36 @@ void doFormat(TypeInfo[] args, va_list argptr)
                             {
                                 assert(0, "Invalid parameter type for %d format flag.");
                             }
-                        }
+                        }*/
                         // Print an unsigned integer
                         else if(a[j] == 'u')
                         {
+                            ulong x;
+
                             i++;
+
                             if(args[i] == typeid(ubyte) || args[i] == typeid(byte))
-                            {
-                                ubyte x = va_arg!(ubyte)(argptr);
-                                print_uint(x, 10, true, pad, padchar);
+                                x = va_arg!(ubyte)(argptr);
 
-                                parse = false;
-                            }
                             else if(args[i] == typeid(ushort) || args[i] == typeid(short))
-                            {
-                                ushort x = va_arg!(ushort)(argptr);
-                                print_uint(x, 10, true, pad, padchar);
+                                x = va_arg!(ushort)(argptr);
 
-                                parse = false;
-                            }
                             else if(args[i] == typeid(uint) || args[i] == typeid(int))
-                            {
-                                uint x = va_arg!(uint)(argptr);
-                                print_uint(x, 10, true, pad, padchar);
+                                x = va_arg!(uint)(argptr);
 
-                                parse = false;
-                            }
                             else if(args[i] == typeid(ulong) || args[i] == typeid(long))
-                            {
-                                ulong x = va_arg!(ulong)(argptr);
-                                print_uint(x, 10, true, pad, padchar);
+                                x = va_arg!(ulong)(argptr);
 
-                                parse = false;
-                            }
                             else
-                            {
                                 assert(0, "Invalid parameter type for %u format flag.");
-                            }
+
+                            char[] str = new char[digits(x)];
+
+                            itoa(x, str.ptr);
+
+                            write(str);
+
+                            parse = false;
                         }
                         // Print an unsigned hexadecimal integer
                         else if(a[j] == 'x' || a[j] == 'X')
@@ -283,40 +241,34 @@ void doFormat(TypeInfo[] args, va_list argptr)
                             if(prefix)
                                 write("0x");
 
+                            ulong x;
+
                             i++;
 
                             if(args[i] == typeid(ubyte) || args[i] == typeid(byte))
-                            {
-                                ubyte x = va_arg!(ubyte)(argptr);
-                                print_uint(x, 16, uc, pad, padchar);
+                                x = va_arg!(ubyte)(argptr);
 
-                                parse = false;
-                            }
                             else if(args[i] == typeid(ushort) || args[i] == typeid(short))
-                            {
-                                ushort x = va_arg!(ushort)(argptr);
-                                print_uint(x, 16, uc, pad, padchar);
+                                x = va_arg!(ushort)(argptr);
 
-                                parse = false;
-                            }
                             else if(args[i] == typeid(uint) || args[i] == typeid(int))
-                            {
-                                uint x = va_arg!(uint)(argptr);
-                                print_uint(x, 16, uc, pad, padchar);
+                                x = va_arg!(uint)(argptr);
 
-                                parse = false;
-                            }
                             else if(args[i] == typeid(ulong) || args[i] == typeid(long))
-                            {
-                                ulong x = va_arg!(ulong)(argptr);
-                                print_uint(x, 16, uc, pad, padchar);
+                                x = va_arg!(ulong)(argptr);
 
-                                parse = false;
-                            }
                             else
-                            {
                                 assert(0, "Invalid parameter type for %x format flag.");
-                            }
+
+                            long len = digits(x, 16);
+                            char[] str = new char[len];
+
+                            itoa(x, str.ptr, 16, uc);
+
+                            pad(padchar, padlen - len);
+                            write(str);
+
+                            parse = false;
                         }
                         // Print a string (don't parse for formatting)
                         else if(a[j] == 's')
@@ -329,11 +281,7 @@ void doFormat(TypeInfo[] args, va_list argptr)
 
                                 ulong len = x.length;
 
-                                while(len < pad)
-                                {
-                                    len++;
-                                    putc(padchar);
-                                }
+                                pad(padchar, padlen - len);
 
                                 write(x);
 
@@ -357,14 +305,21 @@ void doFormat(TypeInfo[] args, va_list argptr)
         {
             ulong x = va_arg!(ulong)(argptr);
             write("0x");
-            print_uint(x, 16, true, 16, '0');
+
+            long len = digits(x, 16);
+            char[16] str;
+
+            pad('0', 16 - len);
+            itoa(x, str.ptr, 16, true);
+
+            write(str);
         }
         else
         {
             ulong size = args[i].tsize();
 
             write("unknown type (size: ");
-            print_uint_dec(size);
+            //print_uint_dec(size);
             write(")");
 
             if(size == ubyte.sizeof)

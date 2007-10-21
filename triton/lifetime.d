@@ -185,26 +185,65 @@ extern (C) Array _d_newarrayT(TypeInfo ti, size_t length)
     else
     {
         result.length = length;
-        /*version (D_InlineAsm_X86)
-        {
-            asm
-            {
-                mov     EAX,size        ;
-                mul     EAX,length      ;
-                mov     size,EAX        ;
-                jc      Loverflow       ;
-            }
-        }
-        else*/
-            size *= length;
+        size *= length;
+
         //result.data = cast(byte*) gc_malloc(size + 1, !(ti.next.flags() & 1) ? BlkAttr.NO_SCAN : 0);
         result.data = cast(byte*)heap.allocate(size+1);
+
         memset(result.data, 0, size);
     }
     return result;
+}
 
-Loverflow:
-    onOutOfMemoryError();
+/**
+ * For when the array has a non-zero initializer.
+ */
+extern (C) Array _d_newarrayiT(TypeInfo ti, size_t length)
+{
+    Array result;
+    auto size = ti.next.tsize(); // array element size
+
+    if (length == 0 || size == 0)
+    {
+
+    }
+    else
+    {
+        auto initializer = ti.next.init();
+        auto isize = initializer.length;
+        auto q = initializer.ptr;
+
+        size *= length;
+
+        //auto p = gc_malloc(size + 1, !(ti.next.flags() & 1) ? BlkAttr.NO_SCAN : 0);
+        auto p = cast(byte*)heap.allocate(size+1);
+
+        if (isize == 1)
+        {
+            memset(p, *cast(ubyte*)q, size);
+        }
+        else if (isize == int.sizeof)
+        {
+            int init = *cast(int*)q;
+            size /= int.sizeof;
+
+            for (size_t u = 0; u < size; u++)
+            {
+                (cast(int*)p)[u] = init;
+            }
+        }
+        else
+        {
+            for (size_t u = 0; u < size; u += isize)
+            {
+                memcpy(p + u, q, isize);
+            }
+        }
+        result.length = length;
+        result.data = cast(byte*) p;
+    }
+
+    return result;
 }
 
 

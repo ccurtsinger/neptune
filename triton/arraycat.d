@@ -31,14 +31,9 @@
  *  Modified by Charlie Curtsinger <speal@devlime.com> for use with Neptune.
  */
 
-private
-{
-    //import tango.stdc.string;
-    //debug import tango.stdc.stdio;
+import std.stdio;
 
-    import mem.util;
-    import dev.screen;
-}
+import mem.util;
 
 extern (C):
 
@@ -46,7 +41,7 @@ byte[] _d_arraycopy(size_t size, byte[] from, byte[] to)
 {
     if (to.length != from.length)
     {
-        print("Exception: lengths don't match for array copy");
+        write("Exception: lengths don't match for array copy");
         for(;;){}
 
         //throw new Exception("lengths don't match for array copy");
@@ -58,7 +53,7 @@ byte[] _d_arraycopy(size_t size, byte[] from, byte[] to)
     }
     else
     {
-        print("Exception: overlapping array copy");
+        write("Exception: overlapping array copy");
         for(;;){}
         //throw new Exception("overlapping array copy");
     }

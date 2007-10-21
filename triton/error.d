@@ -1,5 +1,5 @@
 
-private import dev.screen;
+import std.stdio;
 
 extern (C) void _d_assert( char[] file, uint line )
 {

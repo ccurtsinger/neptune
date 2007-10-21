@@ -141,11 +141,11 @@ void kb_handler(void* p, ulong interrupt, ulong error, InterruptStack* stack)
 
     if(caps)
     {
-        printc(k.uc);
+        putc(k.uc);
     }
     else
     {
-        printc(k.lc);
+        putc(k.lc);
     }
 
     if(k.shift)

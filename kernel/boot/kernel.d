@@ -1,5 +1,7 @@
 module boot.kernel;
 
+import std.stdio;
+
 import neptune.arch.gdt;
 import neptune.arch.tss;
 import neptune.arch.idt;
@@ -125,15 +127,15 @@ void pagefault_handler(void* p, ulong interrupt, ulong error, InterruptStack* st
 	    "mov %%cr2, %[addr]" : [addr] "=a" vAddr;
     }
 
-    print("\nPage Fault: 0x");
+    write("\nPage Fault: 0x");
     print_uint_hex(vAddr);
-    print("\nMapping...");
+    write("\nMapping...");
 
     if(L4.map(vAddr))
-        print("done\n");
+        write("done\n");
     else
     {
-        print("failed\n");
+        write("failed\n");
         for(;;){}
     }
 }
@@ -142,19 +144,19 @@ extern(C)
 {
     void abort()
     {
-        print("abort!\n");
+        write("abort!\n");
         for(;;){}
     }
 
     void* malloc(ulong s)
     {
-        print("malloc\n");
+        write("malloc\n");
         return heap.allocate(s);
     }
 
     void free(void* p)
     {
-        print("free\n");
+        write("free\n");
         heap.free(p);
     }
 

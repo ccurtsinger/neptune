@@ -2,9 +2,11 @@
 Import('env')
 
 obj_list  = [env.gdc('bitarray.o', 'bitarray.d')]
-obj_list += [env.gdc('bit.o', 'bit.d')]
-obj_list += [env.gdc('port.o', 'port.d')]
-obj_list += [env.gdc('stdarg.o', 'stdarg.d')]
+obj_list += [env.gdc('bit.o',      'bit.d')]
+obj_list += [env.gdc('port.o',     'port.d')]
+obj_list += [env.gdc('stdarg.o',   'stdarg.d')]
+obj_list += [env.gdc('stdio.o',    'stdio.d')]
+
 obj_list += SConscript('typeinfo/SConscript', exports='env')
 
 Return('obj_list')

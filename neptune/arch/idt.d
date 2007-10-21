@@ -1,8 +1,7 @@
 module neptune.arch.idt;
 
 import std.port;
-
-import dev.screen;
+import std.stdio;
 
 ulong isrs[256];
 
@@ -661,9 +660,9 @@ void _int_handler(void* p, ulong interrupt, ulong error, InterruptStack* stack)
 
 void _irq_handler(void* p, ulong interrupt, ulong error, InterruptStack* stack)
 {
-    print("\nIRQ ");
+    write("\nIRQ ");
     print_uint_dec(interrupt);
-    print("\n");
+    write("\n");
 
     // Acknowledge irq on PIC1
     outp(PIC1, PIC_EOI);

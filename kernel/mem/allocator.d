@@ -1,6 +1,6 @@
 module mem.allocator;
 
-import dev.screen;
+import std.stdio;
 
 const ulong LINEAR_MEM_BASE = 0xFFFF830000000000;
 const ulong FRAME_SIZE = 0x1000;
@@ -97,7 +97,7 @@ class FixedAllocator
             pool = pool.next;
         }
 
-        print("Memory meta-pool empty\n");
+        write("Memory meta-pool empty\n");
         for(;;){}
 
         return null;
@@ -119,7 +119,7 @@ class FixedAllocator
             free = free.next;
         }
 
-        print("Out of memory\n");
+        write("Out of memory\n");
         for(;;){}
 
         return 0;

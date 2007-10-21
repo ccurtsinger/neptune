@@ -7,7 +7,7 @@
 
 module std.bitarray;
 
-import std.intrinsic;
+import std.bit;
 
 /**
  * Standard class for bit manipulation.  Differs from Phobos and Tango implementation in that

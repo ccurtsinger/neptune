@@ -21,7 +21,6 @@ const ulong PAGE_NX = 0x8000000000000000;
 
 import mem.allocator;
 import dev.screen;
-import interrupt.idt;
 import boot.kernel : pmem;
 
 struct PageTable

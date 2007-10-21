@@ -2,8 +2,6 @@
 Import('env')
 
 obj_list  = [env.yasm('interrupts.o', 'interrupts.asm')]
-obj_list += [env.gdc('isr.o', 'isr.d')]
-obj_list += [env.gdc('idt.o', 'idt.d')]
 
 interrupt = env.PartialLink('interrupt.o', obj_list)
 

@@ -1,8 +1,10 @@
 module dev.kb;
 
+import std.port;
+
+import neptune.arch.idt;
+
 import dev.screen;
-import dev.port;
-import interrupt.idt;
 
 bool caps;
 

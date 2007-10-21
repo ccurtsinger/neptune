@@ -2,10 +2,10 @@ module boot.kernel;
 
 import neptune.arch.gdt;
 import neptune.arch.tss;
+import neptune.arch.idt;
 
 import dev.screen;
 import dev.kb;
-import interrupt.idt;
 import mem.util;
 import mem.allocator;
 

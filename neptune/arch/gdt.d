@@ -1,7 +1,8 @@
 module neptune.arch.gdt;
 
-import std.bitarray;
 import neptune.arch.tss;
+
+import std.bitarray;
 
 enum GDTEntryType
 {

@@ -3,6 +3,7 @@ Import('env')
 
 obj_list  = [env.gdc('gdt.o', 'gdt.d')]
 obj_list += [env.gdc('idt.o', 'idt.d')]
+obj_list += [env.yasm('interrupts.o', 'interrupts.asm')]
 obj_list += [env.gdc('tss.o', 'tss.d')]
 
 Return('obj_list')

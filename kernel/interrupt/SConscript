@@ -1,8 +1,0 @@
-# Grab the build environment
-Import('env')
-
-obj_list  = [env.yasm('interrupts.o', 'interrupts.asm')]
-
-interrupt = env.PartialLink('interrupt.o', obj_list)
-
-Return('interrupt')

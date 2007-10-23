@@ -83,118 +83,6 @@ struct IDTPtr
 	ulong base;
 }
 
-const ubyte PIC1 = 0x20;
-const ubyte PIC2 = 0xA0;
-const ubyte ICW1 = 0x11;
-const ubyte ICW4 = 0x01;
-const ubyte PIC_EOI = 0x20;
-
-extern(C) IntHandler _int_handlers[256];
-
-IDTEntry idt[256];
-IDTPtr idtp;
-
-void idt_install()
-{
-    init_isr_array();
-
-    ubyte irqBase = 32;
-	ushort irqMask = 0xFFFD;
-
-	idtp.limit = IDTEntry.sizeof*256-1;
-	idtp.base = cast(ulong)&idt;
-
-	for(ushort i=0; i<256; i++)
-	{
-	    idt[i] = IDTEntry(cast(ubyte)i, cast(ulong)isrs[i]);
-	    idt_install_default_handler(cast(ubyte)i);
-	}
-
-	//idt[33] = IDTEntry(33, cast(ulong)&_isr33);
-
-	asm
-	{
-	    "cli";
-	    "lidt (%[ptr])" : : [ptr] "a" &idtp;
-	}
-
-	//Sent ICW1
-	outp(PIC1, ICW1);
-	outp(PIC2, ICW1);
-
-	//Send ICW2
-	outp(PIC1+1, irqBase);
-	outp(PIC2+1, irqBase+8);
-
-	//Send ICW3
-	outp(PIC1+1, 4);
-	outp(PIC2+1, 2);
-
-	//Send ICW4
-	outp(PIC1+1, ICW4);
-	outp(PIC2+1, ICW4);
-
-	//Disable all but IRQ 1
-	outp(PIC1+1, cast(ubyte)(irqMask&0xFF));
-	outp(PIC2+1, cast(ubyte)((irqMask>>8)&0xFF));
-
-	asm
-	{
-	    "sti";
-	}
-}
-
-void _int_handler(void* p, ulong interrupt, ulong error, InterruptStack* stack)
-{
-    writefln("\nInterrupt %u", interrupt);
-    writefln("Error Code: %#X", stack.error);
-    writefln("  Context\n  -------");
-    writefln("  rip    %#016X", stack.rip);
-    writefln("  rsp    %#016X", stack.rsp);
-    writefln("  rbp    %#016X", stack.rbp);
-    writefln("  rax    %#016X", stack.rax);
-    writefln("  rbx    %#016X", stack.rbx);
-    writefln("  rcx    %#016X", stack.rcx);
-    writefln("  rdx    %#016X", stack.rdx);
-    writefln("  rsi    %#016X", stack.rsi);
-    writefln("  rdi    %#016X", stack.rdi);
-    writefln("  r8     %#016X", stack.r8);
-    writefln("  r9     %#016X", stack.r9);
-    writefln("  r10    %#016X", stack.r10);
-    writefln("  r11    %#016X", stack.r11);
-    writefln("  r12    %#016X", stack.r12);
-    writefln("  r13    %#016X", stack.r13);
-    writefln("  r14    %#016X", stack.r14);
-    writefln("  r15    %#016X", stack.r15);
-    writefln("  ss     %#02X", stack.ss);
-    writefln("  cs     %#02X", stack.cs);
-
-    for(;;){}
-}
-
-void _irq_handler(void* p, ulong interrupt, ulong error, InterruptStack* stack)
-{
-    writefln("\nIRQ %u", interrupt);
-
-    // Acknowledge irq on PIC1
-    outp(PIC1, PIC_EOI);
-
-    // Acknowledge irq on PIC2
-	if(interrupt >= 40)
-		outp(PIC2, PIC_EOI);
-}
-
-void idt_install_default_handler(ubyte interrupt)
-{
-	idt_install_handler(interrupt, cast(ulong)&_int_handler);
-}
-
-void idt_install_handler(ubyte interrupt, ulong handler)
-{
-    _int_handlers[interrupt].base = handler;
-    _int_handlers[interrupt].pThis = 0;
-}
-
 struct InterruptStack
 {
 	ulong rax;
@@ -218,4 +106,128 @@ struct InterruptStack
 	ulong rflags;
 	ulong rsp;
 	ulong ss;
+}
+
+extern(C) IntHandler _int_handlers[256];
+
+const ubyte PIC1 = 0x20;
+const ubyte PIC2 = 0xA0;
+const ubyte ICW1 = 0x11;
+const ubyte ICW4 = 0x01;
+const ubyte PIC_EOI = 0x20;
+
+struct IDT
+{
+	IDTEntry idt[256];
+	IDTPtr idtp;
+	
+	void init()
+	{
+		init_isr_array();
+		
+		remapPic();
+		
+		for(ushort i=0; i<256; i++)
+		{
+			idt[i] = IDTEntry(i, isrs[i]);
+			setDefaultHandler(i);
+		}
+	}
+	
+	void remapPic(ubyte base = 32, ushort mask = 0xFFFD)
+	{
+		//Sent ICW1
+		outp(PIC1, ICW1);
+		outp(PIC2, ICW1);
+
+		//Send ICW2
+		outp(PIC1+1, base);
+		outp(PIC2+1, base+8);
+
+		//Send ICW3
+		outp(PIC1+1, 4);
+		outp(PIC2+1, 2);
+
+		//Send ICW4
+		outp(PIC1+1, ICW4);
+		outp(PIC2+1, ICW4);
+
+		//Disable all but IRQ 1
+		outp(PIC1+1, cast(ubyte)(mask&0xFF));
+		outp(PIC2+1, cast(ubyte)((mask>>8)&0xFF));
+	}
+
+	void install()
+	{
+		idtp.limit = IDTEntry.sizeof*256-1;
+		idtp.base = cast(ulong)&idt;
+
+		asm
+		{
+			"cli";
+			"lidt (%[ptr])" : : [ptr] "a" &idtp;
+		}
+
+		asm
+		{
+			"sti";
+		}
+	}
+
+	void _int_handler(ulong interrupt, ulong error, InterruptStack* stack)
+	{
+		writefln("\nInterrupt %u", interrupt);
+		writefln("Error Code: %#X", stack.error);
+		writefln("  Context\n  -------");
+		writefln("  rip    %#016X", stack.rip);
+		writefln("  rsp    %#016X", stack.rsp);
+		writefln("  rbp    %#016X", stack.rbp);
+		writefln("  rax    %#016X", stack.rax);
+		writefln("  rbx    %#016X", stack.rbx);
+		writefln("  rcx    %#016X", stack.rcx);
+		writefln("  rdx    %#016X", stack.rdx);
+		writefln("  rsi    %#016X", stack.rsi);
+		writefln("  rdi    %#016X", stack.rdi);
+		writefln("  r8     %#016X", stack.r8);
+		writefln("  r9     %#016X", stack.r9);
+		writefln("  r10    %#016X", stack.r10);
+		writefln("  r11    %#016X", stack.r11);
+		writefln("  r12    %#016X", stack.r12);
+		writefln("  r13    %#016X", stack.r13);
+		writefln("  r14    %#016X", stack.r14);
+		writefln("  r15    %#016X", stack.r15);
+		writefln("  ss     %#02X", stack.ss);
+		writefln("  cs     %#02X", stack.cs);
+
+		for(;;){}
+	}
+
+	void _irq_handler(void* p, ulong interrupt, ulong error, InterruptStack* stack)
+	{
+		writefln("\nIRQ %u", interrupt);
+
+		// Acknowledge irq on PIC1
+		outp(PIC1, PIC_EOI);
+
+		// Acknowledge irq on PIC2
+		if(interrupt >= 40)
+			outp(PIC2, PIC_EOI);
+	}
+
+	void setDefaultHandler(ubyte interrupt)
+	{
+		setHandler(interrupt, &_int_handler);
+	}
+
+	void setHandler(ubyte interrupt, void function(void* p, ulong interrupt, ulong error, InterruptStack* stack) handler)
+	{
+		_int_handlers[interrupt].base = cast(ulong)handler;
+		_int_handlers[interrupt].pThis = 0;
+	}
+	
+	void setHandler(ubyte interrupt, void delegate(ulong interrupt, ulong error, InterruptStack* stack) handler)
+	{
+		_int_handlers[interrupt].base = cast(ulong)handler.funcptr;
+		_int_handlers[interrupt].pThis = cast(ulong)handler.ptr;
+	}
 }

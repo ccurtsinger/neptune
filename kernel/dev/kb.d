@@ -8,6 +8,7 @@ import dev.screen;
 
 bool caps;
 
+
 struct Key
 {
     char lc;
@@ -28,10 +29,8 @@ struct Key
 
 Key[256] keymap;
 
-void kb_install()
+void kb_setup()
 {
-    idt_install_handler(33, cast(ulong)&kb_handler);
-
     caps = false;
 
     for(int i=0; i<256; i++)

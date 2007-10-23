@@ -13,6 +13,7 @@ import mem.allocator;
 
 GDT gdt;
 TSS tss;
+IDT idt;
 FixedAllocator pmem;
 
 import mem.paging;
@@ -31,15 +32,12 @@ extern(C) void _main(LoaderData* loader)
     mem_setup(loader);
     gdt_setup();
     tss_setup();
+    idt_setup();
 
     // Install GDT, IDT, and TSS
     gdt.install();
     tss.install();
-    idt_install();
-
-    // Install interrupt handlers
-    kb_install();
-    pagefault_install();
+    idt.install();
 
     writefln("Hello D!");
 
@@ -114,9 +112,16 @@ void tss_setup()
     tss.setIstEntry(6, 0x7FFFFFF8);*/
 }
 
-void pagefault_install()
+void idt_setup()
 {
-    idt_install_handler(14, cast(ulong)&pagefault_handler);
+	idt.init();
+	
+	// Install the page fault handler
+	idt.setHandler(14, &pagefault_handler);
+	
+	// Initialize keyboard data and install the interrupt handler
+	kb_setup();
+    idt.setHandler(33, &kb_handler);
 }
 
 void pagefault_handler(void* p, ulong interrupt, ulong error, InterruptStack* stack)

@@ -4,7 +4,6 @@ Import('env')
 obj_list  = [env.gdc('allocator.o', 'allocator.d')]
 obj_list += [env.gdc('heap.o', 'heap.d')]
 obj_list += [env.gdc('paging.o', 'paging.d')]
-obj_list += [env.gdc('util.o', 'util.d')]
 
 mem = env.PartialLink('mem.o', obj_list)
 

@@ -1,6 +1,6 @@
 module object;
 
-import mem.util;
+import std.mem;
 
 alias ulong size_t;
 alias long  ptrdiff_t;

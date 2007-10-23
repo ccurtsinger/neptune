@@ -1,4 +1,4 @@
-module mem.util;
+module std.mem;
 
 extern(C) void memset(void* p, ubyte value, ulong size)
 {

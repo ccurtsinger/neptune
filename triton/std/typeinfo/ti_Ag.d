@@ -1,9 +1,7 @@
 
 module std.typeinfo.ti_Ag;
 
-//private import tango.stdc.string;
-//private import util.string;
-private import mem.util;
+import std.mem;
 
 // byte[]
 

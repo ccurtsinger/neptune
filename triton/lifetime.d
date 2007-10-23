@@ -26,17 +26,11 @@
  */
 module lifetime;
 
+import std.stdarg;
+import std.mem;
 
-private
-{
-    //import tango.stdc.stdlib;
-    //import tango.stdc.string;
-    import std.stdarg;
-    //debug(PRINTF) import tango.stdc.stdio;
-}
-
-import boot.kernel : heap;
-import mem.util;
+extern(C) void* malloc(size_t s);
+extern(C) void  free(void* p);
 
 private
 {
@@ -77,24 +71,7 @@ private
  */
 extern (C) Object _d_newclass(ClassInfo ci)
 {
-    void* p;
-
-    debug(PRINTF) printf("_d_newclass(ci = %p, %s)\n", ci, cast(char *)ci.name);
-    /*if (ci.flags & 1) // if COM object
-    {
-        p = tango.stdc.stdlib.malloc(ci.init.length);
-        if (!p)
-            onOutOfMemoryError();
-    }
-    else
-    {
-        p = gc_malloc(ci.init.length,
-                      BlkAttr.FINALIZE | (ci.flags & 2 ? BlkAttr.NO_SCAN : 0));
-        debug(PRINTF) printf(" p = %p\n", p);
-    }*/
-
-    // Allocate the necessary memory
-    p = heap.allocate(ci.init.length);
+    void* p = malloc(ci.init.length);
 
     debug(PRINTF)
     {
@@ -113,8 +90,7 @@ extern (C) Object _d_newclass(ClassInfo ci)
     // initialize it
     (cast(byte*) p)[0 .. ci.init.length] = ci.init[];
 
-    debug(PRINTF) printf("initialization done\n");
-    return cast(Object) p;
+    return cast(Object)p;
 }
 
 
@@ -162,8 +138,8 @@ extern (C) void _d_delclass(Object* p)
                 return;
             }
         }
-        //gc_free(cast(void*) *p);
-        heap.free(cast(void*) *p);
+        
+        free(p);
         *p = null;
     }
 }
@@ -179,19 +155,20 @@ extern (C) Array _d_newarrayT(TypeInfo ti, size_t length)
     Array result;
     auto size = ti.next.tsize();                // array element size
 
-    debug(PRINTF) printf("_d_newarrayT(length = x%x, size = %d)\n", length, size);
     if (length == 0 || size == 0)
-        {}
+	{
+		
+	}
     else
     {
         result.length = length;
         size *= length;
 
-        //result.data = cast(byte*) gc_malloc(size + 1, !(ti.next.flags() & 1) ? BlkAttr.NO_SCAN : 0);
-        result.data = cast(byte*)heap.allocate(size+1);
+        result.data = cast(byte*)malloc(size+1);
 
         memset(result.data, 0, size);
     }
+    
     return result;
 }
 
@@ -215,8 +192,7 @@ extern (C) Array _d_newarrayiT(TypeInfo ti, size_t length)
 
         size *= length;
 
-        //auto p = gc_malloc(size + 1, !(ti.next.flags() & 1) ? BlkAttr.NO_SCAN : 0);
-        auto p = cast(byte*)heap.allocate(size+1);
+        auto p = cast(byte*)malloc(size+1);
 
         if (isize == 1)
         {
@@ -260,12 +236,11 @@ struct Array
 /**
  *
  */
-extern (C) void _d_delmemory(void* *p)
+extern (C) void _d_delmemory(void** p)
 {
     if (*p)
     {
-        //gc_free(*p);
-        heap.free(*p);
+        free(*p);
         *p = null;
     }
 }
@@ -276,8 +251,6 @@ extern (C) void _d_delmemory(void* *p)
  */
 extern (C) void rt_finalize(void* p, bool det = true)
 {
-    debug(PRINTF) printf("rt_finalize(p = %p)\n", p);
-
     if (p) // not necessary if called from gc
     {
         ClassInfo** pc = cast(ClassInfo**)p;
@@ -301,7 +274,9 @@ extern (C) void rt_finalize(void* p, bool det = true)
                     } while (c);
                 }
                 if ((cast(void**)p)[1]) // if monitor is not null
+                {
                     _d_monitordelete(cast(Object)p, det);
+                }
             }
             catch (Exception e)
             {
@@ -328,25 +303,11 @@ extern (C) Array _d_arrayappendT(TypeInfo ti, Array *px, byte[] y)
     auto newlength = length + y.length;
     auto newsize = newlength * sizeelem;
 
-    //if (newsize > cap)
-    //{
-        byte* newdata;
+	byte* newdata = cast(byte *)malloc(newCapacity(newlength, sizeelem) + 1);
 
-        /*if (cap >= PAGESIZE)
-        {   // Try to extend in-place
-            auto u = gc_extend(px.data, (newsize + 1) - cap, (newsize + 1) - cap);
-            if (u)
-            {
-                goto L1;
-            }
-        }*/
-        //newdata = cast(byte *)gc_malloc(newCapacity(newlength, sizeelem) + 1, !(ti.next.flags() & 1) ? BlkAttr.NO_SCAN : 0);
-        newdata = cast(byte *)heap.allocate(newCapacity(newlength, sizeelem) + 1);
+	memcpy(newdata, px.data, length * sizeelem);
+	px.data = newdata;
 
-        memcpy(newdata, px.data, length * sizeelem);
-        px.data = newdata;
-    //}
-  L1:
     px.length = newlength;
     memcpy(px.data + length * sizeelem, y.ptr, y.length * sizeelem);
     return *px;
@@ -456,7 +417,7 @@ extern (C) byte[] _d_arrayappendcTp(TypeInfo ti, inout byte[] x, void *argp)
         cap = newCapacity(newlength, sizeelem);
         assert(cap >= newlength * sizeelem);
         //newdata = cast(byte *)gc_malloc(cap + 1, !(ti.next.flags() & 1) ? BlkAttr.NO_SCAN : 0);
-        newdata = cast(byte *)heap.allocate(cap + 1);
+        newdata = cast(byte *)malloc(cap + 1);
         memcpy(newdata, x.ptr, length * sizeelem);
         (cast(void**)(&x))[1] = newdata;
     //}
@@ -492,7 +453,7 @@ extern (C) byte[] _d_arraycatnT(TypeInfo ti, uint n, ...)
         return null;
 
     //a = gc_malloc(length * size, !(ti.next.flags() & 1) ? BlkAttr.NO_SCAN : 0);
-    a = heap.allocate(length * size);
+    a = malloc(length * size);
 
     va_start!(typeof(n))(va, n);
 

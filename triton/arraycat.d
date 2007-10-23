@@ -32,8 +32,7 @@
  */
 
 import std.stdio;
-
-import mem.util;
+import std.mem;
 
 extern (C):
 

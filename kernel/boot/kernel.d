@@ -1,6 +1,7 @@
 module boot.kernel;
 
 import std.stdio;
+import std.mem;
 
 import neptune.arch.gdt;
 import neptune.arch.tss;
@@ -8,7 +9,6 @@ import neptune.arch.idt;
 
 import dev.screen;
 import dev.kb;
-import mem.util;
 import mem.allocator;
 
 GDT gdt;

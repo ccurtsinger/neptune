@@ -2,7 +2,7 @@
 module std.typeinfo.ti_Aint;
 
 //private import tango.stdc.string;
-private import mem.util;
+import std.mem;
 
 // int[]
 

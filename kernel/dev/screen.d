@@ -1,8 +1,7 @@
 module dev.screen;
 
 import std.port;
-
-import mem.util;
+import std.mem;
 
 const char* SCREEN_MEM = cast(char*)0xFFFF8300000B8000;
 const uint SCREEN_WIDTH = 80;

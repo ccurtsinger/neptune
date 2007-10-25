@@ -2,6 +2,7 @@ module boot.kernel;
 
 import std.stdio;
 import std.mem;
+static import std.collection.heap;
 
 import neptune.arch.gdt;
 import neptune.arch.tss;
@@ -40,6 +41,17 @@ extern(C) void _main(LoaderData* loader)
     idt.install();
 
     writefln("Hello D!");
+    
+    auto h = new std.collection.heap.Heap!(ulong);
+    
+    h.add(1);
+    h.add(2);
+    h.add(3);
+    
+    for(int i=0; i<3; i++)
+    {
+    	writefln("here: %u", h.get(i));
+    }
 
     for(;;){}
 }
@@ -153,7 +165,7 @@ extern(C)
 
     void* malloc(ulong s)
     {
-        write("malloc\n");
+        //write("malloc\n");
         return heap.allocate(s);
     }
 

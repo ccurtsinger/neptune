@@ -182,7 +182,7 @@ struct IDT
 		writefln("  rip    %#016X", stack.rip);
 		writefln("  rsp    %#016X", stack.rsp);
 		writefln("  rbp    %#016X", stack.rbp);
-		writefln("  rax    %#016X", stack.rax);
+		/*writefln("  rax    %#016X", stack.rax);
 		writefln("  rbx    %#016X", stack.rbx);
 		writefln("  rcx    %#016X", stack.rcx);
 		writefln("  rdx    %#016X", stack.rdx);
@@ -195,7 +195,7 @@ struct IDT
 		writefln("  r12    %#016X", stack.r12);
 		writefln("  r13    %#016X", stack.r13);
 		writefln("  r14    %#016X", stack.r14);
-		writefln("  r15    %#016X", stack.r15);
+		writefln("  r15    %#016X", stack.r15);*/
 		writefln("  ss     %#02X", stack.ss);
 		writefln("  cs     %#02X", stack.cs);
 

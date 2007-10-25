@@ -41,10 +41,9 @@ extern _int_handlers
 %macro INTR 1
 global _isr%1
 _isr%1:
-	push 0
-	PUSHL		;Push all the available registers for debugging
-    mov rsi, %1	;Put interrupt number in 2nd argument
-    ;mov rdx, 0  ;Put dummy error code in 3rd argument
+	push 0		 ;Push dummy error code
+	PUSHL		 ;Push all the available registers for debugging
+    mov rsi, %1	 ;Put interrupt number in 2nd argument
     mov rcx, rsp ;Put a pointer to the interrupt stack in the 4th argument
     lea rax, [_int_handlers + 16 * %1 wrt rip]		;Call the installed interrupt handler from the address in the table
     lea rdi, [_int_handlers + 16 * %1 + 8 wrt rip]	;Put the this pointer in 1st argument
@@ -58,9 +57,8 @@ _isr%1:
 %macro INTR_EC 1
 global _isr%1
 _isr%1:
-	PUSHL		;Push all the available registers for debugging
-	mov rsi, %1	;Put interrupt number in 2nd argument
-    ;pop rdx		;Pop error code into 3rd argument
+	PUSHL		 ;Push all the available registers for debugging
+	mov rsi, %1	 ;Put interrupt number in 2nd argument
     mov rcx, rsp ;Put a pointer to the interrupt stack in the 4th argument
     lea rax, [_int_handlers + 16 * %1 wrt rip]		;Call the installed interrupt handler from the address in the table
     lea rdi, [_int_handlers + 16 * %1 + 8 wrt rip]	;Put the this pointer in 1st argument

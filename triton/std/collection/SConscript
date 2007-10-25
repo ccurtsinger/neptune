@@ -2,7 +2,6 @@
 Import('env')
 
 obj_list  = [env.gdc('btree.o',  	'btree.d')]
-obj_list += [env.gdc('common.o',    'common.d')]
 obj_list += [env.gdc('heap.o',    	'heap.d')]
 obj_list += [env.gdc('list.o', 	  	'list.d')]
 obj_list += [env.gdc('queue.o',   	'queue.d')]

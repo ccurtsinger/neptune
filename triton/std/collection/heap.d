@@ -26,7 +26,7 @@ class Heap(T, bool descending = true, size_t stride = 16)
 				newdata[i] = data[i];
 			}
 			
-			// free old data array
+			delete data;
 			
 			allocated += stride;
 			data = newdata;

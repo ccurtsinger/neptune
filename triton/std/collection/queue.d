@@ -51,13 +51,14 @@ class Queue(T)
 	body
 	{
 		T t = head.data;
+		Node* old = head;
 		
 		head.prev.next = head.next;
 		head.next.prev = head.prev;
 		
 		head = head.next;
 		
-		// free old head
+		delete old;
 		
 		return t;
 	}

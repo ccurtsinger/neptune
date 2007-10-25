@@ -73,20 +73,6 @@ extern (C) Object _d_newclass(ClassInfo ci)
 {
     void* p = malloc(ci.init.length);
 
-    debug(PRINTF)
-    {
-        printf("p = %p\n", p);
-        printf("ci = %p, ci.init = %p, len = %d\n", ci, ci.init, ci.init.length);
-        printf("vptr = %p\n", *cast(void**) ci.init);
-        printf("vtbl[0] = %p\n", (*cast(void***) ci.init)[0]);
-        printf("vtbl[1] = %p\n", (*cast(void***) ci.init)[1]);
-        printf("init[0] = %x\n", (cast(uint*) ci.init)[0]);
-        printf("init[1] = %x\n", (cast(uint*) ci.init)[1]);
-        printf("init[2] = %x\n", (cast(uint*) ci.init)[2]);
-        printf("init[3] = %x\n", (cast(uint*) ci.init)[3]);
-        printf("init[4] = %x\n", (cast(uint*) ci.init)[4]);
-    }
-
     // initialize it
     (cast(byte*) p)[0 .. ci.init.length] = ci.init[];
 
@@ -141,6 +127,20 @@ extern (C) void _d_delclass(Object* p)
         
         free(p);
         *p = null;
+    }
+}
+
+
+extern (C) void _d_delarray(Array *p)
+{
+    if (p)
+    {
+        assert(!p.length || p.data);
+
+        if (p.data)
+            free(p.data);
+        p.data = null;
+        p.length = 0;
     }
 }
 

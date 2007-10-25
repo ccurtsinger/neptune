@@ -134,27 +134,32 @@ class List(T)
 	void remove(size_t index)
 	{
 		Node* current = seek(index);
+		Node* old;
 		
 		if(index == 0)
 		{
+			old = head;
+			
 			head = head.next;
 			head.prev = null;
 			
-			// free old head
+			delete old;
 		}
 		else if(index == size() - 1)
 		{
+			old = tail;
+			
 			tail = tail.prev;
 			tail.next = null;
 			
-			// free old tail
+			delete old;
 		}
 		else
 		{
 			current.next.prev = current.prev;
 			current.prev.next = current.next;
 			
-			// free current
+			delete current;
 		}
 		
 		listSize--;

@@ -227,6 +227,8 @@ void doFormat(TypeInfo[] args, va_list argptr)
                             itoa(x, str.ptr);
 
                             write(str);
+                            
+                            delete str;
 
                             parse = false;
                         }
@@ -267,6 +269,8 @@ void doFormat(TypeInfo[] args, va_list argptr)
 
                             pad(padchar, padlen - len);
                             write(str);
+                            
+                            delete str;
 
                             parse = false;
                         }

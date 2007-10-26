@@ -8,12 +8,11 @@ import std.kernel;
 import neptune.arch.gdt;
 import neptune.arch.tss;
 import neptune.arch.idt;
-
+import neptune.arch.paging;
 import neptune.mem.allocate.physical;
 
 import dev.screen;
 import dev.kb;
-import mem.paging;
 import mem.heap;
 
 PhysicalAllocator pAlloc;

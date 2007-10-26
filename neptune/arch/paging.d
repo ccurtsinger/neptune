@@ -1,4 +1,4 @@
-module mem.paging;
+module neptune.arch.paging;
 
 const ubyte PAGEDIR_L4 = 39;
 const ubyte PAGEDIR_L3 = 30;

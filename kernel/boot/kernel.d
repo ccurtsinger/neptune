@@ -3,27 +3,27 @@ module boot.kernel;
 import std.stdio;
 import std.mem;
 import std.collection.stack;
+import std.kernel;
 
 import neptune.arch.gdt;
 import neptune.arch.tss;
 import neptune.arch.idt;
 
+import neptune.mem.allocate.physical;
+
 import dev.screen;
 import dev.kb;
-import mem.allocator;
+import mem.paging;
+import mem.heap;
 
+PhysicalAllocator pAlloc;
 GDT gdt;
 TSS tss;
 IDT idt;
-FixedAllocator pmem;
-
-import mem.paging;
-
 PageTable L4;
-
-import mem.heap;
-
 Heap heap;
+
+const ulong LINEAR_MEM_BASE = 0xFFFF830000000000;
 
 extern(C) void _main(LoaderData* loader)
 {
@@ -40,24 +40,20 @@ extern(C) void _main(LoaderData* loader)
     tss.install();
     idt.install();
 
-    writefln("Hello D!");
+    writeln("Hello D!");
+
+    writefln("Memory Information:\n - Free: %016#X\n - Allocated: %016#X", pAlloc.sizeFree, pAlloc.sizeAllocated);
 
     for(;;){}
 }
 
 void mem_setup(LoaderData* loader)
 {
-    // Create a new in-place physical memory allocator
-    pmem = new(cast(void*)(LINEAR_MEM_BASE + loader.lowerMemBase)) FixedAllocator();
+    pAlloc.init();
 
-    // Add the lower memory range to the physical allocator
-    pmem.addRange(loader.lowerMemBase + FixedAllocator.sizeof, loader.lowerMemSize - FixedAllocator.sizeof);
-
-    // Add the upper memory below the kernel to the physical allocator
-    pmem.addRange(loader.upperMemBase, loader.usedMemBase - loader.upperMemBase);
-
-    // Add the upper memory above the kernel to the physical allocator
-    pmem.addRange(loader.usedMemBase+loader.usedMemSize, loader.upperMemSize-loader.usedMemBase-loader.usedMemSize+loader.upperMemBase);
+    pAlloc.add(loader.lowerMemBase, loader.lowerMemSize);
+    pAlloc.add(loader.upperMemBase, loader.usedMemBase - loader.upperMemBase);
+    pAlloc.add(loader.usedMemBase + loader.usedMemSize, loader.upperMemSize - loader.usedMemBase - loader.usedMemSize + loader.upperMemBase);
 
     // Point the L4 page table to the address passed by the 32 bit loader
     L4.init(PAGEDIR_L4, loader.L4);
@@ -116,10 +112,10 @@ void tss_setup()
 void idt_setup()
 {
 	idt.init();
-	
+
 	// Install the page fault handler
 	idt.setHandler(14, &pagefault_handler);
-	
+
 	// Initialize keyboard data and install the interrupt handler
 	kb_setup();
     idt.setHandler(33, &kb_handler);
@@ -160,6 +156,33 @@ extern(C)
     void free(void* p)
     {
         heap.free(p);
+    }
+
+    ulong get_physical_page()
+    {
+        return pAlloc.allocate();
+    }
+
+    bool is_canonical(void* vAddr)
+    {
+        ulong a = cast(ulong)vAddr;
+
+        return (0 <= a && a <= 0x00007FFFFFFFFFFF) || (0xFFFF800000000000 <= a && a <= 0xFFFFFFFFFFFFFFFF);
+    }
+
+    void* ptov(ulong pAddr)
+    {
+        return cast(void*)(pAddr + LINEAR_MEM_BASE);
+    }
+
+    ulong vtop(void* vAddr)
+    {
+        return (cast(ulong)vAddr) - LINEAR_MEM_BASE;
+    }
+
+    bool map(ulong vAddr)
+    {
+        return L4.map(vAddr);
     }
 }
 

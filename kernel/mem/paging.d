@@ -19,9 +19,7 @@ const ulong PAGE_GLOBAL = 0x100;
 const ulong PAGE_COPY_ON_WRITE = 0x200;
 const ulong PAGE_NX = 0x8000000000000000;
 
-import mem.allocator;
-import dev.screen;
-import boot.kernel : pmem;
+import std.kernel;
 
 struct PageTable
 {
@@ -32,7 +30,7 @@ struct PageTable
     void init(ulong lowBit, ulong entries)
     {
         this.lowBit = lowBit;
-        this.entries = cast(ulong*)(LINEAR_MEM_BASE + entries);
+        this.entries = cast(ulong*)ptov(entries);
 
         mask = (cast(ulong)0x1FF)<<lowBit;
     }
@@ -40,7 +38,7 @@ struct PageTable
     void init(ulong lowBit)
     {
         this.lowBit = lowBit;
-        entries = cast(ulong*)(LINEAR_MEM_BASE + pmem.fetch());
+        entries = cast(ulong*)ptov(get_physical_page());
 
         mask = (cast(ulong)0x1FF)<<lowBit;
 
@@ -98,7 +96,7 @@ struct PageTable
                     nextLevel.init(lowBit-9);
 
                     //Put an entry in the current directory
-                    entries[index] = ((cast(ulong)nextLevel.entries - LINEAR_MEM_BASE) & PAGEDIR_ENTRY_MASK) | flags;
+                    entries[index] = (vtop(nextLevel.entries) & PAGEDIR_ENTRY_MASK) | flags;
 
                     //Map into the lower directory
                     conflicts -= nextLevel.map(vAddr, size, flags);
@@ -116,7 +114,7 @@ struct PageTable
                 //Make sure an entry doesn't already exist at this virtual address
                 if(!present(entries[index]))
                 {
-                    entries[index] = (pmem.fetch() & PAGEDIR_ENTRY_MASK) | flags;
+                    entries[index] = (get_physical_page() & PAGEDIR_ENTRY_MASK) | flags;
                     invalidate(vAddr);
                 }
                 else

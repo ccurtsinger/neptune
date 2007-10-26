@@ -1,9 +1,6 @@
 module mem.heap;
 
-import dev.screen;
-import mem.paging;
-
-import boot.kernel : L4;
+import std.kernel;
 
 struct Heap
 {
@@ -22,15 +19,15 @@ struct Heap
     {
         if(framePtr is null)
         {
-            L4.map(0x10000000);
+            map(0x10000000);
 
             return cast(void*)0x10000000;
         }
         else
         {
-            L4.map(cast(ulong)framePtr + mem.paging.FRAME_SIZE);
+            map(cast(ulong)framePtr + FRAME_SIZE);
 
-            return cast(void*)(framePtr + mem.paging.FRAME_SIZE);
+            return cast(void*)(framePtr + FRAME_SIZE);
         }
     }
 
@@ -39,7 +36,7 @@ struct Heap
         if(size < s || framePtr is null)
         {
             framePtr = morecore();
-            size = mem.paging.FRAME_SIZE;
+            size = FRAME_SIZE;
             allocPtr = framePtr;
         }
 

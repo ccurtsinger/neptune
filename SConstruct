@@ -26,7 +26,7 @@ def setupEnv(target, **kw_args):
 
     # Our custom builders
     env['BUILDERS']['yasm']        = yasm
-    env['BUILDERS']['gdc']         = Builder(action = '%s-gdc $GDCFLAGS -c -o $TARGET $SOURCE' % target)
+    env['BUILDERS']['gdc']         = Builder(action = '%s-gdc $GDCFLAGS -fdoc-dir=docs -fdoc-inc=docs/candydoc/candy.ddoc -fdoc-inc=docs/candydoc/modules.ddoc -c -o $TARGET $SOURCE' % target)
     env['BUILDERS']['obj']         = obj
     env['BUILDERS']['Link']        = link
     env['BUILDERS']['PartialLink'] = partial_link

@@ -55,7 +55,7 @@ void mem_setup(LoaderData* loader)
     pAlloc.add(loader.usedMemBase + loader.usedMemSize, loader.upperMemSize - loader.usedMemBase - loader.usedMemSize + loader.upperMemBase);
 
     // Point the L4 page table to the address passed by the 32 bit loader
-    L4.init(PAGEDIR_L4, loader.L4);
+    L4 = PageTable(PAGEDIR_L4, loader.L4);
 
     // Map an 8k interrupt stack for IST1
     L4.map(0x7FFFC000, FRAME_SIZE*4);
@@ -84,7 +84,7 @@ void gdt_setup()
     gdt.addEntry(GDTEntry(GDTEntryType.DATA, DPL.USER));
 
     // Create TSS Descriptor entry in GDT
-    ushort tssSelector = gdt.addEntry(GDTEntry(cast(ulong)&tss));
+    ushort tssSelector = gdt.addEntry(GDTEntry(&tss));
 
     tss.setSelector(tssSelector);
 }
@@ -111,7 +111,7 @@ void tss_setup()
 void idt_setup()
 {
 	idt.init();
-
+	
 	// Install the page fault handler
 	idt.setHandler(14, &pagefault_handler);
 

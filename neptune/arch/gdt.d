@@ -1,3 +1,11 @@
+/**
+ * GDT Abstraction and Utilities
+ *
+ * Authors: Charlie Curtsinger
+ * Date: October 27th, 2007
+ * Version: 0.1a
+ */
+
 module neptune.arch.gdt;
 
 import neptune.arch.tss;
@@ -23,19 +31,32 @@ struct GDTPtr
 {
     align(1):
     ushort limit;
-    ulong address;
+    void* address;
 }
 
+/**
+ * Struct used to perform bit-twiddling operations for entries into the GDT
+ */
 struct GDTEntry
 {
+	/// First eight byte section of the entry
     ulong data1;
+    
+    /// Second eight byte section (not used by all entry types)
     ulong data2;
+    
+    /// Entry type
     GDTEntryType type;
 
     /**
      * Create a TSS Descriptor Entry for the GDT
+     *
+	 * Params:
+     * 	tss = Address of the TSS
+     *
+     * Returns: The new GDT entry
      */
-    static GDTEntry opCall(ulong tss)
+    static GDTEntry opCall(void* tss)
     {
         GDTEntry entry;
 
@@ -45,22 +66,28 @@ struct GDTEntry
         entry.data1 = 0x67;
 
         // Set base bytes 1, 2, and 3
-        entry.data1 |= (tss << 16) & 0xFFFFFF0000L;
+        entry.data1 |= (cast(ulong)tss << 16) & 0xFFFFFF0000L;
 
         // Set base byte 4
-        entry.data1 |= (tss << 32) & 0xFF00000000000000L;
+        entry.data1 |= (cast(ulong)tss << 32) & 0xFF00000000000000L;
 
         // Set P, DPL, and type
         entry.data1 |= 0x0000890000000000L;
 
         entry.data2 = 0;
-        entry.data2 = (tss >> 32) & 0xFFFFFFFFL;
+        entry.data2 = (cast(ulong)tss >> 32) & 0xFFFFFFFFL;
 
         return entry;
     }
 
     /**
      * Create a code/data segment entry for the GDT
+     *
+     * Params:
+     *  t = Type of entry to create
+     *  p = Permission level for the segment
+     *
+     * Returns: The new GDT entry
      */
     static GDTEntry opCall(GDTEntryType t, DPL p = DPL.KERNEL)
     {
@@ -131,26 +158,40 @@ struct GDTEntry
     }
 }
 
+/**
+ * Abstraction for the Global Descriptor Table
+ */
 struct GDT
 {
+	/// The actual GDT data
     ulong[256] entries;
+    
+    /// GDT pointer structure initialized and used only when loading the GDT with install()
     GDTPtr gdtp;
 
+	/// The next available index in the GDT
     ubyte index;
     ubyte offset;
 
+	/**
+	 * Initialize the GDT
+	 */
     void init()
     {
         index = 0;
-        offset = 0;
     }
 
     /**
      * Adds an entry to the next available spot in the GDT, and returns the GDT selector index
+     *
+     * Params:
+     *  e = Prepared GDT entry
+     *
+     * Returns: Selector index of the newly created entry
      */
     ubyte addEntry(GDTEntry e)
     {
-        ubyte ret = offset;
+        ubyte ret = index*8;
 
         entries[index] = e.data1;
 
@@ -158,18 +199,19 @@ struct GDT
         {
             entries[index+1] = e.data2;
             index++;
-            offset += 8;
         }
         index++;
-        offset += 8;
 
         return ret;
     }
 
+	/**
+	 * Loads the GDT
+	 */
     void install()
     {
-        gdtp.limit = (index + 1) * ulong.sizeof - 1;
-        gdtp.address = cast(ulong)(&(entries[0]));
+        gdtp.limit = (index + 1) * 8 - 1;
+        gdtp.address = entries.ptr;
 
         asm
         {

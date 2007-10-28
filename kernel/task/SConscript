@@ -1,0 +1,8 @@
+# Grab the build environment
+Import('env')
+
+obj_list  = [env.gdc('addrspace.o', 'addrspace.d')]
+
+task = env.PartialLink('task.o', obj_list)
+
+Return('task')

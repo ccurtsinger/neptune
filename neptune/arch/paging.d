@@ -21,31 +21,55 @@ const ulong PAGE_NX = 0x8000000000000000;
 
 import std.kernel;
 
+/**
+ * Abstraction for page directories and tables
+ */
 struct PageTable
 {
+	/// Pointer to array of page entries
     ulong* entries;
+    
+    /// Mask that leaves only bits that act as an index into entries
     ulong mask;
+    
+    /// Lowest bit index of mask - used to shift down and determine index into entries
     ubyte lowBit;
 
-    void init(ulong lowBit, ulong entries)
+	/**
+	 * Construct a PageTable object from an existing entries array
+	 *
+	 * @param lowBit	Lowest bit used to determine the index into entries
+	 * @param entries	Physical address of a set of page table entrires
+	 *
+	 * @return 
+	 */
+    static PageTable opCall(ulong lowBit, ulong entries)
     {
-        this.lowBit = lowBit;
-        this.entries = cast(ulong*)ptov(entries);
+    	PageTable p;
+    	
+        p.lowBit = lowBit;
+        p.entries = cast(ulong*)ptov(entries);
 
-        mask = (cast(ulong)0x1FF)<<lowBit;
+        p.mask = (cast(ulong)0x1FF)<<lowBit;
+        
+        return p;
     }
 
-    void init(ulong lowBit)
+    static PageTable opCall(ulong lowBit)
     {
-        this.lowBit = lowBit;
-        entries = cast(ulong*)ptov(get_physical_page());
+    	PageTable p;
+    	
+        p.lowBit = lowBit;
+        p.entries = cast(ulong*)ptov(get_physical_page());
 
-        mask = (cast(ulong)0x1FF)<<lowBit;
+        p.mask = (cast(ulong)0x1FF)<<lowBit;
 
         for(int i=0; i<FRAME_SIZE/ulong.sizeof; i++)
         {
-            entries[i] = 0;
+            p.entries[i] = 0;
         }
+        
+        return p;
     }
 
     new(size_t size, void* pos)
@@ -82,8 +106,7 @@ struct PageTable
                 if(present(entries[index]))
                 {
                     //Instantiate a lower page directory with data at the entry address
-                    PageTable nextLevel;
-                    nextLevel.init(lowBit-9, entries[index] & PAGEDIR_ADDR_MASK);
+                    PageTable nextLevel = PageTable(lowBit-9, entries[index] & PAGEDIR_ADDR_MASK);
 
                     //Map into the lower directory
                     conflicts -= nextLevel.map(vAddr, size, flags);
@@ -92,8 +115,7 @@ struct PageTable
                 else
                 {
                     //Create a new page directory of lower order
-                    PageTable nextLevel;
-                    nextLevel.init(lowBit-9);
+                    PageTable nextLevel = PageTable(lowBit-9);
 
                     //Put an entry in the current directory
                     entries[index] = (vtop(nextLevel.entries) & PAGEDIR_ENTRY_MASK) | flags;

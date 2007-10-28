@@ -13,7 +13,6 @@ struct PhysicalAllocator
 {
     MemBlock* local;
     MemBlock* free;
-    MemBlock* allocated;
 
     size_t sizeLocal;
     size_t sizeFree;
@@ -23,7 +22,6 @@ struct PhysicalAllocator
     {
         local = null;
         free = null;
-        allocated = null;
 
         sizeLocal = 0;
         sizeFree = 0;

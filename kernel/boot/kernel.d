@@ -9,10 +9,10 @@ import neptune.arch.gdt;
 import neptune.arch.tss;
 import neptune.arch.idt;
 import neptune.arch.paging;
-import neptune.mem.allocate.physical;
 
 import dev.screen;
 import dev.kb;
+import mem.physical;
 import mem.heap;
 
 PhysicalAllocator pAlloc;
@@ -111,7 +111,7 @@ void tss_setup()
 void idt_setup()
 {
 	idt.init();
-	
+
 	// Install the page fault handler
 	idt.setHandler(14, &pagefault_handler);
 

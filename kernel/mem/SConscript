@@ -2,6 +2,7 @@
 Import('env')
 
 obj_list  = [env.gdc('heap.o', 'heap.d')]
+obj_list += [env.gdc('physical.o', 'physical.d')]
 
 mem = env.PartialLink('mem.o', obj_list)
 

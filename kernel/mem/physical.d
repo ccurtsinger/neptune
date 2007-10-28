@@ -1,4 +1,4 @@
-module neptune.mem.allocate.physical;
+module mem.physical;
 
 import std.kernel;
 

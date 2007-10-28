@@ -4,7 +4,7 @@ Import('env')
 kernel_obj  = SConscript('boot/SConscript',         exports='env')
 kernel_obj += SConscript('dev/SConscript',          exports='env')
 kernel_obj += SConscript('mem/SConscript',          exports='env')
-kernel_obj += SConscript('task/SConscript',         exports='env')
+#kernel_obj += SConscript('task/SConscript',         exports='env')
 
 kernel = env.Link('kernel', kernel_obj, LINKSCRIPTS = ['kernel/link/linker.ld'], _LIBDIRFLAGS = '-Lneptune -Ltriton', _LIBFLAGS = '-lneptune -lgphobos')
 

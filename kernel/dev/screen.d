@@ -1,4 +1,4 @@
-module dev.screen;
+module kernel.dev.screen;
 
 import std.port;
 import std.mem;

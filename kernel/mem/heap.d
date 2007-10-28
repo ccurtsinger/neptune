@@ -1,4 +1,4 @@
-module mem.heap;
+module kernel.mem.heap;
 
 import std.kernel;
 

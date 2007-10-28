@@ -26,7 +26,7 @@ def setupEnv(target, **kw_args):
 
     # Our custom builders
     env['BUILDERS']['yasm']        = yasm
-    env['BUILDERS']['gdc']         = Builder(action = '%s-gdc $GDCFLAGS -fdoc-dir=docs -fdoc-inc=docs/candydoc/candy.ddoc -fdoc-inc=docs/candydoc/modules.ddoc -c -o $TARGET $SOURCE' % target)
+    env['BUILDERS']['gdc']         = Builder(action = '%s-gdc $GDCFLAGS -fdoc-dir=docs -fdoc-inc=docs/candydoc/candy.ddoc -fdoc-inc=docs/modules.ddoc -c -o $TARGET $SOURCE' % target)
     env['BUILDERS']['obj']         = obj
     env['BUILDERS']['Link']        = link
     env['BUILDERS']['PartialLink'] = partial_link
@@ -41,7 +41,6 @@ def setupEnv(target, **kw_args):
 
 i586_env = setupEnv('i586-pc-elf',   YASMFLAGS = '-f elf', GDCFLAGS =   ' -fversion=i586' +
                                                                         ' -Itriton' +
-                                                                        ' -Ikernel' +
                                                                         ' -mno-red-zone' +
                                                                         ' -fno-exceptions' +
                                                                         ' -O4')
@@ -49,7 +48,6 @@ i586_env = setupEnv('i586-pc-elf',   YASMFLAGS = '-f elf', GDCFLAGS =   ' -fvers
 # Set up the x86_64 environment
 env = setupEnv('x86_64-pc-elf', YASMFLAGS = '-f elf64', GDCFLAGS =  ' -fversion=x86_64' +
                                                                     ' -Itriton' +
-                                                                    ' -Ikernel' +
                                                                     ' -mno-red-zone' +
                                                                     ' -fno-exceptions' +
                                                                     ' -O4' +

@@ -1,4 +1,4 @@
-module boot.kernel;
+module kernel.boot.kernel;
 
 import std.stdio;
 import std.mem;
@@ -10,10 +10,10 @@ import neptune.arch.tss;
 import neptune.arch.idt;
 import neptune.arch.paging;
 
-import dev.screen;
-import dev.kb;
-import mem.physical;
-import mem.heap;
+import kernel.dev.screen;
+import kernel.dev.kb;
+import kernel.mem.physical;
+import kernel.mem.heap;
 
 PhysicalAllocator pAlloc;
 GDT gdt;

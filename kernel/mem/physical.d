@@ -1,4 +1,4 @@
-module mem.physical;
+module kernel.mem.physical;
 
 import std.kernel;
 

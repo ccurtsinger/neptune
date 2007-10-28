@@ -1,0 +1,8 @@
+MODULES =
+	$(MODULE boot.kernel)
+	$(MODULE dev.kb)
+	$(MODULE dev.screen)
+	$(MODULE mem.heap)
+	$(MODULE mem.physical)
+
+	$(MODULE neptune.arch.gdt)

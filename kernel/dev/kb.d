@@ -1,13 +1,12 @@
-module dev.kb;
+module kernel.dev.kb;
 
 import std.port;
 
 import neptune.arch.idt;
 
-import dev.screen;
+import kernel.dev.screen;
 
 bool caps;
-
 
 struct Key
 {

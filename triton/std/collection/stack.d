@@ -6,16 +6,22 @@ module std.collection.stack;
  */
 class Stack(T)
 {
-	Node* head;
-	size_t count;
+	private Node* head;
+	private size_t count;
 	
-	this()
+	/**
+	 * Create an empty stack
+	 */
+	public this()
 	{
 		head = null;
 		count = 0;
 	}
 	
-	~this()
+	/**
+	 * Free all used memory by emptying the stack
+	 */
+	public ~this()
 	{
 		while(head !is null)
 		{
@@ -23,12 +29,23 @@ class Stack(T)
 		}
 	}
 	
-	size_t size()
+	/**
+	 * Get the size of the stack
+	 *
+	 * Returns: The number of elements in the stack
+	 */
+	public size_t size()
 	{
 		return count;
 	}
 	
-	void push(T t)
+	/**
+	 * Push an element onto the stack
+	 *
+	 * Params:
+	 *  t = Element to push
+	 */
+	public void push(T t)
 	{
 		Node* n = new Node;
 		
@@ -39,7 +56,12 @@ class Stack(T)
 		count++;
 	}
 	
-	T pop()
+	/**
+	 * Pop an element off the top of the stack
+	 *
+	 * Returns: The top element on the stack
+	 */
+	public T pop()
 	in
 	{
 		assert(head !is null, "Stack empty - unable to execute pop()");
@@ -58,6 +80,9 @@ class Stack(T)
 		return t;
 	}
 	
+	/**
+	 * Wrapper struct for elements on the stack
+	 */
 	struct Node
 	{
 		T data;
@@ -75,29 +100,46 @@ class Stack(T)
  */
 class FastStack(T, bool compact = true, size_t stride = 16)
 {
-	T[] data;
-	size_t count;
-	size_t allocated;
+	private T[] data;
+	private size_t count;
+	private size_t allocated;
 	
-	this()
+	/**
+	 * Create an empty stack
+	 */
+	public this()
 	{
 		count = 0;
 		allocated = 0;
 		data = null;
 	}
 	
-	~this()
+	/**
+	 * Free used memory by deleting the data array
+	 */
+	public ~this()
 	{
 		if(data !is null)
 			delete data;
 	}
 	
-	size_t size()
+	/**
+	 * Get the size of the stack
+	 *
+	 * Returns: The number of elements in the stack
+	 */
+	public size_t size()
 	{
 		return count;
 	}
 	
-	void push(T t)
+	/**
+	 * Push an element onto the stack.  Resize the data array if no space is available.
+	 *
+	 * Params:
+	 *  t = Element to push
+	 */
+	public void push(T t)
 	{
 		if(allocated <= count)
 		{
@@ -121,7 +163,12 @@ class FastStack(T, bool compact = true, size_t stride = 16)
 		count++;
 	}
 	
-	T pop()
+	/**
+	 * Pop an element off the top of the stack.  If 'compact' is set, reduce the data array by 'stride' if possible.
+	 *
+	 * Returns: The top element on the stack
+	 */
+	public T pop()
 	in
 	{
 		assert(data !is null, "Stack empty - unable to execute pop()");

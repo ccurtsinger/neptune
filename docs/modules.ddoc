@@ -21,11 +21,9 @@ MODULES =
 
 	$(MODULE std.c.stdarg)
 
-	$(MODULE std.collection.btree)
 	$(MODULE std.collection.heap)
 	$(MODULE std.collection.list)
 	$(MODULE std.collection.queue)
-	$(MODULE std.collection.splaytree)
 	$(MODULE std.collection.stack)
 
 	$(MODULE std.typeinfo.ti_AC)

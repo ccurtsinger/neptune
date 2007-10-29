@@ -1,23 +1,41 @@
+/**
+ * Physical memory allocation system
+ *
+ * Authors: Charlie Curtsinger
+ * Date: October 29th, 2007
+ * Version: 0.1a
+ */
+
 module kernel.mem.physical;
 
 import std.kernel;
 
-struct MemBlock
-{
-    ulong base;
-    ulong size;
-    MemBlock* next;
-}
-
+/**
+ * Physical memory allocator that distributes free pages
+ *
+ * Uses zero-overhead when no memory is present.  Memory is taken
+ * as needed to store metadata.
+ */
 struct PhysicalAllocator
 {
+    /// Pointer to the list of free meta-pool memory
     MemBlock* local;
+    
+    /// Pointer to the list of free public memory
     MemBlock* free;
 
+    /// Size of the local free pool
     size_t sizeLocal;
+    
+    /// Size of the free public pool
     size_t sizeFree;
+    
+    /// Amount of public memory allocated
     size_t sizeAllocated;
 
+    /**
+     * Initialize the allocator
+     */
     void init()
     {
         local = null;
@@ -28,6 +46,13 @@ struct PhysicalAllocator
         sizeAllocated = 0;
     }
 
+    /**
+     * Add a block of memory to the allocator
+     *
+     * Params:
+     *  base = base address of the block
+     *  size = size of the block
+     */
     void add(ulong base, ulong size)
     {
         // Move the base up to the next frame-aligned address
@@ -71,7 +96,8 @@ struct PhysicalAllocator
 
     /**
      * Allocate a page of physical memory.
-     * Returns the physical address of the allocated memory
+     *
+     * Returns: the physical address of the allocated memory
      */
     ulong allocate()
     {
@@ -101,6 +127,13 @@ struct PhysicalAllocator
         }
     }
 
+    /**
+     * Release a block of physical memory
+     *
+     * Params:
+     *  base = base address of the block
+     *  size = size of the block
+     */
     void release(ulong base, ulong size = FRAME_SIZE)
     {
         add(base, size);
@@ -109,6 +142,10 @@ struct PhysicalAllocator
 
     /**
      * Add memory to the local pool for meta data
+     *
+     * Params:
+     *  base = base address of the block
+     *  size = size of the block
      */
     void addLocal(ulong base, ulong size = FRAME_SIZE)
     {
@@ -131,7 +168,8 @@ struct PhysicalAllocator
 
     /**
      * Get a MemBlock pointer from the local meta data pool.
-     * Return null if no memory is available
+     *
+     * ReturnS: null if no memory is available, otherwise the next local memory block
      */
     MemBlock* getLocal()
     {
@@ -156,5 +194,15 @@ struct PhysicalAllocator
         }
 
         return null;
+    }
+    
+    /**
+     * Wrapper struct for memory in the local of public pool
+     */
+    struct MemBlock
+    {
+        ulong base;
+        ulong size;
+        MemBlock* next;
     }
 }

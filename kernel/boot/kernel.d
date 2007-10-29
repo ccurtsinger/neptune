@@ -21,7 +21,7 @@ import neptune.arch.paging;
 import kernel.dev.screen;
 import kernel.dev.kb;
 import kernel.mem.physical;
-import kernel.mem.heap;
+import kernel.mem.virtual;
 
 /// Physical memory allocator that provides pages
 PhysicalAllocator pAlloc;

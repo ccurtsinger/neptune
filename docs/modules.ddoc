@@ -2,8 +2,8 @@ MODULES =
 	$(MODULE kernel.boot.kernel)
 	$(MODULE kernel.dev.kb)
 	$(MODULE kernel.dev.screen)
-	$(MODULE kernel.mem.heap)
 	$(MODULE kernel.mem.physical)
+	$(MODULE kernel.mem.virtual)
 
 	$(MODULE neptune.arch.gdt)
 	$(MODULE neptune.arch.idt)

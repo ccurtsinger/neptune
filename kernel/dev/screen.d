@@ -11,9 +11,7 @@ module kernel.dev.screen;
 import std.port;
 import std.mem;
 
-/**
- * Possible foreground and background colors
- */
+/// Possible foreground and background colors
 enum Color
 {
     black,

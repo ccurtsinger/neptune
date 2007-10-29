@@ -44,6 +44,9 @@ Heap heap;
 /// Keyboard device
 Keyboard kb;
 
+/// Screen device
+Screen screen;
+
 const ulong LINEAR_MEM_BASE = 0xFFFF830000000000;
 
 /**
@@ -54,8 +57,6 @@ const ulong LINEAR_MEM_BASE = 0xFFFF830000000000;
  */
 extern(C) void _main(LoaderData* loader)
 {
-    clear_screen();
-
     // Initialize important data structures
     mem_setup(loader);
     gdt_setup();
@@ -66,6 +67,10 @@ extern(C) void _main(LoaderData* loader)
     gdt.install();
     tss.install();
     idt.install();
+    
+    screen = new Screen();
+    
+    screen.clear();
 
     writeln("Hello D!");
 
@@ -74,7 +79,7 @@ extern(C) void _main(LoaderData* loader)
     while(true)
     {
     	char c = kb.getc();
-    	kernel.dev.screen.putc(c);
+    	putc(c);
     }
 }
 
@@ -197,6 +202,17 @@ void pagefault_handler(void* p, ulong interrupt, ulong error, InterruptStack* st
 
 extern(C)
 {
+    /**
+     * Put a character on the screen
+     *
+     * Params:
+     *  c = character to write to screen
+     */
+    void putc(char c)
+    {
+        screen.putc(c);
+    }
+    
     /**
      * Abort execution
      */

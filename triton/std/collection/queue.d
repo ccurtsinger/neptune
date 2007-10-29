@@ -1,98 +1,76 @@
 module std.collection.queue;
 
+/**
+ * Queue implementation based on a linked list method.
+ * Uses n*T.sizeof memory for n elements
+ */
 class Queue(T)
 {
 	Node* head;
+	Node* tail;
+	size_t count;
 
 	this()
 	{
 		head = null;
+		tail = null;
+		count = 0;
 	}
-	
-	/**
-	 * Return the current item
-	 */
-	T current()
+
+	~this()
 	{
-		return head.data;
+		while(head !is null)
+		{
+			dequeue();
+		}
 	}
-	
-	/**
-	 * Adds an item one place before the current head
-	 */
-	void add(T t)
+
+	size_t size()
+	{
+		return count;
+	}
+
+	void enqueue(T t)
 	{
 		Node* n = new Node;
+
 		n.data = t;
-		
-		if(head !is null)
-		{
-			n.next = head;
-			n.prev = head.prev;
-			head.prev.next = n;
-			head.prev = n;
-		}
-		else
-		{
-			head = n;
-			n.next = n;
-			n.prev = n;
-		}
+        n.next = null;
+
+        if(tail !is null)
+        {
+            tail.next = n;
+            tail = n;
+        }
+        else
+        {
+            head = n;
+            tail = n;
+        }
+        
+        count++;
 	}
-	
-	/**
-	 * Removes the current item
-	 */
-	T remove()
+
+	T dequeue()
 	in
 	{
-		assert(head !is null, "Cannot remove an item from an empty Queue");
+	    assert(head !is null, "Attempted to dequeue from an empty Queue");
 	}
 	body
 	{
-		T t = head.data;
-		Node* old = head;
-		
-		head.prev.next = head.next;
-		head.next.prev = head.prev;
-		
-		head = head.next;
-		
-		delete old;
-		
-		return t;
+        T t = head.data;
+        
+        Node* old = head;
+        head = head.next;
+        
+        delete old;
+        
+        return t;
 	}
-	
-	/**
-	 * Move to the next item
-	 */
-	void forward()
-	in
-	{
-		assert(head !is null, "Cannot move forward in an empty Queue");
-	}
-	body
-	{
-		head = head.next;
-	}
-	
-	/**
-	 * Move to the previous item
-	 */
-	void back()
-	in
-	{
-		assert(head !is null, "Cannot move back in an empty Queue");
-	}
-	body
-	{
-		head = head.prev;
-	}
-	
+
 	struct Node
 	{
 		T data;
 		Node* next;
-		Node* prev;
 	}
 }

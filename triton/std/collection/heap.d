@@ -1,21 +1,52 @@
+/**
+ * Dynamic memory heap implementation (incomplete)
+ *
+ * Authors: Charlie Curtsinger
+ * Date: October 29th, 2007
+ * Version: 0.1a
+ */
+
 module std.collection.heap;
 
-import std.stdio;
-
+/**
+ * Array based heap implementation (incomplete)
+ *
+ * Params:
+ *  T = Type to store in heap
+ *  descending = true if this is a min-heap
+ *  stride = number of elements to increase data array by when it needs expansion
+ */
 class Heap(T, bool descending = true, size_t stride = 16)
 {
-	T[] data;
-	size_t allocated;
-	size_t elements;
+	private T[] data;
+	private size_t allocated;
+	private size_t elements;
 	
-	this()
+	/**
+	 * Create an empty heap
+	 */
+	public this()
 	{
 		data = null;
 		allocated = 0;
 		elements = 0;
 	}
 	
-	void add(T t)
+	/**
+	 * Free used memory by deleting the data array
+	 */
+	public ~this()
+	{
+	    if(data !is null)
+	    {
+	        delete data;
+	    }
+	}
+	
+	/**
+	 * Add an element to the heap, expanding the data array as necessary
+	 */
+	public void add(T t)
 	{
 		if(allocated - elements <= 0)
 		{
@@ -46,11 +77,14 @@ class Heap(T, bool descending = true, size_t stride = 16)
 		heapify(0);
 	}
 	
-	T get(size_t index)
-	{
-	    return data[index];
-	}
-	
+	/**
+	 * Get the index of a particular element's parent
+	 *
+	 * Params:
+	 *  index = element to find parent of
+	 *
+	 * Returns: index of parent
+	 */
 	private size_t parentIndex(size_t index)
 	{
 		// left child
@@ -64,6 +98,14 @@ class Heap(T, bool descending = true, size_t stride = 16)
 		}
 	}
 	
+	/**
+	 * Ensure the heap property holds for an index and its child-heaps
+	 *
+	 * Params:
+	 *  index = root of the sub-heap to heapify
+	 *
+	 * Returns: true if any change was made to the index or its children
+	 */
 	private bool heapify(size_t index)
 	{
 		size_t lchild = (index + 1) * 2 - 1;

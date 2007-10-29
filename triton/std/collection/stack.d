@@ -1,8 +1,19 @@
+/**
+ * Stack (LIFO) implementations using linked-list and expanding array approaches
+ *
+ * Authors: Charlie Curtsinger
+ * Date: October 29th, 2007
+ * Version: 0.1a
+ */
+
 module std.collection.stack;
 
 /**
  * Stack implementation based on a linked list method.
  * Uses n*T.sizeof memory for n elements
+ *
+ * Params:
+ *  T = Element type to store in the stack
  */
 class Stack(T)
 {
@@ -94,9 +105,10 @@ class Stack(T)
  * Array-based stack implementation
  * Uses at most n+stride-1*T.sizeof memory for n elements
  *
- * If compact is set, memory usage will reduce on pop().  Otherwise
- * above memory bound applies to the maximum number of elements present
- * at any point.
+ * Params:
+ *  T = Element type to store in the stack
+ *  comact = set if data array should be shrunk when possible
+ *  stride = number of elements to increase/decrease data array by when resizing
  */
 class FastStack(T, bool compact = true, size_t stride = 16)
 {

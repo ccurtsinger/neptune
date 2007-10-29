@@ -1,3 +1,11 @@
+/**
+ * D entry point for the Neptune Kernel
+ *
+ * Authors: Charlie Curtsinger
+ * Date: October 29th, 2007
+ * Version: 0.1a
+ */
+
 module kernel.boot.kernel;
 
 import std.stdio;
@@ -15,17 +23,35 @@ import kernel.dev.kb;
 import kernel.mem.physical;
 import kernel.mem.heap;
 
+/// Physical memory allocator that provides pages
 PhysicalAllocator pAlloc;
+
+/// GDT
 GDT gdt;
+
+/// TSS
 TSS tss;
+
+/// IDT
 IDT idt;
+
+/// Top level page directory
 PageTable L4;
+
+/// Dynamic memory allocator (heap) for the kernel
 Heap heap;
 
+/// Keyboard device
 Keyboard kb;
 
 const ulong LINEAR_MEM_BASE = 0xFFFF830000000000;
 
+/**
+ * First function called in 64 bit mode D
+ *
+ * Params:
+ *  loader = Pointer to the loader data struct - contains memory information
+ */
 extern(C) void _main(LoaderData* loader)
 {
     clear_screen();
@@ -52,6 +78,12 @@ extern(C) void _main(LoaderData* loader)
     }
 }
 
+/**
+ * Set up the kernel's memory system
+ *
+ * Params:
+ *  loader = pointer to the loader data struct containing memory information
+ */
 void mem_setup(LoaderData* loader)
 {
     pAlloc.init();
@@ -70,6 +102,9 @@ void mem_setup(LoaderData* loader)
     heap.init();
 }
 
+/**
+ * Add necessary entries to the GDT
+ */
 void gdt_setup()
 {
     gdt.init();
@@ -95,6 +130,9 @@ void gdt_setup()
     tss.setSelector(tssSelector);
 }
 
+/**
+ * Create and initialize a TSS with IST
+ */
 void tss_setup()
 {
     tss.init();
@@ -114,6 +152,9 @@ void tss_setup()
     tss.setIstEntry(6, 0x7FFFFFF8);*/
 }
 
+/**
+ * Set up an IDT and install handlers for keyboard an page fault
+ */
 void idt_setup()
 {
 	idt.init();
@@ -126,6 +167,15 @@ void idt_setup()
     idt.setHandler(33, &kb.handler);
 }
 
+/**
+ * Page fault handler - Attempts to map missing pages
+ *
+ * Params:
+ *  p = ignored pointer (filler for the 'this' pointer)
+ *  interrupt = interrupt number
+ *  error = error code
+ *  stack = pointer to context information
+ */
 void pagefault_handler(void* p, ulong interrupt, ulong error, InterruptStack* stack)
 {
     ulong vAddr;
@@ -147,27 +197,57 @@ void pagefault_handler(void* p, ulong interrupt, ulong error, InterruptStack* st
 
 extern(C)
 {
+    /**
+     * Abort execution
+     */
     void abort()
     {
         write("abort!\n");
         for(;;){}
     }
 
-    void* malloc(ulong s)
+    /**
+     * Allocate memory
+     *
+     * Params:
+     *  s = size of the memory to allocate
+     *
+     * Returns: pointer to the allocated memory
+     */
+    void* malloc(size_t s)
     {
         return heap.allocate(s);
     }
 
+    /**
+     * Free memory
+     * 
+     * Params:
+     *  p = pointer to the memory to free
+     */
     void free(void* p)
     {
         heap.free(p);
     }
 
+    /**
+     * Get a free physical page
+     *
+     * Returns: the physical address of a page of memory
+     */
     ulong get_physical_page()
     {
         return pAlloc.allocate();
     }
 
+    /**
+     * Determine if a memory address is canonical
+     *
+     * Params:
+     *  vAddr = the address to check
+     *
+     * Returns: trus if the address is sign-extended above bit 48
+     */
     bool is_canonical(void* vAddr)
     {
         ulong a = cast(ulong)vAddr;
@@ -175,32 +255,73 @@ extern(C)
         return (0 <= a && a <= 0x00007FFFFFFFFFFF) || (0xFFFF800000000000 <= a && a <= 0xFFFFFFFFFFFFFFFF);
     }
 
+    /**
+     * Convert a physical address to a pointer into the linear-mapped virtual address range
+     *
+     * Params:
+     *  pAddr = physical address to reference
+     *
+     * Returns: a pointer to memory that will allow read/write access to pAddr
+     */
     void* ptov(ulong pAddr)
     {
         return cast(void*)(pAddr + LINEAR_MEM_BASE);
     }
 
+    /**
+     * Convert a virtual address pointer in the linear-mapped region to a physical address
+     *
+     * Params:
+     *  vAddr = pointer to convert
+     *
+     * Returns: the physical address of vAddr
+     */
     ulong vtop(void* vAddr)
     {
         return (cast(ulong)vAddr) - LINEAR_MEM_BASE;
     }
 
+    /**
+     * Map a page starting at a given virtual address to some available physical memory
+     *
+     * Params:
+     *  vAddr = address to map
+     * 
+     * Returns: true if the map was successful
+     */
     bool map(ulong vAddr)
     {
         return L4.map(vAddr);
     }
 }
 
+/**
+ * Data passed from the 32 bit loader
+ */
 struct LoaderData
 {
     align(1):
+    /// Physical address of the top-level page directory
 	ulong L4;
+	
+	/// Base address of the used memory
 	ulong usedMemBase;
+	
+	/// Size of the used memory
 	ulong usedMemSize;
+	
+	/// Base address of lower memory
 	ulong lowerMemBase;
+	
+	/// Size of lower memory
 	ulong lowerMemSize;
+	
+	/// Base address of upper memory
 	ulong upperMemBase;
+	
+	/// Size of upper memory
 	ulong upperMemSize;
+	
 	ulong regions;
 	ulong memInfo;
 }

@@ -1,8 +1,19 @@
+/**
+ * Queue (FIFO) implementations using linked-list and expanding-circular-buffer approaches
+ *
+ * Authors: Charlie Curtsinger
+ * Date: October 29th, 2007
+ * Version: 0.1a
+ */
+
 module std.collection.queue;
 
 /**
  * Queue implementation based on a linked list method.
  * Uses n*T.sizeof memory for n elements
+ *
+ * Params:
+ *  T = Type to store in queue
  */
 class Queue(T)
 {
@@ -114,9 +125,10 @@ class Queue(T)
  * Array-based queue implementation (circular buffer)
  * Uses at most n+stride-1*T.sizeof memory for n elements
  *
- * If compact is set, memory usage will reduce on dequeue().  Otherwise
- * above memory bound applies to the maximum number of elements present
- * at any point.
+ * Params:
+ *  T = Type to store in queue
+ *  compact = true if allocated data array should shrink when possible
+ *  stride = number of elements to increase/decrease data array by when changing size
  */
 class FastQueue(T, bool compact = true, size_t stride = 16)
 {

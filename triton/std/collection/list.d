@@ -1,25 +1,63 @@
+/**
+ * Linked List implementation (doubly-linked)
+ *
+ * Authors: Charlie Curtsinger
+ * Date: October 29th, 2007
+ * Version: 0.1a
+ */
+
 module std.collection.list;
 
+/**
+ * Linked list implementation
+ *
+ * Params:
+ *  T = Element type to store in this list
+ */
 class List(T)
 {
 	private Node* head;
 	private Node* tail;
 	private size_t listSize;
 	
-	this()
+	/**
+	 * Create an empty list
+	 */
+	public this()
 	{
 		head = null;
 		tail = null;
 		listSize = 0;
 	}
 	
-	size_t size()
+	/**
+	 * Free all used memory by emptying the list
+	 */
+	public ~this()
+	{
+	    while(size() > 0)
+	    {
+	        remove(0);
+	    }
+	}
+	
+	/**
+	 * Get the size of the list
+	 *
+	 * Returns: The number of elements in the list
+	 */
+	public size_t size()
 	{
 		return listSize;
 	}
 	
 	/**
 	 * Follows the shortest path to locate the Node at `index`
+	 *
+	 * Params:
+	 *  index = index to seek to
+	 *
+	 * Returns: Node* to the requested index
 	 */
 	private Node* seek(size_t index)
 	in
@@ -59,9 +97,14 @@ class List(T)
 	}
 	
 	/**
-	 * Get the item at `index`
+	 * Get the item at 'index'
+	 *
+	 * Params:
+	 *  index = index to seek to and return element at
+	 *
+	 * Returns: Element at index
 	 */
-	T get(size_t index)
+	public T get(size_t index)
 	{
 		Node* current = seek(index);		
 		return current.data;
@@ -69,24 +112,34 @@ class List(T)
 	
 	/**
 	 * Add an item to the front of the list
+	 *
+	 * Params:
+	 *  t = Element to add
 	 */
-	void prepend(T t)
+	public void prepend(T t)
 	{
 		insert(0, t);
 	}
 	
 	/**
 	 * Add an item to the end of the list
+	 *
+	 * Params:
+	 *  t = Element to add
 	 */
-	void append(T t)
+	public void append(T t)
 	{
 		insert(size(), t);
 	}
 	
 	/**
 	 * Add an item to the list so it resides at `index` after insertion
+	 *
+	 * Params:
+	 *  index = index that t should be at after adding it to the list
+	 *  t = Element to add
 	 */
-	void insert(size_t index, T t)
+	public void insert(size_t index, T t)
 	{
 		Node* n = new Node;
 		n.data = t;
@@ -129,11 +182,18 @@ class List(T)
 	}
 	
 	/**
-	 * Remove the item at `index`
+	 * Remove the item at 'index'
+	 *
+	 * Params:
+	 *  index = index to remove
+	 *
+	 * Returns: The element at the removed index
 	 */
-	void remove(size_t index)
+	public T remove(size_t index)
 	{
 		Node* current = seek(index);
+		T t = current.data;
+		
 		Node* old;
 		
 		if(index == 0)
@@ -163,8 +223,13 @@ class List(T)
 		}
 		
 		listSize--;
+		
+		return t;
 	}
 	
+	/**
+	 * Wrapper struct for elements in the list
+	 */
 	struct Node
 	{
 		T data;

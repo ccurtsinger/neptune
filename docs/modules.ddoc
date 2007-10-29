@@ -13,7 +13,7 @@ MODULES =
 	$(MODULE std.bit)
 	$(MODULE std.bitarray)
 	$(MODULE std.integer)
-	$(MODULE std.kernel)
+	$(MODULE std.stdlib)
 	$(MODULE std.mem)
 	$(MODULE std.port)
 	$(MODULE std.stdarg)

@@ -27,7 +27,7 @@ const ulong PAGE_GLOBAL = 0x100;
 const ulong PAGE_COPY_ON_WRITE = 0x200;
 const ulong PAGE_NX = 0x8000000000000000;
 
-import std.kernel;
+import std.stdlib;
 
 /**
  * Abstraction for page directories and tables

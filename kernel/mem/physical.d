@@ -8,7 +8,7 @@
 
 module kernel.mem.physical;
 
-import std.kernel;
+import std.stdlib;
 
 /**
  * Physical memory allocator that distributes free pages

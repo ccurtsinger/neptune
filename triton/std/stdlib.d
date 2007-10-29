@@ -1,12 +1,12 @@
 /**
- * Externs to standard functions that must be defined in the kernel/host
+ * Externs to standard functions that must be defined by the kernel/host
  *
  * Authors: Charlie Curtsinger
  * Date: October 29th, 2007
  * Version: 0.1a
  */
 
-module std.kernel;
+module std.stdlib;
 
 const ulong FRAME_SIZE = 0x1000;
 

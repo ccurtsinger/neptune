@@ -8,7 +8,7 @@
 
 module kernel.mem.virtual;
 
-import std.kernel;
+import std.stdlib;
 
 /**
  * Temporary heap allocation with built-in page allocation

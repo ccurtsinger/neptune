@@ -11,7 +11,7 @@ module kernel.boot.kernel;
 import std.stdio;
 import std.mem;
 import std.collection.queue;
-import std.kernel;
+import std.stdlib;
 
 import neptune.arch.gdt;
 import neptune.arch.tss;

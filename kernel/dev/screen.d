@@ -23,10 +23,15 @@ extern(C) void putc(char c)
         if(cursor_x > 0)
         {
             cursor_x--;
-
-            uint pos = cursor_y*SCREEN_WIDTH + cursor_x;
-            SCREEN_MEM[2*pos] = ' ';
         }
+        else
+        {
+        	cursor_x = SCREEN_WIDTH-1;
+        	cursor_y--;
+        }
+        
+        uint pos = cursor_y*SCREEN_WIDTH + cursor_x;
+		SCREEN_MEM[2*pos] = ' ';
     }
     else if(c == '\t')
     {

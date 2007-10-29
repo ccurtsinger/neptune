@@ -22,6 +22,8 @@ IDT idt;
 PageTable L4;
 Heap heap;
 
+Keyboard kb;
+
 const ulong LINEAR_MEM_BASE = 0xFFFF830000000000;
 
 extern(C) void _main(LoaderData* loader)
@@ -43,7 +45,11 @@ extern(C) void _main(LoaderData* loader)
 
     writefln("Memory Information:\n - Free: %016#X\n - Allocated: %016#X", pAlloc.sizeFree, pAlloc.sizeAllocated);
 
-    for(;;){}
+    while(true)
+    {
+    	char c = kb.getc();
+    	kernel.dev.screen.putc(c);
+    }
 }
 
 void mem_setup(LoaderData* loader)
@@ -94,12 +100,12 @@ void tss_setup()
     tss.init();
 
     // Set the permission-level stacks
-    tss.setRspEntry(0, 0xFFFF810000000000);
-    tss.setRspEntry(1, 0xFFFF810000000000);
-    tss.setRspEntry(2, 0xFFFF810000000000);
+    tss.setRspEntry(0, cast(void*)0xFFFF810000000000);
+    tss.setRspEntry(1, cast(void*)0xFFFF810000000000);
+    tss.setRspEntry(2, cast(void*)0xFFFF810000000000);
 
     // Set IST entries
-    tss.setIstEntry(0, 0x7FFFFFF8);
+    tss.setIstEntry(0, cast(void*)0x7FFFFFF8);
     /*tss.setIstEntry(1, 0x7FFFFFF8);
     tss.setIstEntry(2, 0x7FFFFFF8);
     tss.setIstEntry(3, 0x7FFFFFF8);
@@ -116,8 +122,8 @@ void idt_setup()
 	idt.setHandler(14, &pagefault_handler);
 
 	// Initialize keyboard data and install the interrupt handler
-	kb_setup();
-    idt.setHandler(33, &kb_handler);
+	kb = new Keyboard();
+    idt.setHandler(33, &kb.handler);
 }
 
 void pagefault_handler(void* p, ulong interrupt, ulong error, InterruptStack* stack)

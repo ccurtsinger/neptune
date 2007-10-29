@@ -3,7 +3,7 @@ module std.stdio;
 import std.integer;
 import std.stdarg;
 
-extern(C) void putc(char c);
+private extern(C) void putc(char c);
 
 /**
  * Write a string to screen

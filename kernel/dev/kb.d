@@ -2,6 +2,7 @@ module kernel.dev.kb;
 
 import std.port;
 import std.stdio;
+import std.collection.queue;
 
 import neptune.arch.idt;
 
@@ -28,15 +29,12 @@ class Keyboard
 	private bool caps;
 	private Key[256] keymap;
 	
-	bool* waiting;
-	
-	private char c;
+	private Queue!(char) chars;
 
 	this()
 	{
 		caps = false;
-		waiting = new bool;
-		*waiting = false;
+		chars = new Queue!(char);
 
 		for(int i=0; i<256; i++)
 		{
@@ -82,9 +80,9 @@ class Keyboard
 		keymap[37] = Key('k', 'K');
 		keymap[38] = Key('l', 'L');
 		keymap[39] = Key(';', ':');
-
+        keymap[40] = Key('\'', '"');
 		keymap[41] = Key('`', '~');
-		// Shift down
+		// Left shift down
 		keymap[42] = Key('\0', '\0', true);
 
 		keymap[44] = Key('\\', '|');
@@ -98,7 +96,10 @@ class Keyboard
 		keymap[51] = Key(',', '<');
 		keymap[52] = Key('.', '>');
 		keymap[53] = Key('/', '?');
-
+		
+		// Right shift down
+        keymap[54] = Key('\0', '\0', true);
+        
 		// 55 is print screen
 		// 56 is alt
 		keymap[57] = Key(' ', ' ');
@@ -139,18 +140,12 @@ class Keyboard
 	
 	public char getc()
 	{
-		*waiting = true;
-		
-		/*bool l = true;
-		
-		while(l)
-		{
-			volatile l = *waiting;
-		}*/
-		
-		volatile while(*waiting){}
-		
-		return c;
+	    volatile while(chars.size() == 0)
+	    {
+	        asm{"hlt";}
+        }
+	    
+        return chars.dequeue();
 	}
 
 	void handler(ulong interrupt, ulong error, InterruptStack* stack)
@@ -159,7 +154,7 @@ class Keyboard
 
 		Key k = keymap[s];
 		
-		c = '\0';
+		char c = '\0';
 
 		if(caps)
 		{
@@ -177,8 +172,13 @@ class Keyboard
 		
 		if(c != '\0')
 		{
-			*waiting = false;
+			chars.enqueue(c);
 		}
+		
+		/*if(s < 128 && k.lc == '\0')
+    	{
+    	    writef("(%u)", s);
+    	}*/
 
 		outp(0x20, 0x20);
 	}

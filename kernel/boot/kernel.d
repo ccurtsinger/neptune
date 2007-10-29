@@ -2,7 +2,7 @@ module kernel.boot.kernel;
 
 import std.stdio;
 import std.mem;
-import std.collection.stack;
+import std.collection.queue;
 import std.kernel;
 
 import neptune.arch.gdt;

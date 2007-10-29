@@ -6,9 +6,9 @@ module std.collection.queue;
  */
 class Queue(T)
 {
-	Node* head;
-	Node* tail;
-	size_t count;
+	private Node* head;
+	private Node* tail;
+	private size_t count;
 
 	this()
 	{
@@ -58,12 +58,22 @@ class Queue(T)
 	}
 	body
 	{
+	    count--;
+	    
         T t = head.data;
         
-        Node* old = head;
-        head = head.next;
-        
-        delete old;
+        if(head == tail)
+        {
+            delete head;
+            head = null;
+            tail = null;
+        }
+        else
+        {
+            Node* old = head;
+            head = head.next;
+            delete old;
+        }
         
         return t;
 	}

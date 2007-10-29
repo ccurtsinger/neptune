@@ -1,3 +1,11 @@
+/**
+ * Paging Abstraction and Utilities
+ *
+ * Authors: Charlie Curtsinger
+ * Date: October 28th, 2007
+ * Version: 0.1a
+ */
+
 module neptune.arch.paging;
 
 const ubyte PAGEDIR_L4 = 39;
@@ -38,12 +46,13 @@ struct PageTable
 	/**
 	 * Construct a PageTable object from an existing entries array
 	 *
-	 * @param lowBit	Lowest bit used to determine the index into entries
-	 * @param entries	Physical address of a set of page table entrires
+	 * Params:
+	 *  lowBit = Lowest bit used to determine the index into entries
+	 *  entries = Physical address of a set of page table entrires
 	 *
-	 * @return 
+	 * Returns: Newly created page table object
 	 */
-    static PageTable opCall(ulong lowBit, ulong entries)
+    public static PageTable opCall(ulong lowBit, ulong entries)
     {
     	PageTable p;
     	
@@ -55,7 +64,15 @@ struct PageTable
         return p;
     }
 
-    static PageTable opCall(ulong lowBit)
+	/**
+	 * Construct a PageTable object and a new set of entries
+	 *
+	 * Params:
+	 *  lowBit = Lowest bit used to determine the index into entries
+	 *
+	 * Returns: Newly created page table
+	 */
+    public static PageTable opCall(ulong lowBit)
     {
     	PageTable p;
     	
@@ -72,17 +89,27 @@ struct PageTable
         return p;
     }
 
-    new(size_t size, void* pos)
-    {
-        return pos;
-    }
-
-    bool present(ulong entry)
+	/**
+	 * Check if the present bit is set for a given entry
+	 *
+	 * Params:
+	 *  entry = Contents of the entry
+	 *
+	 * Returns: true if the present bit is set
+	 */
+    private bool present(ulong entry)
     {
         return (entry & 0x1) == 1;
     }
 
-    void invalidate(ulong vAddr)
+	/**
+	 * Invalidate a TLB entry
+	 *
+	 * Params:
+	 *  vAddr = Virtual address to invalidate
+	 *
+	 */
+    private void invalidate(ulong vAddr)
     {
         asm
         {
@@ -90,7 +117,17 @@ struct PageTable
         }
     }
 
-    bool map(ulong vAddr, ulong size = FRAME_SIZE, ulong flags = PAGE_PRESENT | PAGE_READWRITE)
+	/**
+	 * Map a page or sequence of virtual pages into the page heirarchy
+	 * 
+	 * Params:
+	 *  vAddr = Virtual address to map page(s) at
+	 *  size = Size of the region to match - must be a multiple of FRAME_SIZE
+	 *  flags = Flags to set for newly mapped page(s)
+	 * 
+	 * Returns: True if all pages mapped successfully
+	 */
+    public bool map(ulong vAddr, ulong size = FRAME_SIZE, ulong flags = PAGE_PRESENT | PAGE_READWRITE)
     {
         ulong index = (vAddr & mask) >> lowBit;
         ulong topIndex = ((vAddr+size-1) & mask) >> lowBit;

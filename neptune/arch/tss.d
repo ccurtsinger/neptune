@@ -1,3 +1,11 @@
+/**
+ * TSS abstraction
+ *
+ * Authors: Charlie Curtsinger
+ * Date: October 28th, 2007
+ * Version: 0.1a
+ */
+
 module neptune.arch.tss;
 
 struct TSS
@@ -7,14 +15,14 @@ struct TSS
     uint res1;
 
     // Privelege-level switch stacks
-    ulong rsp0;
-    ulong rsp1;
-    ulong rsp2;
+    void* rsp0;
+    void* rsp1;
+    void* rsp2;
 
     ulong res2;
 
     // Interrupt stack table
-    ulong[7] ist;
+    void*[7] ist;
 
     ulong res3;
     ushort res4;
@@ -23,6 +31,11 @@ struct TSS
 
     ushort selector;
 
+	/**
+	 * Initialize the TSS
+	 *
+	 * Sets all reserved and available regions to 0
+	 */
     void init()
     {
         // Clear reserved regions
@@ -35,20 +48,27 @@ struct TSS
         iomap = 0;
 
         // Clear pointers
-        rsp0 = 0;
-        rsp1 = 0;
-        rsp2 = 0;
+        rsp0 = null;
+        rsp1 = null;
+        rsp2 = null;
 
-        ist[0] = 0;
-        ist[1] = 0;
-        ist[2] = 0;
-        ist[3] = 0;
-        ist[4] = 0;
-        ist[5] = 0;
-        ist[6] = 0;
+        ist[0] = null;
+        ist[1] = null;
+        ist[2] = null;
+        ist[3] = null;
+        ist[4] = null;
+        ist[5] = null;
+        ist[6] = null;
     }
 
-    void setRspEntry(ubyte dpl, ulong p)
+	/**
+	 * Set one of the permission-level stack pointers
+	 *
+	 * Params:
+	 *  dpl = Privelege level
+	 *  p = Stack pointer
+	 */
+    void setRspEntry(ubyte dpl, void* p)
     {
         if(dpl == 0)
         {
@@ -64,21 +84,37 @@ struct TSS
         }
     }
 
-    void setIstEntry(size_t index, ulong p)
+	/**
+	 * Set one of the interrupt stack table entries
+	 *
+	 * Params:
+	 *  index = Index into the IST
+	 *  p = Stack pointer
+	 */
+    void setIstEntry(size_t index, void* p)
     {
         ist[index] = p;
     }
 
+	/**
+	 * Set the offset of the TSS entry in the GDT
+	 *
+	 * Params:
+	 *  s = GDT offset
+	 */
+	void setSelector(ushort s)
+    {
+        selector = s;
+    }
+
+	/**
+	 * Install the TSS
+	 */
     void install()
     {
         asm
         {
             "ltr %[tssSel]" : : [tssSel] "b" selector;
         }
-    }
-
-    void setSelector(ushort s)
-    {
-        selector = s;
     }
 }

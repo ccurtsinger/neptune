@@ -1,3 +1,11 @@
+/**
+ * IDT Abstraction and Utilities
+ *
+ * Authors: Charlie Curtsinger
+ * Date: October 28th, 2007
+ * Version: 0.1a
+ */
+
 module neptune.arch.idt;
 
 import std.port;
@@ -102,10 +110,13 @@ struct IDTEntry
 	/**
 	 * Create an IDT entry
 	 *
-	 * @param base		Address of the isr
-	 * @param selector	Code segment selector
-	 * @param flags		Additional flags
-	 * @param ist		IST index - 0 means use existing stack
+	 * Params:
+	 *  base = Address of the isr
+	 *  selector = code segment selector
+	 *  flags = Additional flags
+	 *  ist = IST index - 0 means use existing stack
+	 *
+	 * Returns: Newly created IDT entry object
 	 */
 	static IDTEntry opCall(void* base, ushort selector = 0x08, ubyte flags = 0x8E, ubyte ist = 0)
     {
@@ -186,8 +197,9 @@ struct IDT
 	/**
 	 * Install a non-member handler for an interrupt
 	 *
-	 * @param interrupt		Index of the interrupt to set the handler for
-	 * @param handler		Function pointer to the interrupt handler
+	 * Params:
+	 *  interrupt = Index of the interrupt to set the handler for
+	 *  handler = Function pointer to the interrupt handler
 	 */
 	void setHandler(ubyte interrupt, void function(void* p, ulong interrupt, ulong error, InterruptStack* stack) handler)
 	{
@@ -198,8 +210,9 @@ struct IDT
 	/**
 	 * Install an object-member interrupt handler for a given interrupt
 	 *
-	 * @param interrupt		Index of the interrupt to set the handler for
-	 * @param handler		Delegate to teh interrupt handler
+	 * Params:
+	 *  interrupt = Index of the interrupt to set the handler for
+	 *  handler = Delegate to teh interrupt handler
 	 */
 	void setHandler(ubyte interrupt, void delegate(ulong interrupt, ulong error, InterruptStack* stack) handler)
 	{
@@ -272,6 +285,15 @@ struct InterruptStack
 	ulong ss;
 }
 
+/**
+ * Default interrupt handler
+ *
+ * Params:
+ *  p = empty pointer - used for compatibility with delegate handlers
+ *  interrupt = interrupt number
+ *  error = error code (or 0)
+ *  stack = pointer to pre-interrupt context information on the stack
+ */
 void _int_handler(void* p, ulong interrupt, ulong error, InterruptStack* stack)
 {
 	writefln("\nInterrupt %u", interrupt);
@@ -300,6 +322,15 @@ void _int_handler(void* p, ulong interrupt, ulong error, InterruptStack* stack)
 	for(;;){}
 }
 
+/**
+ * Default IRQ handler
+ *
+ * Params:
+ *  p = empty pointer -used for compatibility with delegate handlers
+ *  interrupt = interrupt number (NOT IRQ NUMBER)
+ *  error = error code (0 for IRQs)
+ *  stack = pointer to pre-interrupt context information on the stack
+ */
 void _irq_handler(void* p, ulong interrupt, ulong error, InterruptStack* stack)
 {
 	writefln("\nIRQ %u", interrupt);

@@ -10,14 +10,20 @@ class Queue(T)
 	private Node* tail;
 	private size_t count;
 
-	this()
+    /**
+     * Create an empty queue
+     */
+	public this()
 	{
 		head = null;
 		tail = null;
 		count = 0;
 	}
 
-	~this()
+    /**
+     * Free all used memory by emptying queue
+     */
+	public ~this()
 	{
 		while(head !is null)
 		{
@@ -25,12 +31,23 @@ class Queue(T)
 		}
 	}
 
-	size_t size()
+    /**
+     * Get the size of the queue
+     *
+     * Returns: The number of elements in the queue
+     */
+	public size_t size()
 	{
 		return count;
 	}
 
-	void enqueue(T t)
+    /**
+     * Enqueue an element
+     *
+     * Params:
+     *  t = Element to enqueue
+     */
+	public void enqueue(T t)
 	{
 		Node* n = new Node;
 
@@ -51,7 +68,12 @@ class Queue(T)
         count++;
 	}
 
-	T dequeue()
+    /**
+     * Dequeue an element
+     *
+     * Returns: The oldest (first) element in the queue
+     */
+	public T dequeue()
 	in
 	{
 	    assert(head !is null, "Attempted to dequeue from an empty Queue");
@@ -78,9 +100,161 @@ class Queue(T)
         return t;
 	}
 
+    /**
+     * Wrapper struct for elements in the Queue
+     */
 	struct Node
 	{
 		T data;
 		Node* next;
+	}
+}
+
+/**
+ * Array-based queue implementation (circular buffer)
+ * Uses at most n+stride-1*T.sizeof memory for n elements
+ *
+ * If compact is set, memory usage will reduce on dequeue().  Otherwise
+ * above memory bound applies to the maximum number of elements present
+ * at any point.
+ */
+class FastQueue(T, bool compact = true, size_t stride = 16)
+{
+    private T[] data;
+	private size_t base;
+	private size_t count;
+	private size_t allocated;
+	
+	/**
+     * Create an empty queue
+     */
+	public this()
+	{
+	    base = 0;
+	    count = 0;
+	    allocated = 0;
+	    data = null;
+	}
+	
+	/**
+     * Free the data array
+     */
+	public ~this()
+	{
+	    if(data !is null)
+	    {
+            delete data;
+        }
+	}
+	
+	/**
+     * Get the size of the queue
+     *
+     * Returns: The number of elements in the queue
+     */
+	public size_t size()
+	{
+        return count;
+	}
+	
+	/**
+     * Enqueue an element.  If not enough space is available, allocated a new data array.
+     *
+     * Params:
+     *  t = Element to enqueue
+     */
+	public void enqueue(T t)
+	{
+	    if(allocated <= count)
+	    {
+	        T[] newdata = new T[allocated + stride];
+	        
+	        if(data !is null)
+	        {
+	            size_t index = base;
+	            
+	            for(size_t i=0; i<count; i++)
+	            {
+	                newdata[index] = base;
+	                index++;
+	                
+	                if(index >= allocated)
+                        index = 0;
+	            }
+	            
+	            base = 0;
+	            
+	            delete data;
+	        }
+	        
+	        allocated += stride;
+            data = newdata;
+	    }
+	    
+	    size_t index = base + count;
+	    
+	    while(index >= allocated)
+        {
+            index -= allocated;
+        }
+        
+        data[index] = t;
+        count++;
+	}
+	
+	/**
+     * Dequeue an element.  If compact is set, shrink allocated size by 'stride' if possible
+     *
+     * Returns: The oldest (first) element in the queue
+     */
+	public T dequeue()
+	in
+	{
+	    assert(data !is null && count > 0, "Attempted to dequeue from an empty Queue");
+	}
+	body
+	{
+	    T t = data[base];
+	    
+	    base++;
+	    
+	    while(base >= allocated)
+	    {
+	        base -= allocated;
+	    }
+	    
+	    count--;
+	    
+	    static if(compact)
+	    {
+	        if(allocated - count >= stride)
+	        {
+	            T[] newdata = null;
+	            
+	            if(allocated > stride)
+	            {
+	                newdata = new T[allocated - stride];
+	                
+	                size_t index = base;
+	            
+                    for(size_t i=0; i<count; i++)
+                    {
+                        newdata[index] = base;
+                        index++;
+                        
+                        if(index >= allocated)
+                            index = 0;
+                    }
+                    
+                    base = 0;
+	            }
+	            
+	            delete data;
+	            allocated -= stride;
+	            data = newdata;
+	        }
+	    }
+	    
+	    return t;
 	}
 }

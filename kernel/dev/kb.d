@@ -29,12 +29,12 @@ class Keyboard
 	private bool caps;
 	private Key[256] keymap;
 	
-	private Queue!(char) chars;
+	private FastQueue!(char, true) chars;
 
 	this()
 	{
 		caps = false;
-		chars = new Queue!(char);
+		chars = new FastQueue!(char, true);
 
 		for(int i=0; i<256; i++)
 		{

@@ -1,7 +1,21 @@
+/**
+ * Integer &lt;-&gt; String conversions
+ *
+ * Authors: Charlie Curtsinger
+ * Date: October 29th, 2007
+ * Version: 0.1a
+ */
+
 module std.integer;
 
 /**
- * Return the number of digits in i
+ * Count the number of digits in i
+ *
+ * Params:
+ *  i = value to count digits from
+ *  radix = base to use when computing digit count
+ * 
+ * Returns: Number of digits in i with base radix
  */
 extern(C) long digits(ulong i, int radix = 10)
 {
@@ -22,7 +36,12 @@ extern(C) long digits(ulong i, int radix = 10)
 
 /**
  * Convert 'i' to a string in 's' using base 'radix'
- * For digits above 9, A-F will be used, with the case determined by 'uc'
+ *
+ * Params:
+ *  i = value to convert
+ *  s = memory to use for the string
+ *  radix = base to convert with
+ *  uc = If true, A-Z will be used for values over 9, otherwise a-z will be used
  */
 extern(C) void itoa(ulong i, char* s, int radix = 10, bool uc = true)
 {

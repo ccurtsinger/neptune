@@ -1,3 +1,11 @@
+/**
+ * Externs to standard functions that must be defined in the kernel/host
+ *
+ * Authors: Charlie Curtsinger
+ * Date: October 29th, 2007
+ * Version: 0.1a
+ */
+
 module std.kernel;
 
 const ulong FRAME_SIZE = 0x1000;

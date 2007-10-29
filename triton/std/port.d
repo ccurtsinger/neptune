@@ -1,7 +1,20 @@
+/**
+ * CPU Port I/O functions
+ *
+ * Authors: Charlie Curtsinger
+ * Date: October 29th, 2007
+ * Version: 0.1a
+ */
+
 module std.port;
 
 /**
- * Reads I/O port at port_address.
+ * Read a ubyte from port p
+ *
+ * Params:
+ *  p = port to read from
+ *
+ * Returns: ubyte read
  */
 ubyte inp(ushort p)
 {
@@ -11,7 +24,12 @@ ubyte inp(ushort p)
 }
 
 /**
- * ditto
+ * Read a ushort from port p
+ *
+ * Params:
+ *  p = port to read from
+ *
+ * Returns: ushort read
  */
 ushort inpw(ushort p)
 {
@@ -21,7 +39,12 @@ ushort inpw(ushort p)
 }
 
 /**
- * ditto
+ * Read a uint from port p
+ *
+ * Params:
+ *  p = port to read from
+ *
+ * Returns: uint read
  */
 uint inpl(ushort p)
 {
@@ -31,7 +54,11 @@ uint inpl(ushort p)
 }
 
 /**
- * Writes and returns value to I/O port at port_address.
+ * Write a ubyte to port p
+ *
+ * Params:
+ *  p = port to write to
+ *  d = data to write
  */
 void outp(ushort p, ubyte d)
 {
@@ -39,7 +66,11 @@ void outp(ushort p, ubyte d)
 }
 
 /**
- * ditto
+ * Write a ushort to port p
+ *
+ * Params:
+ *  p = port to write to
+ *  d = data to write
  */
 void outpw(ushort p, ushort d)
 {
@@ -47,7 +78,11 @@ void outpw(ushort p, ushort d)
 }
 
 /**
- * ditto
+ * Write a uint to port p
+ *
+ * Params:
+ *  p = port to write to
+ *  d = data to write
  */
 void outpl(ushort p, uint d)
 {

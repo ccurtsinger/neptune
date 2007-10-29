@@ -1,41 +1,76 @@
+/**
+ * Bit testing and setting operations (non-atomic)
+ * 
+ * Based on the implemented bit operations in std.intrinsic
+ * written by Walter Bright.
+ *
+ * Authors: Walter Bright, Charlie Curtsinger
+ * Date: October 29th, 2007
+ * Version: 0.1a
+ */
 module std.bits;
 
 /**
- * Based on the implemented bit operations in std.intrinsic
- * written by Walter Bright.
- */
-
-/**
- * Scans the bits in v starting with bit 0, looking
- * for the first set bit.
+ * Scan for the first set bit
+ *
+ * Params:
+ *  v = value to scan through
+ *
  * Returns:
- *	The bit number of the first bit set.
- *	The return value is undefined if v is zero.
+ *	The bit number of the first bit set
+ *	The return value is undefined if v is zero
  */
 int bsf(uint v)
 {
 	uint m = 1;
+	
 	uint i;
-	for (i = 0; i < 32; i++,m<<=1) {
+	
+	for (i = 0; i < 64; i++,m<<=1) 
+	{
 	    if (v&m)
-		return i;
+	    {
+            return i;
+	    }
 	}
+	
 	return i; // supposed to be undefined
 }
 
+/**
+ * Scan for the last set bit
+ * 
+ * Params:
+ *  v = value to scan through
+ *
+ * Returns
+ *  The bit number for the last bit set
+ *  The return value is undefined if v is zero
+ */
 int bsr(uint v)
 {
     uint m = 0x80000000;
     uint i;
-    for (i = 32; i ; i--,m>>>=1) {
-	if (v&m)
-	    return i-1;
+    
+    for (i = 64; i ; i--,m>>>=1) 
+    {
+        if (v&m)
+        {
+            return i-1;
+        }
     }
+    
     return i; // supposed to be undefined
 }
 
 /**
- * Tests the bit.
+ * Test a bit
+ *
+ * Params:
+ *  p = pointer to the value to test bit in
+ *  bitnum = index of the bit to test
+ *
+ * Returns: the value of the bit being tested
  */
 int bt(uint *p, uint bitnum)
 {
@@ -43,7 +78,11 @@ int bt(uint *p, uint bitnum)
 }
 
 /**
- * Tests and complements the bit.
+ * Tests and complements a bit
+ *
+ * Params:
+ *  p = pointer to the value to operate on
+ *  bitnum = bit index to operate on
  */
 int btc(uint *p, uint bitnum)
 {
@@ -55,7 +94,11 @@ int btc(uint *p, uint bitnum)
 }
 
 /**
- * Tests and resets (sets to 0) the bit.
+ * Tests and resets (sets to 0) a bit
+ *
+ * Params:
+ *  p = pointer to the value to operate on
+ *  bitnum = bit index to operate on
  */
 int btr(uint *p, uint bitnum)
 {
@@ -66,6 +109,13 @@ int btr(uint *p, uint bitnum)
     return result ? -1 : 0;
 }
 
+/**
+ * Test and set a bit
+ * 
+ * Params:
+ *  p = pointer to the value to operate on
+ *  bitnum = bit index to operate on
+ */
 int bts(uint *p, uint bitnum)
 {
     uint * q = p + (bitnum / (uint.sizeof*8));

@@ -1,3 +1,12 @@
+/**
+ * Basic screen output and keyboard input functions
+ *
+ * Authors: Charlie Curtsinger
+ * Date: October 29th, 2007
+ * Version: 0.1a
+ */
+
+
 module std.stdio;
 
 import std.integer;
@@ -7,6 +16,9 @@ private extern(C) void putc(char c);
 
 /**
  * Write a string to screen
+ *
+ * Params:
+ *  s = string to write
  */
 void write(char[] s)
 {
@@ -17,6 +29,9 @@ void write(char[] s)
 }
 /**
  * Write a string to screen, followed by a newline
+ *
+ * Params:
+ *  s = string to write
  */
 void writeln(char[] s)
 {
@@ -42,9 +57,13 @@ void writefln(...)
 }
 
 /**
- * Print 'c' 'n' times
+ * Print a character repeatedly
  *
  * Used by doFormat for padding values
+ *
+ * Params:
+ *  c = character to print
+ *  n = number of times to print c
  */
 void pad(char c, long n)
 {
@@ -58,11 +77,15 @@ void pad(char c, long n)
 }
 
 /**
- * Parse a set of arguments using standard formatting rules for printf
+ * Parse a set of arguments and print their contents to screen
  *
  * Some types have default display options (strings, pointers, etc...)
+ *
+ * Params:
+ *  args = array of argument types
+ *  argptr = pointer used to access the variable argument list
  */
-void doFormat(TypeInfo[] args, va_list argptr)
+private void doFormat(TypeInfo[] args, va_list argptr)
 {
     // Iterate through arguments
     for(int i=0; i<args.length; i++)

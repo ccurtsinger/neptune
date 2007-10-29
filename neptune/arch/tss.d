@@ -8,6 +8,9 @@
 
 module neptune.arch.tss;
 
+/**
+ * TSS object
+ */
 struct TSS
 {
     align(1):

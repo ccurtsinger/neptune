@@ -1,11 +1,9 @@
 # Grab the build environment
 Import('env')
 
-obj_list  = [env.gdc('btree.o',  	'btree.d')]
-obj_list += [env.gdc('heap.o',    	'heap.d')]
+obj_list  = [env.gdc('heap.o',    	'heap.d')]
 obj_list += [env.gdc('list.o', 	  	'list.d')]
 obj_list += [env.gdc('queue.o',   	'queue.d')]
-obj_list += [env.gdc('splaytree.o',	'splaytree.d')]
 obj_list += [env.gdc('stack.o',   	'stack.d')]
 
 Return('obj_list')

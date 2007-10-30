@@ -35,9 +35,6 @@ TSS tss;
 /// IDT
 IDT idt;
 
-/// Top level page directory
-PageTable L4;
-
 /// Dynamic memory allocator (heap) for the kernel
 Heap heap;
 
@@ -46,6 +43,9 @@ Keyboard kb;
 
 /// Screen device
 Screen screen;
+
+VirtualMemory v;
+byte[VirtualMemory.sizeof] alloc;
 
 const ulong LINEAR_MEM_BASE = 0xFFFF830000000000;
 
@@ -97,11 +97,13 @@ void mem_setup(LoaderData* loader)
     pAlloc.add(loader.upperMemBase, loader.usedMemBase - loader.upperMemBase);
     pAlloc.add(loader.usedMemBase + loader.usedMemSize, loader.upperMemSize - loader.usedMemBase - loader.usedMemSize + loader.upperMemBase);
 
-    // Point the L4 page table to the address passed by the 32 bit loader
-    L4 = PageTable(PAGEDIR_L4, loader.L4);
+    VirtualMemory v = new(alloc.ptr) VirtualMemory(loader.L4);
 
     // Map an 8k interrupt stack for IST1
-    L4.map(0x7FFFC000, FRAME_SIZE*4);
+    map(0x7FFFC000);
+    map(0x7FFFD000);
+    map(0x7FFFE000);
+    map(0x7FFFF000);
 
     // Initialize the heap allocator object
     heap.init();
@@ -191,8 +193,10 @@ void pagefault_handler(void* p, ulong interrupt, ulong error, InterruptStack* st
 
     writef("\nPage Fault: %016#X\nMapping...", vAddr);
 
-    if(L4.map(vAddr))
+    if(v.map(cast(void*)vAddr))
+    {
         writeln("done");
+    }
     else
     {
         writeln("failed");
@@ -296,7 +300,7 @@ extern(C)
     {
         return (cast(ulong)vAddr) - LINEAR_MEM_BASE;
     }
-
+    
     /**
      * Map a page starting at a given virtual address to some available physical memory
      *
@@ -307,9 +311,13 @@ extern(C)
      */
     bool map(ulong vAddr)
     {
-        return L4.map(vAddr);
+        VirtualMemory m = cast(VirtualMemory)alloc.ptr;
+        
+        return m.map(cast(void*)vAddr);
     }
 }
+
+
 
 /**
  * Data passed from the 32 bit loader

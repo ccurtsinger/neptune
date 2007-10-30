@@ -99,7 +99,7 @@ void mem_setup(LoaderData* loader)
 
     v = new(alloc.ptr) VirtualMemory(loader.L4);
 
-    // Map an 8k interrupt stack for IST1
+    // Map a 16k interrupt stack for IST1
     map(0x7FFFC000);
     map(0x7FFFD000);
     map(0x7FFFE000);

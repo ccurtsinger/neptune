@@ -97,7 +97,7 @@ void mem_setup(LoaderData* loader)
     pAlloc.add(loader.upperMemBase, loader.usedMemBase - loader.upperMemBase);
     pAlloc.add(loader.usedMemBase + loader.usedMemSize, loader.upperMemSize - loader.usedMemBase - loader.usedMemSize + loader.upperMemBase);
 
-    VirtualMemory v = new(alloc.ptr) VirtualMemory(loader.L4);
+    v = new(alloc.ptr) VirtualMemory(loader.L4);
 
     // Map an 8k interrupt stack for IST1
     map(0x7FFFC000);
@@ -311,9 +311,7 @@ extern(C)
      */
     bool map(ulong vAddr)
     {
-        VirtualMemory m = cast(VirtualMemory)alloc.ptr;
-        
-        return m.map(cast(void*)vAddr);
+        return v.map(cast(void*)vAddr);
     }
 }
 

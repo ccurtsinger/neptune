@@ -42,5 +42,5 @@ _loader_data:
 	dq 0
 
 section .bss
-    ; Reserve a 16K kernel stack
-    resb 0x4000
+    ; Reserve an 8K kernel stack
+    resb 0x2000

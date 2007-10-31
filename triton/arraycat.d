@@ -34,26 +34,7 @@
 import std.stdio;
 import std.mem;
 
-import std.stdlib;
-
 extern (C):
-
-void[] _d_arraycast(size_t tsize, size_t fsize, void[] a)
-{
-    auto length = a.length;
-    auto nbytes = length * fsize;
-    
-    if (nbytes % tsize != 0)
-    {
-        assert(false, "array cast misalignment");
-        //throw new Exception("array cast misalignment");
-    }
-    
-    length = nbytes / tsize;
-    *cast(size_t*)&a = length; // jam new length
-    
-    return a;
-}
 
 byte[] _d_arraycopy(size_t size, byte[] from, byte[] to)
 {
@@ -72,21 +53,6 @@ byte[] _d_arraycopy(size_t size, byte[] from, byte[] to)
     else
     {
         write("Exception: overlapping array copy");
-        
-        ulong i = cast(ulong)from.ptr;
-        
-        while(i > 0)
-        {
-            ulong d = i%16;
-            i -= d;
-            i /= 16;
-            
-            if(d < 10)
-                putc('0' + d);
-            else
-                putc('A' + (d - 10));
-        }
-        
         for(;;){}
         //throw new Exception("overlapping array copy");
     }

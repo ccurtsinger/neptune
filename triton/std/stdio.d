@@ -12,30 +12,6 @@ module std.stdio;
 import std.stdlib;
 import std.integer;
 import std.stdarg;
-import std.collection.stack;
-
-char[] readln()
-{
-    auto buf = new FastStack!(char);
-    	
-    char c;
-    
-    do
-    {
-        c = getc();
-        putc(c);
-        buf.push(c);
-    } while(c != '\n');
-    
-    char[] line = new char[buf.size()];
-    
-    for(size_t i=buf.size(); i>0; i--)
-    {
-        line[i-1] = buf.pop();
-    }
-    
-    return line;
-}
 
 /**
  * Write a string to screen

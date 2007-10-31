@@ -11,7 +11,7 @@ module kernel.boot.kernel;
 import std.stdio;
 import std.mem;
 import std.modinit;
-import std.collection.stack;
+import std.collection.queue;
 import std.stdlib;
 
 import neptune.arch.gdt;
@@ -80,15 +80,30 @@ extern(C) void _main(LoaderData* loader)
 	_moduleCtor();
 	_moduleUnitTests();
 	
-	writeln("here");
-	getc();
-	
 	while(true)
     {
-    	char[] line = readln();
-    	
-    	writefln("You typed: ", line);
+    	char c = kb.getc();
+    	putc(c);
     }
+}
+
+unittest
+{
+	writeln("\nType 'run'");
+	
+	char[255] buf;
+	size_t i = 0;
+	
+	while(i == 0 || buf[i-1] != '\n')
+	{
+		buf[i] = getc();
+		write(buf[i]);
+		i++;
+	}
+	
+	assert(buf[0] == 'r' && buf[1] == 'u' && buf[2] == 'n' && buf[3] == '\n', "Can't you follow directions?");
+	
+	writeln("nice work");
 }
 
 /**

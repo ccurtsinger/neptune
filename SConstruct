@@ -46,7 +46,7 @@ i586_env = setupEnv('i586-pc-elf',   YASMFLAGS = '-f elf', GDCFLAGS =   ' -fdoc-
                                                                         ' -Itriton' +
                                                                         ' -mno-red-zone' +
                                                                         ' -fno-exceptions' +
-                                                                        ' -O0')
+                                                                        ' -O4')
 
 # Set up the x86_64 environment
 env = setupEnv('x86_64-pc-elf', YASMFLAGS = '-f elf64', GDCFLAGS =  ' -fdoc-inc=docs/candydoc/candy.ddoc' +
@@ -56,7 +56,7 @@ env = setupEnv('x86_64-pc-elf', YASMFLAGS = '-f elf64', GDCFLAGS =  ' -fdoc-inc=
                                                                     ' -Itriton' +
                                                                     ' -mno-red-zone' +
                                                                     ' -fno-exceptions' +
-                                                                    ' -O0' +
+                                                                    ' -O4' +
                                                                     ' -mcmodel=kernel')
 
 # Build the Loader

@@ -11,7 +11,7 @@ module kernel.boot.kernel;
 import std.stdio;
 import std.mem;
 import std.modinit;
-import std.collection.queue;
+import std.collection.stack;
 import std.stdlib;
 
 import neptune.arch.gdt;
@@ -58,6 +58,8 @@ const ulong LINEAR_MEM_BASE = 0xFFFF830000000000;
  */
 extern(C) void _main(LoaderData* loader)
 {
+	screen = null;
+	
 	// Initialize important data structures
     mem_setup(loader);
     gdt_setup();
@@ -80,10 +82,14 @@ extern(C) void _main(LoaderData* loader)
 	_moduleCtor();
 	_moduleUnitTests();
 	
+	// Need to do this so the template instance gets linked in for readln
+	auto b = new FastStack!(char);
+	
 	while(true)
     {
-    	char c = kb.getc();
-    	putc(c);
+    	char[] line = readln();
+    	
+    	writefln("You typed: ", line);
     }
 }
 
@@ -237,7 +243,8 @@ extern(C)
      */
     void putc(char c)
     {
-        screen.putc(c);
+    	if(screen !is null)
+			screen.putc(c);
     }
     
     /**

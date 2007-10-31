@@ -27,10 +27,9 @@
 module lifetime;
 
 import std.stdarg;
+import std.stdlib;
+import std.stdio;
 import std.mem;
-
-extern(C) void* malloc(size_t s);
-extern(C) void  free(void* p);
 
 private
 {
@@ -71,6 +70,8 @@ private
  */
 extern (C) Object _d_newclass(ClassInfo ci)
 {
+	//writeln(ci.name);
+	
     void* p = malloc(ci.init.length);
 
     // initialize it

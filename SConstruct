@@ -42,6 +42,7 @@ def setupEnv(target, **kw_args):
 i586_env = setupEnv('i586-pc-elf',   YASMFLAGS = '-f elf', GDCFLAGS =   ' -fdoc-inc=docs/candydoc/candy.ddoc' +
                                                                         ' -fdoc-inc=docs/modules.ddoc' +
                                                                         ' -fversion=i586' +
+                                                                        ' -funittest' + 
                                                                         ' -Itriton' +
                                                                         ' -mno-red-zone' +
                                                                         ' -fno-exceptions' +
@@ -51,6 +52,7 @@ i586_env = setupEnv('i586-pc-elf',   YASMFLAGS = '-f elf', GDCFLAGS =   ' -fdoc-
 env = setupEnv('x86_64-pc-elf', YASMFLAGS = '-f elf64', GDCFLAGS =  ' -fdoc-inc=docs/candydoc/candy.ddoc' +
                                                                     ' -fdoc-inc=docs/modules.ddoc' +
                                                                     ' -fversion=x86_64' +
+                                                                    ' -funittest' + 
                                                                     ' -Itriton' +
                                                                     ' -mno-red-zone' +
                                                                     ' -fno-exceptions' +
@@ -72,6 +74,7 @@ kernel = SConscript('kernel/SConscript', exports='env')
 Depends(kernel, triton)
 Depends(neptune, triton)
 Depends(kernel, neptune)
+Depends(kernel, 'kernel/link/linker.ld');
 
 # Build the CD
 cd_env = Environment(BUILDERS={'CD': CDBuilder})

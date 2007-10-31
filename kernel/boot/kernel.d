@@ -10,6 +10,7 @@ module kernel.boot.kernel;
 
 import std.stdio;
 import std.mem;
+import std.modinit;
 import std.collection.queue;
 import std.stdlib;
 
@@ -50,14 +51,14 @@ byte[VirtualMemory.sizeof] alloc;
 const ulong LINEAR_MEM_BASE = 0xFFFF830000000000;
 
 /**
- * First function called in 64 bit mode D
+ * Starting function for D
  *
  * Params:
  *  loader = Pointer to the loader data struct - contains memory information
  */
 extern(C) void _main(LoaderData* loader)
 {
-    // Initialize important data structures
+	// Initialize important data structures
     mem_setup(loader);
     gdt_setup();
     tss_setup();
@@ -75,12 +76,34 @@ extern(C) void _main(LoaderData* loader)
     writeln("Hello D!");
 
     writefln("Memory Information:\n - Free: %016#X\n - Allocated: %016#X", pAlloc.sizeFree, pAlloc.sizeAllocated);
-
-    while(true)
+	
+	_moduleCtor();
+	_moduleUnitTests();
+	
+	while(true)
     {
     	char c = kb.getc();
     	putc(c);
     }
+}
+
+unittest
+{
+	writeln("\nType 'run'");
+	
+	char[255] buf;
+	size_t i = 0;
+	
+	while(i == 0 || buf[i-1] != '\n')
+	{
+		buf[i] = getc();
+		write(buf[i]);
+		i++;
+	}
+	
+	assert(buf[0] == 'r' && buf[1] == 'u' && buf[2] == 'n' && buf[3] == '\n', "Can't you follow directions?");
+	
+	writeln("nice work");
 }
 
 /**
@@ -216,6 +239,16 @@ extern(C)
     {
         screen.putc(c);
     }
+    
+    /**
+     * Get a character from the keyboard
+     *
+     * Returns: character typed
+     */
+	char getc()
+	{
+		return kb.getc();
+	}
     
     /**
      * Abort execution

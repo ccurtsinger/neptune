@@ -9,10 +9,9 @@
 
 module std.stdio;
 
+import std.stdlib;
 import std.integer;
 import std.stdarg;
-
-private extern(C) void putc(char c);
 
 /**
  * Write a string to screen
@@ -27,6 +26,35 @@ void write(char[] s)
         putc(c);
     }
 }
+
+/**
+ * Write a character to screen
+ *
+ * Params:
+ *  c = character to write
+ */
+void write(char c)
+{
+	putc(c);
+}
+
+/**
+ * Write an integer to screen (using radix = 10)
+ *
+ * Params:
+ *  i = integer to print
+ */
+void write(ulong i)
+{
+	size_t d = digits(i);
+	
+	char[] str = new char[d];
+	
+	itoa(i, str.ptr);
+	
+	write(str);
+}
+
 /**
  * Write a string to screen, followed by a newline
  *

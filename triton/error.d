@@ -1,30 +1,36 @@
 
 import std.stdio;
+import std.integer;
+
+void onError(char[] msg, char[] file, ulong line)
+{
+	write("\n  ");
+	write(msg);
+	write(" (");
+	write(file);
+	write(", line ");
+	write(line);
+	write(")\n");
+		
+	for(;;){}
+}
 
 extern (C) void _d_assert(char[] file, uint line)
 {
-    writefln("_d_assert(file: %s, line: %u)", file, line);
-    
-    for(;;){}
+	onError("assert failed", file, line);
 }
 
 extern (C) static void _d_assert_msg(char[] msg, char[] file, uint line)
 {
-    writefln("_d_assert_msg(file: %s, line: %u)\n  %s", file, line, msg);
-    
-    for(;;){}
+    onError(msg, file, line);
 }
 
 extern (C) void _d_array_bounds(char[] file, uint line)
 {
-    writefln("_d_array_bounds(file: %s, line: %u)", file, line);
-    
-    for(;;){}
+    onError("array index out of bounds", file, line);
 }
 
 extern (C) void _d_switch_error(char[] file, uint line)
 {
-    writefln("_d_switch_error(file: %s, line: %u)", file, line);
-    
-    for(;;){}
+	onError("switch error", file, line);
 }

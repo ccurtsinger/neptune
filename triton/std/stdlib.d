@@ -18,6 +18,9 @@ extern(C)
     ulong vtop(void* vAddr);
     bool map(ulong vAddr);
     
+    void putc(char c);
+    char getc();
+    
     void* malloc(size_t s);
     void  free(void* p);
 }

@@ -1,5 +1,6 @@
 module object;
 
+import std.stdlib;
 import std.mem;
 
 alias ulong size_t;
@@ -944,6 +945,21 @@ class Exception : Object
     }
 }
 
+/***********************
+ * Information about each module.
+ */
+class ModuleInfo
+{
+    char name[];
+    ModuleInfo importedModules[];
+    ClassInfo localClasses[];
+
+    uint flags;		// initialization state
+
+    void (*ctor)();
+    void (*dtor)();
+    void (*unitTest)();
+}
 
 extern (C) void _d_monitordelete(Object h, bool det)
 {

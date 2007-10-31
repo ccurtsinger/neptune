@@ -13,6 +13,10 @@ SECTIONS
 
     .data : AT(ADDR(.data) - 0xffffffff80000000 + 0x1000000)
     {
+		start_ctors = .;
+		*(.ctor*)
+		end_ctors = .;
+
         data = .;
 		*(.data)
 		. = ALIGN(4096);
@@ -20,7 +24,7 @@ SECTIONS
 
     .bss : AT(ADDR(.bss) - 0xffffffff80000000 + 0x1000000)
     {
-        bss = .;
+		stack = .;
 		*(.bss)
 		. = ALIGN(4096);
     }

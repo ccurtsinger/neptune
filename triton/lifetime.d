@@ -28,6 +28,8 @@ module lifetime;
 
 import std.stdarg;
 import std.mem;
+import std.stdlib;
+import std.stdio;
 
 extern(C) void* malloc(size_t s);
 extern(C) void  free(void* p);

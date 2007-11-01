@@ -1,4 +1,3 @@
-
 /**
  * C's &lt;stdarg.h&gt;
  * Authors: Hauke Duden and Walter Bright, Digital Mars, www.digitalmars.com

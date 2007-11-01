@@ -2,10 +2,9 @@
  * Basic screen output and keyboard input functions
  *
  * Authors: Charlie Curtsinger
- * Date: October 29th, 2007
- * Version: 0.1a
+ * Date: October 31st, 2007
+ * Version: 0.1b
  */
-
 
 module std.stdio;
 
@@ -14,7 +13,12 @@ import std.integer;
 import std.stdarg;
 import std.collection.stack;
 
-char[] readln()
+/**
+ * Read a line from the keyboard
+ *
+ * Returns: the array of read characters
+ */
+char[] readln(char delimiter = '\n')
 {
     auto buf = new FastStack!(char);
     	
@@ -25,7 +29,7 @@ char[] readln()
         c = getc();
         putc(c);
         buf.push(c);
-    } while(c != '\n');
+    } while(c != delimiter);
     
     char[] line = new char[buf.size()];
     
@@ -33,6 +37,8 @@ char[] readln()
     {
         line[i-1] = buf.pop();
     }
+    
+    delete buf;
     
     return line;
 }

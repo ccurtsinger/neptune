@@ -1,3 +1,11 @@
+/**
+ * Definition for base langauge types
+ *
+ * Authors: Walter Bright, Sean Kelly, Charlie Curtsinger
+ * Date: October 31st, 2007
+ * Version: 0.1b
+ */
+
 module object;
 
 import std.stdlib;
@@ -5,7 +13,6 @@ import std.mem;
 
 alias ulong size_t;
 alias long  ptrdiff_t;
-
 alias size_t hash_t;
 
 extern (C) Object _d_newclass(ClassInfo ci);

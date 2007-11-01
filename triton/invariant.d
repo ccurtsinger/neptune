@@ -1,3 +1,10 @@
+/**
+ * Language support for invariant types
+ *
+ * Authors: Walter Bright, Sean Kelly, Charlie Curtsinger
+ * Date: October 31st, 2007
+ * Version: 0.1b
+ */
 
 /*
  * Placed into the Public Domain
@@ -5,11 +12,14 @@
  * www.digitalmars.com
  */
 
+/**
+ * Does invariant things.  Need to figure this out.
+ */
 void _d_invariant(Object o)
 {
     ClassInfo c;
 
-    //printf("__d_invariant(%p)\n", o);
+    //writefln("__d_invariant(%016#X)", cast(ulong)o);
 
     // BUG: needs to be filename/line of caller, not library routine
     assert(o !is null);	// just do null check, not invariant check

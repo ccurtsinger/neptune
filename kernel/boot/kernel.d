@@ -2,8 +2,8 @@
  * D entry point for the Neptune Kernel
  *
  * Authors: Charlie Curtsinger
- * Date: October 29th, 2007
- * Version: 0.1a
+ * Date: October 31st, 2007
+ * Version: 0.1b
  */
 
 module kernel.boot.kernel;
@@ -45,8 +45,9 @@ Keyboard kb;
 /// Screen device
 Screen screen;
 
+/// Paging abstraction
 VirtualMemory v;
-byte[VirtualMemory.sizeof] alloc;
+byte[VirtualMemory.sizeof] alloc; // Space allocated for the virtual memory class
 
 const ulong LINEAR_MEM_BASE = 0xFFFF830000000000;
 
@@ -79,6 +80,7 @@ extern(C) void _main(LoaderData* loader)
 
     writefln("Memory Information:\n - Free: %016#X\n - Allocated: %016#X", pAlloc.sizeFree, pAlloc.sizeAllocated);
 	
+	// Run module constructors and unit tests
 	_moduleCtor();
 	_moduleUnitTests();
 	
@@ -89,7 +91,7 @@ extern(C) void _main(LoaderData* loader)
     {
     	char[] line = readln();
     	
-    	writefln("You typed: ", line);
+    	writef("You typed: ", line);
     }
 }
 

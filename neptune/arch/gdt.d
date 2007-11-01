@@ -2,8 +2,8 @@
  * GDT Abstraction and Utilities
  *
  * Authors: Charlie Curtsinger
- * Date: October 27th, 2007
- * Version: 0.1a
+ * Date: October 31st, 2007
+ * Version: 0.1b
  */
 
 module neptune.arch.gdt;

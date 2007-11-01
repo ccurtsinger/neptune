@@ -2,8 +2,8 @@
  * Basic abstraction for a memory-mapped screen
  *
  * Authors: Charlie Curtsinger
- * Date: October 29th, 2007
- * Version: 0.1a
+ * Date: October 31st, 2007
+ * Version: 0.1b
  */
 
 module kernel.dev.screen;
@@ -143,7 +143,7 @@ class Screen
             cursor_y++;
         }
 
-        if(cursor_y >= width)
+        if(cursor_y >= height)
         {
             // Copy a screen up, but offset by one line.  Move the line after the console up one (we cleared it in clear_screen())
             memcpy(mem, mem + width * 2, 2 * width * height);

@@ -10,6 +10,12 @@ MODULES =
 	$(MODULE neptune.arch.paging)
 	$(MODULE neptune.arch.tss)
 
+	$(MODULE triton.array)
+	$(MODULE triton.cast)
+	$(MODULE triton.error)
+	$(MODULE triton.genobj)
+	$(MODULE triton.invariant)
+	$(MODULE triton.lifetime)
 	$(MODULE std.bit)
 	$(MODULE std.bitarray)
 	$(MODULE std.integer)

@@ -4,8 +4,8 @@
  * Based on std.bitarray (Phobos, Walter Bright) and tango.core.BitArray (Tango, Sean Kelly and Walter Bright)
  *
  * Authors: Charlie Curtsinger
- * Date: October 29th, 2007
- * Version: 0.1a
+ * Date: October 31st, 2007
+ * Version: 0.1b
  */
 
 module std.bitarray;

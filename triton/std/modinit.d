@@ -1,9 +1,11 @@
 /**
  * Functions for constructing, testing, and destructing modules
  *
- * Authors: Charlie Curtsinger
- * Date: October 30th, 2007
- * Version: 0.1a
+ * Based on module unit test support in Phobos (Walter Bright)
+ *
+ * Authors: Charlie Curtsinger, Walter Bright
+ * Date: October 31st, 2007
+ * Version: 0.1b
  */
 
 module std.modinit;

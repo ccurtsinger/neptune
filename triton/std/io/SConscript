@@ -1,0 +1,6 @@
+# Grab the build environment
+Import('env')
+
+obj_list  = [env.gdc('Stream.o', 'Stream.d')]
+
+Return('obj_list')

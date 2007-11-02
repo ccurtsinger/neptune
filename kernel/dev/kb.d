@@ -11,13 +11,14 @@ module kernel.dev.kb;
 import std.port;
 import std.stdio;
 import std.collection.queue;
+import std.io.Stream;
 
 import neptune.arch.idt;
 
 /**
  * Keyboard abstraction with keymap support
  */
-class Keyboard
+class Keyboard : InputStream
 {
     /**
      * Struct to hold keycode decoding information

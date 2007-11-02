@@ -11,7 +11,6 @@ module kernel.boot.kernel;
 import std.stdio;
 import std.mem;
 import std.modinit;
-import std.collection.stack;
 import std.stdlib;
 
 import neptune.arch.gdt;
@@ -83,16 +82,17 @@ extern(C) void _main(LoaderData* loader)
 	// Run module constructors and unit tests
 	_moduleCtor();
 	_moduleUnitTests();
-	
-	// Need to do this so the template instance gets linked in for readln
-	auto b = new FastStack!(char);
+
+	screen.writeln("Yay, streams work!");
 	
 	while(true)
-    {
-    	char[] line = readln();
-    	
-    	writef("You typed: " ~ line);
-    }
+	{
+		char[] line = kb.readln(&screen.putc);
+		screen.write(line);
+		delete line;
+	}
+	
+	for(;;){}
 }
 
 unittest

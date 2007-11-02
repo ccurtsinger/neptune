@@ -12,6 +12,7 @@ obj_list += [env.gdc('stdio.o',    		'stdio.d')]
 obj_list += [env.gdc('stdlib.o',   		'stdlib.d')]
 
 obj_list += SConscript('collection/SConscript', exports='env')
+obj_list += SConscript('io/SConscript', exports='env')
 obj_list += SConscript('typeinfo/SConscript', exports='env')
 
 Return('obj_list')

@@ -10,6 +10,7 @@ module kernel.dev.screen;
 
 import std.port;
 import std.mem;
+import std.io.Stream;
 
 /// Possible foreground and background colors
 enum Color
@@ -29,17 +30,25 @@ enum Color
     lightred,
     lightmagenta,
     lightbrown,
-    white,
-    none
+    white
 }
 
 /**
  * Screen abstraction
  */
-class Screen
+class Screen : OutputStream
 {
     /// Base address of the screen memory
     private char* mem;
+    
+    /// Current foreground color
+    private Color fg;
+    
+    /// Current background color
+    private Color bg;
+    
+    /// Current composite color
+    private char color;
     
     /// Screen width in characters
     private size_t width;
@@ -65,7 +74,7 @@ class Screen
      *  height = height of the screen
      *  tabSize = tab size
      */
-    public this(char* mem = cast(char*)0xFFFF8300000B8000, size_t width = 80, size_t height = 25, size_t tabSize = 4)
+    public this(char* mem = cast(char*)0xFFFF8300000B8000, Color fg = Color.white, Color bg = Color.black, size_t width = 80, size_t height = 25, size_t tabSize = 4)
     {
         this.mem = mem;
         this.width = width;
@@ -74,6 +83,15 @@ class Screen
         
         cursor_x = 0;
         cursor_y = 0;
+        
+        setColor(fg, bg);
+    }
+    
+    public void setColor(Color fg, Color bg)
+    {
+    	this.fg = fg;
+    	this.bg = bg;
+    	this.color = (bg << 4) + fg;
     }
 
     /**
@@ -84,20 +102,8 @@ class Screen
      *  fg = foreground color for the character (not applied to special characters)
      *  bg = background color for the character (not applied to special characters)
      */
-    public void putc(char c, Color fg = Color.none, Color bg = Color.none)
+    public void putc(char c)
     {
-        char color = mem[1];
-        
-        if(fg != Color.none)
-        {
-            color = (color & 0xF0) + fg;
-        }
-        
-        if(bg != Color.none)
-        {
-            color = (color * 0x0F) + (bg << 4);
-        }
-        
         if(c == '\n')
         {
             cursor_x = 0;

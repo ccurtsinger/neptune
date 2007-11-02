@@ -5,7 +5,7 @@ module std.typeinfo.ti_void;
 
 class TypeInfo_v : TypeInfo
 {
-    char[] toUtf8() { return "void"; }
+    char[] toString() { return "void"; }
 
     hash_t getHash(void *p)
     {

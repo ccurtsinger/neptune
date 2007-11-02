@@ -5,7 +5,7 @@ module std.typeinfo.ti_real;
 
 class TypeInfo_e : TypeInfo
 {
-    char[] toUtf8() { return "real"; }
+    char[] toString() { return "real"; }
 
     hash_t getHash(void *p)
     {

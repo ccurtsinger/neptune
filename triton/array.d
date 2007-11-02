@@ -186,6 +186,13 @@ extern (C) byte[] _d_arrayappendcTp(TypeInfo ti, inout byte[] x, void *argp)
  */
 extern (C) byte[] _d_arraycatnT(TypeInfo ti, uint n, ...)
 {
+    write("_d_arraycatnT(");
+    write(ti.toString());
+    write(", ");
+    write(cast(ulong)n);
+    write(", ...)\n");
+    for(;;){}
+    
     void* a;
     byte[] b;
     size_t length;
@@ -223,4 +230,33 @@ extern (C) byte[] _d_arraycatnT(TypeInfo ti, uint n, ...)
     }
 
     return (cast(byte*)a)[0..length];
+}
+
+/**
+ * Helper function for casting dynamic arrays
+ *
+ * Params:
+ *  tsize = size of elements in the target array
+ *  fsize = size of elements in the source array
+ *  a = array to cast
+ *
+ * Returns: array a with new length set
+ */
+extern (C) void[] _d_arraycast(size_t tsize, size_t fsize, void[] a)
+{
+    auto length = a.length;
+
+    auto nbytes = length * fsize;
+    
+    if (nbytes % tsize != 0)
+    {
+        onError("array cast misalignment");
+        //throw new Exception("array cast misalignment");
+    }
+    
+    length = nbytes / tsize;
+    
+    *cast(size_t *)&a = length; // jam new length
+    
+    return a;
 }

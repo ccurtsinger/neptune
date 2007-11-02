@@ -91,7 +91,7 @@ extern(C) void _main(LoaderData* loader)
     {
     	char[] line = readln();
     	
-    	writef("You typed: ", line);
+    	writef("You typed: " ~ line);
     }
 }
 

@@ -8,7 +8,7 @@ import std.mem;
 
 class TypeInfo_Ai : TypeInfo
 {
-    char[] toUtf8() { return "int[]"; }
+    char[] toString() { return "int[]"; }
 
     hash_t getHash(void *p)
     {   int[] s = *cast(int[]*)p;
@@ -77,7 +77,7 @@ class TypeInfo_Ai : TypeInfo
 
 class TypeInfo_Ak : TypeInfo_Ai
 {
-    char[] toUtf8() { return "uint[]"; }
+    char[] toString() { return "uint[]"; }
 
     int compare(void *p1, void *p2)
     {
@@ -110,7 +110,7 @@ class TypeInfo_Ak : TypeInfo_Ai
 
 class TypeInfo_Aw : TypeInfo_Ak
 {
-    char[] toUtf8() { return "dchar[]"; }
+    char[] toString() { return "dchar[]"; }
 
     TypeInfo next()
     {

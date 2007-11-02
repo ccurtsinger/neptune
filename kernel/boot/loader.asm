@@ -2,7 +2,7 @@ BITS 64
 
 global _loader           ; making entry point visible to linker
 extern _setup, _main
-extern data, stack
+extern data
 extern start_ctors, end_ctors
 extern _Dmodule_ref
 
@@ -44,3 +44,4 @@ _loader_data:
 section .bss
     ; Reserve an 8K kernel stack
     resb 0x2000
+    stack:

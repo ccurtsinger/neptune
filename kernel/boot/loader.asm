@@ -43,5 +43,5 @@ _loader_data:
 
 section .bss
     ; Reserve an 8K kernel stack
-    resb 0x2000
+    resb 0x4000
     stack:

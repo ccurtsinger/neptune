@@ -11,7 +11,7 @@ module kernel.dev.kb;
 import std.port;
 import std.stdio;
 import std.collection.queue;
-import std.io.Stream;
+import std.io.InputStream;
 
 import neptune.arch.idt;
 
@@ -182,6 +182,7 @@ class Keyboard : InputStream
 	{
 	    delete chars;
 	}
+
 	
 	/**
 	 * Get the next keypress, or wait for one if the chars buffer is empty

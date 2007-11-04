@@ -3,7 +3,7 @@
  *
  * Authors: Charlie Curtsinger
  * Date: October 31st, 2007
- * Version: 0.1b
+ * Version: 0.2a
  */
 
 module kernel.boot.kernel;
@@ -75,19 +75,17 @@ extern(C) void _main(LoaderData* loader)
     
     screen.clear();
 
-    writeln("Hello D!");
+    screen.write("Hello D!").newline;
 
     writefln("Memory Information:\n - Free: %016#X\n - Allocated: %016#X", pAlloc.sizeFree, pAlloc.sizeAllocated);
 	
 	// Run module constructors and unit tests
 	_moduleCtor();
 	_moduleUnitTests();
-
-	screen.writeln("Yay, streams work!");
-	
+		
 	while(true)
 	{
-		char[] line = kb.readln(&screen.putc);
+		char[] line = kb.readln(screen);
 		screen.write(line);
 		delete line;
 	}

@@ -10,7 +10,7 @@ module kernel.dev.screen;
 
 import std.port;
 import std.mem;
-import std.io.Stream;
+import std.io.OutputStream;
 
 /// Possible foreground and background colors
 enum Color

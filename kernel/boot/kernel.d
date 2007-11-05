@@ -8,7 +8,6 @@
 
 module kernel.boot.kernel;
 
-import std.stdio;
 import std.mem;
 import std.modinit;
 import std.stdlib;
@@ -58,8 +57,6 @@ const ulong LINEAR_MEM_BASE = 0xFFFF830000000000;
  */
 extern(C) void _main(LoaderData* loader)
 {
-	screen = null;
-	
 	// Initialize important data structures
     mem_setup(loader);
     gdt_setup();
@@ -72,12 +69,15 @@ extern(C) void _main(LoaderData* loader)
     idt.install();
     
     screen = new Screen();
-    
     screen.clear();
+    
+    System.setOutput(screen);
+    System.setError(screen);
+    System.setInput(kb);
 
-    screen.write("Hello D!").newline;
+    System.output.write("Hello Neptune!").newline;
 
-    writefln("Memory Information:\n - Free: %016#X\n - Allocated: %016#X", pAlloc.sizeFree, pAlloc.sizeAllocated);
+    System.output.writef("Memory Information:\n - Free: ", cast(void*)pAlloc.sizeFree, "\n - Allocated: ", cast(void*)pAlloc.sizeAllocated).newline;
 	
 	// Run module constructors and unit tests
 	_moduleCtor();
@@ -85,31 +85,12 @@ extern(C) void _main(LoaderData* loader)
 		
 	while(true)
 	{
-		char[] line = kb.readln(screen);
-		screen.write(line);
+		char[] line = System.input.readln(screen);
+		System.output.write(line);
 		delete line;
 	}
 	
 	for(;;){}
-}
-
-unittest
-{
-	writeln("\nType 'run'");
-	
-	char[255] buf;
-	size_t i = 0;
-	
-	while(i == 0 || buf[i-1] != '\n')
-	{
-		buf[i] = getc();
-		write(buf[i]);
-		i++;
-	}
-	
-	assert(buf[0] == 'r' && buf[1] == 'u' && buf[2] == 'n' && buf[3] == '\n', "Can't you follow directions?");
-	
-	writeln("nice work");
 }
 
 /**
@@ -220,15 +201,15 @@ void pagefault_handler(void* p, ulong interrupt, ulong error, InterruptStack* st
 	    "mov %%cr2, %[addr]" : [addr] "=a" vAddr;
     }
 
-    writef("\nPage Fault: %016#X\nMapping...", vAddr);
+    System.output.writef("\nPage Fault: ", cast(void*)vAddr, "\nMapping...");
 
     if(v.map(cast(void*)vAddr))
     {
-        writeln("done");
+        System.output.write("done").newline;
     }
     else
     {
-        writeln("failed");
+        System.output.write("failed").newline;
         for(;;){}
     }
 }
@@ -262,7 +243,7 @@ extern(C)
      */
     void abort()
     {
-        write("abort!\n");
+        System.output.write("abort!").newline;
         for(;;){}
     }
 

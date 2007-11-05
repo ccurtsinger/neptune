@@ -990,3 +990,5 @@ extern (C) void _d_monitordelete(Object h, bool det)
         setMonitor(h, null);
     }*/
 }
+
+public import std.System;

@@ -9,16 +9,15 @@
  
 module std.System;
 
-import std.io.InputStream;
-import std.io.OutputStream;
+import std.io.CharStream;
 
 class System
 {
-    private static InputStream stdin = null;
-    private static OutputStream stdout = null;
-    private static OutputStream stderr = null;
+    private static CharInputStream stdin = null;
+    private static CharOutputStream stdout = null;
+    private static CharOutputStream stderr = null;
     
-    public static InputStream input()
+    public static CharInputStream input()
     in
     {
         assert(stdin !is null, "Attempted to use null input stream");
@@ -28,7 +27,7 @@ class System
         return stdin;
     }
     
-    public static OutputStream output()
+    public static CharOutputStream output()
     in
     {
         assert(stdout !is null, "Attempted to use null output stream");
@@ -38,7 +37,7 @@ class System
         return stdout;
     }
     
-    public static OutputStream error()
+    public static CharOutputStream error()
     in
     {
         assert(stderr !is null, "Attempted to use null error stream");
@@ -48,17 +47,17 @@ class System
         return stderr;
     }
     
-    public static void setInput(InputStream stdin)
+    public static void setInput(CharInputStream stdin)
     {
         this.stdin = stdin;
     }
     
-    public static void setOutput(OutputStream stdout)
+    public static void setOutput(CharOutputStream stdout)
     {
         this.stdout = stdout;
     }
     
-    public static void setError(OutputStream stderr)
+    public static void setError(CharOutputStream stderr)
     {
         this.stderr = stderr;
     }

@@ -10,7 +10,7 @@ module kernel.dev.screen;
 
 import std.port;
 import std.mem;
-import std.io.OutputStream;
+import std.io.CharStream;
 
 /// Possible foreground and background colors
 enum Color
@@ -36,7 +36,7 @@ enum Color
 /**
  * Screen abstraction
  */
-class Screen : OutputStream
+class Screen : CharOutputStream
 {
     /// Base address of the screen memory
     private char* mem;
@@ -102,7 +102,7 @@ class Screen : OutputStream
      *  fg = foreground color for the character (not applied to special characters)
      *  bg = background color for the character (not applied to special characters)
      */
-    public void putc(char c)
+    public Screen write(char c)
     {
         if(c == '\n')
         {
@@ -157,6 +157,8 @@ class Screen : OutputStream
         }
 
         updateCursor();
+        
+        return this;
     }
     
     /**

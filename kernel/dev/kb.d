@@ -11,14 +11,14 @@ module kernel.dev.kb;
 import std.port;
 import std.stdio;
 import std.collection.queue;
-import std.io.InputStream;
+import std.io.CharStream;
 
 import neptune.arch.idt;
 
 /**
  * Keyboard abstraction with keymap support
  */
-class Keyboard : InputStream
+class Keyboard : CharInputStream
 {
     /**
      * Struct to hold keycode decoding information
@@ -189,7 +189,7 @@ class Keyboard : InputStream
 	 *
 	 * Returns: The next character from the keyboard
 	 */
-	public char getc()
+	public char read()
 	{
 	    volatile while(chars.size() == 0)
 	    {

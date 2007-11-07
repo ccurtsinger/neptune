@@ -1,9 +1,12 @@
 # Grab the build environment
 Import('env')
 
-obj_list  = [env.gdc('InputStream.o', 	'InputStream.d')]
-obj_list += [env.gdc('OutputStream.o', 	'OutputStream.d')]
-obj_list += [env.gdc('Readable.o', 		'Readable.d')]
-obj_list += [env.gdc('Writable.o', 		'Writable.d')]
+#obj_list  = [env.gdc('InputStream.o', 	'InputStream.d')]
+#obj_list += [env.gdc('OutputStream.o', 	'OutputStream.d')]
+#obj_list += [env.gdc('Readable.o', 		'Readable.d')]
+#obj_list += [env.gdc('Writable.o', 		'Writable.d')]
+
+obj_list  = [env.gdc('CharStream.o', 	'CharStream.d')]
+obj_list += [env.gdc('Stream.o', 		'Stream.d')]
 
 Return('obj_list')

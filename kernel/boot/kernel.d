@@ -225,7 +225,7 @@ extern(C)
     void putc(char c)
     {
     	if(screen !is null)
-			screen.putc(c);
+			screen.write(c);
     }
     
     /**
@@ -235,7 +235,7 @@ extern(C)
      */
 	char getc()
 	{
-		return kb.getc();
+		return kb.read();
 	}
     
     /**

@@ -11,6 +11,7 @@ module kernel.boot.kernel;
 import std.mem;
 import std.modinit;
 import std.stdlib;
+import std.stdio;
 
 import neptune.arch.gdt;
 import neptune.arch.tss;
@@ -21,6 +22,8 @@ import kernel.dev.screen;
 import kernel.dev.kb;
 import kernel.mem.physical;
 import kernel.mem.virtual;
+import kernel.task.Scheduler;
+import kernel.task.Thread;
 
 /// Physical memory allocator that provides pages
 PhysicalAllocator pAlloc;
@@ -46,6 +49,8 @@ Screen screen;
 /// Paging abstraction
 VirtualMemory v;
 byte[VirtualMemory.sizeof] alloc; // Space allocated for the virtual memory class
+
+Scheduler scheduler;
 
 const ulong LINEAR_MEM_BASE = 0xFFFF830000000000;
 
@@ -82,15 +87,66 @@ extern(C) void _main(LoaderData* loader)
 	// Run module constructors and unit tests
 	_moduleCtor();
 	_moduleUnitTests();
+	
+	spawn_thread(cast(void*)0x60000000, &thread_function);
+	spawn_thread(cast(void*)0x50000000, &thread_function);
+	spawn_thread(cast(void*)0x40000000, &thread_function);
 		
 	while(true)
 	{
 		char[] line = System.input.readln(screen);
 		System.output.write(line);
 		delete line;
+		writefln("typing in thread %u", scheduler.getThreadID());
+		yield();
 	}
 	
 	for(;;){}
+}
+
+void thread_function()
+{
+    while(true)
+    {
+        writefln("hello from thread %u", scheduler.getThreadID());
+        yield();
+    }
+}
+
+void yield()
+{
+    asm
+    {
+        "int $255";
+    }
+}
+
+ulong spawn_thread(void* stack, void function() thread)
+{
+    ulong result;
+    
+    ulong page_base = cast(ulong)stack;
+    ulong mod = page_base % FRAME_SIZE;
+    
+    if(mod == 0)
+        page_base -= FRAME_SIZE;
+    else
+        page_base -= mod;
+        
+    map(page_base);
+    
+    asm
+    {
+        "int $254" : "=a" result, "=c" thread : "b" stack, "c" thread;
+    }
+    
+    if(result == 0)
+    {
+        thread();
+        assert(false, "Unhandled thread termination");
+    }
+    
+    return result;
 }
 
 /**
@@ -182,6 +238,12 @@ void idt_setup()
 	// Initialize keyboard data and install the interrupt handler
 	kb = new Keyboard();
     idt.setHandler(33, &kb.handler);
+    
+    Thread t = new Thread(1, 0);
+    scheduler = new Scheduler(t);
+    
+    idt.setHandler(255, &scheduler.task_switcher);
+    idt.setHandler(254, &scheduler.create_thread);
 }
 
 /**
@@ -201,7 +263,7 @@ void pagefault_handler(void* p, ulong interrupt, ulong error, InterruptStack* st
 	    "mov %%cr2, %[addr]" : [addr] "=a" vAddr;
     }
 
-    System.output.writef("\nPage Fault: ", cast(void*)vAddr, "\nMapping...");
+    writef("\nPage Fault: %#X", vAddr, "\nMapping...");
 
     if(v.map(cast(void*)vAddr))
     {

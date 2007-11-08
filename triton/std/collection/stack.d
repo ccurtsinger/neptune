@@ -192,19 +192,14 @@ class FastStack(T, bool compact = true, size_t stride = 16)
 		
 		static if(compact)
 		{
-			if(allocated - count >= stride)
+			if(allocated - count >= stride && allocated > stride)
 			{
-				T[] newdata = null;
+				T[] newdata = new T[allocated - stride];
 				
-				if(allocated > stride)
-				{
-					newdata = new T[allocated - stride];
-				
-					for(size_t i=0; i<count; i++)
-					{
-						newdata[i] = data[i];
-					}
-				}
+                for(size_t i=0; i<count; i++)
+                {
+                    newdata[i] = data[i];
+                }
 				
 				delete data;
 				

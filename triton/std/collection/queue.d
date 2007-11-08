@@ -8,6 +8,8 @@
 
 module std.collection.queue;
 
+import std.stdio;
+
 /**
  * Queue implementation based on a linked list method.
  * Uses n*T.sizeof memory for n elements
@@ -183,15 +185,9 @@ class FastQueue(T, bool compact = true, size_t stride = 16)
 	        
 	        if(data !is null)
 	        {
-	            size_t index = base;
-	            
 	            for(size_t i=0; i<count; i++)
 	            {
-	                newdata[index] = base;
-	                index++;
-	                
-	                if(index >= allocated)
-                        index = 0;
+	                newdata[i] = data[(base + i)%allocated];
 	            }
 	            
 	            base = 0;
@@ -239,27 +235,16 @@ class FastQueue(T, bool compact = true, size_t stride = 16)
 	    
 	    static if(compact)
 	    {
-	        if(allocated - count >= stride)
+	        if(allocated - count >= stride && allocated > stride)
 	        {
-	            T[] newdata = null;
-	            
-	            if(allocated > stride)
-	            {
-	                newdata = new T[allocated - stride];
+	            T[] newdata = new T[allocated - stride];
 	                
-	                size_t index = base;
-	            
-                    for(size_t i=0; i<count; i++)
-                    {
-                        newdata[index] = base;
-                        index++;
-                        
-                        if(index >= allocated)
-                            index = 0;
-                    }
-                    
-                    base = 0;
-	            }
+                for(size_t i=0; i<count; i++)
+                {
+                    newdata[i] = data[(base + i)%allocated];
+                }
+                
+                base = 0;
 	            
 	            delete data;
 	            allocated -= stride;

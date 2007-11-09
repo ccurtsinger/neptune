@@ -26,6 +26,8 @@ import kernel.mem.virtual;
 import kernel.task.Scheduler;
 import kernel.task.Thread;
 
+const ulong LINEAR_MEM_BASE = 0xFFFF830000000000;
+
 /// Physical memory allocator that provides pages
 PhysicalAllocator pAlloc;
 
@@ -49,13 +51,10 @@ Screen screen;
 
 AddressSpace mem;
 
-/// Paging abstraction
-VirtualMemory v;
-byte[VirtualMemory.sizeof] alloc; // Space allocated for the virtual memory class
-
 Scheduler scheduler;
 
-const ulong LINEAR_MEM_BASE = 0xFFFF830000000000;
+/// Paging abstraction
+VirtualMemory v;
 
 /**
  * Starting function for D
@@ -168,7 +167,8 @@ void mem_setup(LoaderData* loader)
     pAlloc.add(loader.upperMemBase, loader.usedMemBase - loader.upperMemBase);
     pAlloc.add(loader.usedMemBase + loader.usedMemSize, loader.upperMemSize - loader.usedMemBase - loader.usedMemSize + loader.upperMemBase);
 
-    v = new(alloc.ptr) VirtualMemory(loader.L4);
+    //v = new(alloc.ptr) VirtualMemory(loader.L4);
+    v.init(loader.L4);
 
     // Map a 16k interrupt stack for IST1
     map(0x7FFFC000);

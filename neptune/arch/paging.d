@@ -33,7 +33,7 @@ import std.mem;
 /**
  * Virtual memory class for page table management
  */
-class VirtualMemory
+struct VirtualMemory
 {
     /// Pointer to the top level page table's first entry
     PageEntry* pagetable;
@@ -44,7 +44,7 @@ class VirtualMemory
      * Params:
      *  p = physical address of the top-level page table
      */
-    this(ulong p)
+    void init(ulong p)
     {
         pagetable = cast(PageEntry*)ptov(p);
     }
@@ -60,12 +60,12 @@ class VirtualMemory
      *
      * Returns: pointer to the allocated memory
      */
-    new(size_t size)
+    /*new(size_t size)
     {
         void* p = malloc(size);
         
         return p;
-    }
+    }*/
     
     /**
      * In-place allocator for the class
@@ -78,10 +78,10 @@ class VirtualMemory
      *
      * Returns: the passed in pointer, triggering an in-place allocation
      */
-    new(size_t size, void* p)
+    /*new(size_t size, void* p)
     {
         return p;
-    }
+    }*/
     
     /**
      * Map a page into this virtual address space

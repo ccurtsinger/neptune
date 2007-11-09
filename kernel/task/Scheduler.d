@@ -6,7 +6,6 @@ import std.collection.queue;
 import neptune.arch.idt;
 
 import kernel.task.Thread;
-import std.stdio;
 
 class Scheduler
 {

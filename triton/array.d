@@ -36,7 +36,6 @@
 module array;
 
 import error;
-import std.stdio;
 import std.stdlib;
 import std.stdarg;
 import std.mem;
@@ -186,12 +185,7 @@ extern (C) byte[] _d_arrayappendcTp(TypeInfo ti, inout byte[] x, void *argp)
  */
 extern (C) byte[] _d_arraycatnT(TypeInfo ti, uint n, ...)
 {
-    write("_d_arraycatnT(");
-    write(ti.toString());
-    write(", ");
-    write(cast(ulong)n);
-    write(", ...)\n");
-    for(;;){}
+    System.output.writef("_d_arraycatnT(%s, %u, ...)", ti.toString(), n).newline;
     
     void* a;
     byte[] b;

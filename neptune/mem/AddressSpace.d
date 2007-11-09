@@ -7,18 +7,17 @@
  */
 
 import std.stdlib;
-import std.stdio;
 
 import neptune.arch.paging;
 
 class AddressSpace
 {
-	VirtualMemory mem;
+	VirtualMemory* mem;
 	
 	void* nextStack;
 	size_t stackSize;
 	
-	this(VirtualMemory mem)
+	this(VirtualMemory* mem)
 	{
 		this.mem = mem;
 		nextStack = cast(void*)0x100000000;

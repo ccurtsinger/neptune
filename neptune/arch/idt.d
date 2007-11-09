@@ -9,7 +9,6 @@
 module neptune.arch.idt;
 
 import std.port;
-import std.stdio;
 import std.integer;
 
 /// Array of isr addresses
@@ -296,28 +295,30 @@ struct InterruptStack
  */
 void _int_handler(void* p, ulong interrupt, ulong error, InterruptStack* stack)
 {
-	writefln("\nInterrupt %u", interrupt);
-	writefln("Error Code: %#X", stack.error);
-	writefln("  Context\n  -------");
-	writefln("  rip    %#016X", stack.rip);
-	writefln("  rsp    %#016X", stack.rsp);
-	writefln("  rbp    %#016X", stack.rbp);
-	/*writefln("  rax    %#016X", stack.rax);
-	writefln("  rbx    %#016X", stack.rbx);
-	writefln("  rcx    %#016X", stack.rcx);
-	writefln("  rdx    %#016X", stack.rdx);
-	writefln("  rsi    %#016X", stack.rsi);
-	writefln("  rdi    %#016X", stack.rdi);
-	writefln("  r8     %#016X", stack.r8);
-	writefln("  r9     %#016X", stack.r9);
-	writefln("  r10    %#016X", stack.r10);
-	writefln("  r11    %#016X", stack.r11);
-	writefln("  r12    %#016X", stack.r12);
-	writefln("  r13    %#016X", stack.r13);
-	writefln("  r14    %#016X", stack.r14);
-	writefln("  r15    %#016X", stack.r15);*/
-	writefln("  ss     %#02X", stack.ss);
-	writefln("  cs     %#02X", stack.cs);
+	System.output.writef("\nInterrupt %u", interrupt).newline;
+	System.output.writef("Error Code: %#X", stack.error).newline;
+	System.output.writef("  Context\n  -------").newline;
+	System.output.writef("  rip    %#016X", stack.rip).newline;
+	System.output.writef("  rsp    %#016X", stack.rsp).newline;
+	System.output.writef("  rbp    %#016X", stack.rbp).newline;
+	/*
+	System.output.writef("  rax    %#016X", stack.rax).newline;
+	System.output.writef("  rbx    %#016X", stack.rbx).newline;
+	System.output.writef("  rcx    %#016X", stack.rcx).newline;
+	System.output.writef("  rdx    %#016X", stack.rdx).newline;
+	System.output.writef("  rsi    %#016X", stack.rsi).newline;
+	System.output.writef("  rdi    %#016X", stack.rdi).newline;
+	System.output.writef("  r8     %#016X", stack.r8).newline;
+	System.output.writef("  r9     %#016X", stack.r9).newline;
+	System.output.writef("  r10    %#016X", stack.r10).newline;
+	System.output.writef("  r11    %#016X", stack.r11).newline;
+	System.output.writef("  r12    %#016X", stack.r12).newline;
+	System.output.writef("  r13    %#016X", stack.r13).newline;
+	System.output.writef("  r14    %#016X", stack.r14).newline;
+	System.output.writef("  r15    %#016X", stack.r15).newline;
+	*/
+	System.output.writef("  ss     %#02X", stack.ss).newline;
+	System.output.writef("  cs     %#02X", stack.cs).newline;
 
 	for(;;){}
 }
@@ -333,7 +334,7 @@ void _int_handler(void* p, ulong interrupt, ulong error, InterruptStack* stack)
  */
 void _irq_handler(void* p, ulong interrupt, ulong error, InterruptStack* stack)
 {
-	writefln("\nIRQ %u", interrupt);
+	System.output.writef("\nIRQ %u", interrupt).newline;
 
 	// Acknowledge irq on PIC1
 	outp(PIC1, PIC_EOI);

@@ -8,7 +8,6 @@
  
 module error;
  
-import std.stdio;
 import std.integer;
 
 /**
@@ -21,19 +20,14 @@ import std.integer;
  */
 void onError(char[] msg, char[] file = null, ulong line = 0)
 {
-	write("\n  ");
-	write(msg);
+	System.output.newline.write(msg);
 	
 	if(file !is null && line > 0)
 	{
-		write(" (");
-		write(file);
-		write(", line ");
-		write(line);
-		write(")");
+	    System.output.writef(" (%s, line %u)", file, line);
 	}
 	
-	write("\n");
+	System.output.newline;
 		
 	for(;;){}
 }

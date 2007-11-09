@@ -11,7 +11,6 @@ module kernel.boot.kernel;
 import std.mem;
 import std.modinit;
 import std.stdlib;
-import std.stdio;
 
 import neptune.arch.gdt;
 import neptune.arch.tss;
@@ -82,7 +81,7 @@ extern(C) void _main(LoaderData* loader)
     System.setError(screen);
     System.setInput(kb);
     
-    mem = new AddressSpace(v);
+    mem = new AddressSpace(&v);
 
     System.output.write("Hello Neptune!").newline;
 
@@ -101,7 +100,7 @@ extern(C) void _main(LoaderData* loader)
 		char[] line = System.input.readln(screen);
 		System.output.write(line);
 		delete line;
-		writefln("typing in thread %u", scheduler.getThreadID());
+		System.output.writef("typing in thread %u", scheduler.getThreadID()).newline;
 		yield();
 	}
 	
@@ -112,7 +111,7 @@ void thread_function()
 {
     while(true)
     {
-        writefln("hello from thread %u", scheduler.getThreadID());
+        System.output.writef("hello from thread %u", scheduler.getThreadID()).newline;
         yield();
     }
 }
@@ -128,16 +127,6 @@ void yield()
 ulong spawn_thread(void* stack, void function() thread)
 {
     ulong result;
-    
-    ulong page_base = cast(ulong)stack;
-    ulong mod = page_base % FRAME_SIZE;
-    
-    if(mod == 0)
-        page_base -= FRAME_SIZE;
-    else
-        page_base -= mod;
-        
-    map(page_base);
     
     asm
     {
@@ -171,13 +160,13 @@ void mem_setup(LoaderData* loader)
     v.init(loader.L4);
 
     // Map a 16k interrupt stack for IST1
-    map(0x7FFFC000);
-    map(0x7FFFD000);
-    map(0x7FFFE000);
-    map(0x7FFFF000);
+    v.map(cast(void*)0x7FFFC000);
+    v.map(cast(void*)0x7FFFD000);
+    v.map(cast(void*)0x7FFFE000);
+    v.map(cast(void*)0x7FFFF000);
 
     // Initialize the heap allocator object
-    heap.init();
+    heap.init(&v);
 }
 
 /**
@@ -268,7 +257,7 @@ void pagefault_handler(void* p, ulong interrupt, ulong error, InterruptStack* st
 	    "mov %%cr2, %[addr]" : [addr] "=a" vAddr;
     }
 
-    writef("\nPage Fault: %#X", vAddr, "\nMapping...");
+    System.output.writef("\nPage Fault: %#X", vAddr, "\nMapping...");
 
     if(v.map(cast(void*)vAddr))
     {
@@ -277,7 +266,7 @@ void pagefault_handler(void* p, ulong interrupt, ulong error, InterruptStack* st
     else
     {
         System.output.write("failed").newline;
-        writefln("  %016#X", stack.rip);
+        System.output.writef("  %016#X", stack.rip).newline;
         for(;;){}
     }
 }
@@ -389,22 +378,7 @@ extern(C)
     {
         return (cast(ulong)vAddr) - LINEAR_MEM_BASE;
     }
-    
-    /**
-     * Map a page starting at a given virtual address to some available physical memory
-     *
-     * Params:
-     *  vAddr = address to map
-     * 
-     * Returns: true if the map was successful
-     */
-    bool map(ulong vAddr)
-    {
-        return v.map(cast(void*)vAddr);
-    }
 }
-
-
 
 /**
  * Data passed from the 32 bit loader

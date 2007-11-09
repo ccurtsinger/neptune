@@ -10,7 +10,6 @@
 
 module std.modinit;
 
-import std.stdio;
 import std.stdlib;
 
 /**
@@ -72,8 +71,7 @@ void _moduleUnitTests()
 		
 		if(m.unitTest)
 		{
-			write("  ");
-			write(m.name);
+			System.output.writef("  %s", m.name);
 			m.unitTest();
 		}
 		

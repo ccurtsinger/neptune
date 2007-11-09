@@ -8,8 +8,6 @@
 
 module std.collection.queue;
 
-import std.stdio;
-
 /**
  * Queue implementation based on a linked list method.
  * Uses n*T.sizeof memory for n elements

@@ -16,7 +16,6 @@ extern(C)
     bool is_canonical(void* vAddr);
     void* ptov(ulong pAddr);
     ulong vtop(void* vAddr);
-    bool map(ulong vAddr);
     
     void putc(char c);
     char getc();

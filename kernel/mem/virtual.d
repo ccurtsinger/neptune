@@ -8,6 +8,8 @@
 
 module kernel.mem.virtual;
 
+import neptune.arch.paging;
+
 import std.stdlib;
 
 /**
@@ -18,6 +20,7 @@ import std.stdlib;
  */
 struct Heap
 {
+    VirtualMemory* mem;
     void* framePtr = null;
     void* allocPtr = null;
     ulong size = 0;
@@ -25,8 +28,9 @@ struct Heap
     /**
      * Initialize the heap
      */
-    void init()
+    void init(VirtualMemory* mem)
     {
+        this.mem = mem;
         framePtr = null;
         allocPtr = null;
         size = 0;
@@ -41,13 +45,13 @@ struct Heap
     {
         if(framePtr is null)
         {
-            map(0x10000000);
+            mem.map(cast(void*)0x10000000);
 
             return cast(void*)0x10000000;
         }
         else
         {
-            map(cast(ulong)framePtr + FRAME_SIZE);
+            mem.map(framePtr + FRAME_SIZE);
 
             return cast(void*)(framePtr + FRAME_SIZE);
         }

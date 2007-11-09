@@ -9,7 +9,6 @@
 module kernel.dev.kb;
 
 import std.port;
-import std.stdio;
 import std.collection.queue;
 import std.io.CharStream;
 

@@ -2,7 +2,7 @@
 module std.typeinfo.ti_Ashort;
 
 //private import tango.stdc.string;
-import std.mem;
+import std.stdmem;
 
 // short[]
 

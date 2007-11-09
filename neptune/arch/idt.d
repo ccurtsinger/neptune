@@ -295,7 +295,7 @@ struct InterruptStack
  */
 void _int_handler(void* p, ulong interrupt, ulong error, InterruptStack* stack)
 {
-	System.output.writef("\nInterrupt %u", interrupt).newline;
+	System.output.newline.writef("Interrupt %u", interrupt).newline;
 	System.output.writef("Error Code: %#X", stack.error).newline;
 	System.output.writef("  Context\n  -------").newline;
 	System.output.writef("  rip    %#016X", stack.rip).newline;
@@ -334,7 +334,7 @@ void _int_handler(void* p, ulong interrupt, ulong error, InterruptStack* stack)
  */
 void _irq_handler(void* p, ulong interrupt, ulong error, InterruptStack* stack)
 {
-	System.output.writef("\nIRQ %u", interrupt).newline;
+	System.output.newline.writef("IRQ %u", interrupt).newline;
 
 	// Acknowledge irq on PIC1
 	outp(PIC1, PIC_EOI);

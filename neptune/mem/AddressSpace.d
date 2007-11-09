@@ -6,8 +6,6 @@
  * Version: 0.2a
  */
 
-import std.stdlib;
-
 import neptune.arch.paging;
 
 class AddressSpace
@@ -31,7 +29,7 @@ class AddressSpace
 		for(int i=0; i<stackSize; i++)
 		{
 			mem.map(nextStack);
-			nextStack -= FRAME_SIZE;
+			nextStack -= System.pageSize;
 		}
 		
 		return top;

@@ -10,39 +10,28 @@
 module std.System;
 
 import std.io.CharStream;
+import std.mem.Allocator;
+import std.mem.PageAllocator;
 
 class System
 {
     private static CharInputStream stdin = null;
     private static CharOutputStream stdout = null;
     private static CharOutputStream stderr = null;
+    private static PageAllocator pmem = null;
+    private static Allocator mem = null;
     
     public static CharInputStream input()
-    in
-    {
-        assert(stdin !is null, "Attempted to use null input stream");
-    }
-    body
     {
         return stdin;
     }
     
     public static CharOutputStream output()
-    in
-    {
-        assert(stdout !is null, "Attempted to use null output stream");
-    }
-    body
     {
         return stdout;
     }
     
     public static CharOutputStream error()
-    in
-    {
-        assert(stderr !is null, "Attempted to use null error stream");
-    }
-    body
     {
         return stderr;
     }
@@ -60,5 +49,35 @@ class System
     public static void setError(CharOutputStream stderr)
     {
         this.stderr = stderr;
+    }
+    
+    public static size_t pageSize()
+    {
+        return 0x1000;
+    }
+    
+    public static void setPhysicalAllocator(PageAllocator p)
+    {
+        pmem = p;
+    }
+    
+    public static void setAllocator(Allocator a)
+    {
+        mem = a;
+    }
+    
+    public static ulong getPage()
+    {
+        return pmem.getPage();
+    }
+    
+    public static void* allocate(size_t size)
+    {
+        return mem.allocate(size);
+    }
+    
+    public static void free(void* p)
+    {
+        return mem.free(p);
     }
 }

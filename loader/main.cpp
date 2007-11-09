@@ -40,6 +40,8 @@ typedef struct LoaderData
 	uint64_t upperMemSize;
 	uint64_t regions;
 	uint64_t memInfo;
+	uint64_t tempData;
+	uint64_t tempDataSize;
 }__attribute__((packed)) LoaderData;
 
 typedef struct MemoryRegion
@@ -158,6 +160,11 @@ void startLongMode(uint64_t pAddress, uint64_t kAddress, uint64_t kLength)
 		mapPages(L4, kAddress+c, pAddress + c);
 		c += 0x200000;
 	}
+	
+	// Map a temporary data region for the kernel to use for setup
+	mapPages(L4, kAddress+c, pAddress+c);
+	_data.tempData = kAddress+c;
+	_data.tempDataSize = 0x200000LL;
 
 	//Map memory to the LINEAR_START base address
 	c = 0;

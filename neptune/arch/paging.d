@@ -28,7 +28,7 @@ const ulong PAGE_COPY_ON_WRITE = 0x200;
 const ulong PAGE_NX = 0x8000000000000000;
 
 import std.stdlib;
-import std.mem;
+import std.stdmem;
 
 /**
  * Virtual memory class for page table management
@@ -113,9 +113,9 @@ struct VirtualMemory
             {
                 if(!table[index].present())
                 {
-                    ulong newtable = get_physical_page();
+                    ulong newtable = System.getPage();
                     
-                    memset(ptov(newtable), 0, FRAME_SIZE);
+                    memset(ptov(newtable), 0, System.pageSize);
                     
                     table[index].setEntry(newtable, flags);
                 }
@@ -126,7 +126,7 @@ struct VirtualMemory
             {
                 if(!table[index].present())
                 {
-                    ulong newpage = get_physical_page();
+                    ulong newpage = System.getPage();
                     
                     table[index].setEntry(newpage, flags);
                     

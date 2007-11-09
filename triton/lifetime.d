@@ -40,7 +40,7 @@
 module lifetime;
 
 import std.stdlib;
-import std.mem;
+import std.stdmem;
 
 import array;
 
@@ -59,10 +59,10 @@ private
  */
 extern (C) Object _d_newclass(ClassInfo ci)
 {
-    void* p = malloc(ci.init.length);
-
+    void* p = System.allocate(ci.init.length);
+    
     (cast(byte*) p)[0 .. ci.init.length] = ci.init[];
-
+    
     return cast(Object)p;
 }
 
@@ -116,7 +116,7 @@ extern (C) void _d_delclass(Object* p)
             }
         }
         
-        free(p);
+        System.free(p);
         
         *p = null;
     }
@@ -141,7 +141,7 @@ extern (C) Array _d_newarrayT(TypeInfo ti, size_t length)
         result.length = length;
         size *= length;
 
-        result.data = cast(byte*)malloc(size+1);
+        result.data = cast(byte*)System.allocate(size+1);
 
         memset(result.data, 0, size);
     }
@@ -171,7 +171,7 @@ extern (C) Array _d_newarrayiT(TypeInfo ti, size_t length)
 
         size *= length;
 
-        auto p = cast(byte*)malloc(size+1);
+        auto p = cast(byte*)System.allocate(size+1);
 
         if (isize == 1)
         {
@@ -215,7 +215,7 @@ extern (C) void _d_delarray(Array *p)
 
         if (p.data)
         {
-            free(p.data);
+            System.free(p.data);
         }
         
         p.data = null;
@@ -233,7 +233,7 @@ extern (C) void _d_delmemory(void** p)
 {
     if (*p)
     {
-        free(*p);
+        System.free(*p);
         *p = null;
     }
 }

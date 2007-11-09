@@ -9,7 +9,7 @@
 module kernel.dev.screen;
 
 import std.port;
-import std.mem;
+import std.stdmem;
 import std.io.CharStream;
 
 /// Possible foreground and background colors

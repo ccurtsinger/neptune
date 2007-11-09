@@ -8,7 +8,7 @@
 
 module kernel.boot.kernel;
 
-import std.mem;
+import std.stdmem;
 import std.modinit;
 import std.stdlib;
 
@@ -22,13 +22,15 @@ import kernel.dev.screen;
 import kernel.dev.kb;
 import kernel.mem.physical;
 import kernel.mem.virtual;
+import kernel.mem.dummy;
 import kernel.task.Scheduler;
 import kernel.task.Thread;
 
 const ulong LINEAR_MEM_BASE = 0xFFFF830000000000;
 
-/// Physical memory allocator that provides pages
-PhysicalAllocator pAlloc;
+DummyAllocator dummyAllocator;
+
+PhysicalAllocator pmem;
 
 /// GDT
 GDT gdt;
@@ -85,7 +87,9 @@ extern(C) void _main(LoaderData* loader)
 
     System.output.write("Hello Neptune!").newline;
 
-    System.output.writef("Memory Information:\n - Free: ", cast(void*)pAlloc.sizeFree, "\n - Allocated: ", cast(void*)pAlloc.sizeAllocated).newline;
+    System.output.write("Memory Information:").newline;
+    System.output.writef(" - Free: %016#X", pmem.getFreeSize).newline;
+    System.output.writef(" - Allocated: %016#X", pmem.getAllocatedSize).newline;
 	
 	// Run module constructors and unit tests
 	_moduleCtor();
@@ -150,11 +154,17 @@ ulong spawn_thread(void* stack, void function() thread)
  */
 void mem_setup(LoaderData* loader)
 {
-    pAlloc.init();
+    dummyAllocator = new(loader.tempData) DummyAllocator();
+    dummyAllocator.add(loader.tempData + System.pageSize, loader.tempDataSize - System.pageSize);
+    System.setAllocator(dummyAllocator);
+    
+    pmem = new PhysicalAllocator();
 
-    pAlloc.add(loader.lowerMemBase, loader.lowerMemSize);
-    pAlloc.add(loader.upperMemBase, loader.usedMemBase - loader.upperMemBase);
-    pAlloc.add(loader.usedMemBase + loader.usedMemSize, loader.upperMemSize - loader.usedMemBase - loader.usedMemSize + loader.upperMemBase);
+    pmem.add(loader.lowerMemBase, loader.lowerMemSize);
+    pmem.add(loader.upperMemBase, loader.usedMemBase - loader.upperMemBase);
+    pmem.add(loader.usedMemBase + loader.usedMemSize, loader.upperMemSize - loader.usedMemBase - loader.usedMemSize + loader.upperMemBase);
+
+    System.setPhysicalAllocator(pmem);
 
     //v = new(alloc.ptr) VirtualMemory(loader.L4);
     v.init(loader.L4);
@@ -166,7 +176,9 @@ void mem_setup(LoaderData* loader)
     v.map(cast(void*)0x7FFFF000);
 
     // Initialize the heap allocator object
-    heap.init(&v);
+    heap = new Heap(&v);
+    
+    System.setAllocator(heap);
 }
 
 /**
@@ -273,27 +285,6 @@ void pagefault_handler(void* p, ulong interrupt, ulong error, InterruptStack* st
 
 extern(C)
 {
-    /**
-     * Put a character on the screen
-     *
-     * Params:
-     *  c = character to write to screen
-     */
-    void putc(char c)
-    {
-    	if(screen !is null)
-			screen.write(c);
-    }
-    
-    /**
-     * Get a character from the keyboard
-     *
-     * Returns: character typed
-     */
-	char getc()
-	{
-		return kb.read();
-	}
     
     /**
      * Abort execution
@@ -302,55 +293,6 @@ extern(C)
     {
         System.output.write("abort!").newline;
         for(;;){}
-    }
-
-    /**
-     * Allocate memory
-     *
-     * Params:
-     *  s = size of the memory to allocate
-     *
-     * Returns: pointer to the allocated memory
-     */
-    void* malloc(size_t s)
-    {
-        return heap.allocate(s);
-    }
-
-    /**
-     * Free memory
-     * 
-     * Params:
-     *  p = pointer to the memory to free
-     */
-    void free(void* p)
-    {
-        heap.free(p);
-    }
-
-    /**
-     * Get a free physical page
-     *
-     * Returns: the physical address of a page of memory
-     */
-    ulong get_physical_page()
-    {
-        return pAlloc.allocate();
-    }
-
-    /**
-     * Determine if a memory address is canonical
-     *
-     * Params:
-     *  vAddr = the address to check
-     *
-     * Returns: trus if the address is sign-extended above bit 48
-     */
-    bool is_canonical(void* vAddr)
-    {
-        ulong a = cast(ulong)vAddr;
-
-        return (0 <= a && a <= 0x00007FFFFFFFFFFF) || (0xFFFF800000000000 <= a && a <= 0xFFFFFFFFFFFFFFFF);
     }
 
     /**
@@ -364,19 +306,6 @@ extern(C)
     void* ptov(ulong pAddr)
     {
         return cast(void*)(pAddr + LINEAR_MEM_BASE);
-    }
-
-    /**
-     * Convert a virtual address pointer in the linear-mapped region to a physical address
-     *
-     * Params:
-     *  vAddr = pointer to convert
-     *
-     * Returns: the physical address of vAddr
-     */
-    ulong vtop(void* vAddr)
-    {
-        return (cast(ulong)vAddr) - LINEAR_MEM_BASE;
     }
 }
 
@@ -408,5 +337,10 @@ struct LoaderData
 	ulong upperMemSize;
 	
 	ulong regions;
+	
 	ulong memInfo;
+	
+	void* tempData;
+	
+	size_t tempDataSize;
 }

@@ -2,13 +2,14 @@
  * Physical memory allocation system
  *
  * Authors: Charlie Curtsinger
- * Date: October 31st, 2007
- * Version: 0.1b
+ * Date: November 9th, 2007
+ * Version: 0.2a
  */
 
 module kernel.mem.physical;
 
 import std.stdlib;
+import std.mem.PageAllocator;
 
 /**
  * Physical memory allocator that distributes free pages
@@ -16,34 +17,45 @@ import std.stdlib;
  * Uses zero-overhead when no memory is present.  Memory is taken
  * as needed to store metadata.
  */
-struct PhysicalAllocator
+class PhysicalAllocator : PageAllocator
 {
     /// Pointer to the list of free meta-pool memory
-    MemBlock* local;
+    private MemBlock* local = null;
     
     /// Pointer to the list of free public memory
-    MemBlock* free;
+    private MemBlock* free = null;
 
     /// Size of the local free pool
-    size_t sizeLocal;
+    private size_t localSize = 0;
     
     /// Size of the free public pool
-    size_t sizeFree;
+    private size_t freeSize = 0;
     
     /// Amount of public memory allocated
-    size_t sizeAllocated;
-
-    /**
-     * Initialize the allocator
-     */
-    void init()
+    private size_t allocatedSize = 0;
+    
+    public this()
     {
         local = null;
         free = null;
+        localSize = 0;
+        freeSize = 0;
+        allocatedSize = 0;
+    }
 
-        sizeLocal = 0;
-        sizeFree = 0;
-        sizeAllocated = 0;
+    public size_t getFreeSize()
+    {
+        return freeSize;
+    }
+    
+    public size_t getAllocatedSize()
+    {
+        return allocatedSize;
+    }
+    
+    public size_t getOverheadSize()
+    {
+        return localSize;
     }
 
     /**
@@ -53,28 +65,28 @@ struct PhysicalAllocator
      *  base = base address of the block
      *  size = size of the block
      */
-    void add(ulong base, ulong size)
+    public void add(size_t base, size_t size)
     {
         // Move the base up to the next frame-aligned address
-        ulong baseShift = FRAME_SIZE - (base % FRAME_SIZE);
+        ulong baseShift = System.pageSize - (base % System.pageSize);
 
-        if(baseShift < FRAME_SIZE)
+        if(baseShift < System.pageSize)
         {
             base += baseShift;
             size -= baseShift;
         }
 
         // Adjust the size so it is FRAME_SIZE aligned
-        size -= size % FRAME_SIZE;
+        size -= size % System.pageSize;
 
         // Check to make sure at least one page is being added
-        if(size >= FRAME_SIZE)
+        if(size >= System.pageSize)
         {
-            if(sizeLocal < 2*MemBlock.sizeof)
+            if(localSize < 2*MemBlock.sizeof)
             {
                 addLocal(base);
-                base += FRAME_SIZE;
-                size -= FRAME_SIZE;
+                base += System.pageSize;
+                size -= System.pageSize;
             }
 
             MemBlock* newblock = getLocal();
@@ -86,7 +98,7 @@ struct PhysicalAllocator
             newblock.next = free;
             free = newblock;
 
-            sizeFree += size;
+            freeSize += size;
         }
         else
         {
@@ -99,26 +111,26 @@ struct PhysicalAllocator
      *
      * Returns: the physical address of the allocated memory
      */
-    ulong allocate()
+    public ulong getPage()
     {
-        if(sizeFree >= FRAME_SIZE && free !is null)
+        if(freeSize >= System.pageSize && free !is null)
         {
-            if(free.size >= FRAME_SIZE)
+            if(free.size >= System.pageSize)
             {
                 ulong pAddr = free.base;
-                free.base += FRAME_SIZE;
-                free.size -= FRAME_SIZE;
-                sizeFree -= FRAME_SIZE;
-                sizeAllocated += FRAME_SIZE;
+                free.base += System.pageSize;
+                free.size -= System.pageSize;
+                freeSize -= System.pageSize;
+                allocatedSize += System.pageSize;
 
                 return pAddr;
             }
             else
             {
-                sizeFree -= free.size;
+                freeSize -= free.size;
                 free = free.next;
 
-                return allocate();
+                return getPage();
             }
         }
         else
@@ -134,10 +146,10 @@ struct PhysicalAllocator
      *  base = base address of the block
      *  size = size of the block
      */
-    void release(ulong base, ulong size = FRAME_SIZE)
+    public void freePage(ulong base)
     {
-        add(base, size);
-        sizeAllocated -= size;
+        add(base, System.pageSize);
+        allocatedSize -= System.pageSize;
     }
 
     /**
@@ -147,7 +159,7 @@ struct PhysicalAllocator
      *  base = base address of the block
      *  size = size of the block
      */
-    void addLocal(ulong base, ulong size = FRAME_SIZE)
+    private void addLocal(ulong base, ulong size = System.pageSize)
     {
         MemBlock* newblock = getLocal();
 
@@ -163,7 +175,7 @@ struct PhysicalAllocator
         newblock.next = local;
         local = newblock;
 
-        sizeLocal += size;
+        localSize += size;
     }
 
     /**
@@ -171,7 +183,7 @@ struct PhysicalAllocator
      *
      * ReturnS: null if no memory is available, otherwise the next local memory block
      */
-    MemBlock* getLocal()
+    private MemBlock* getLocal()
     {
         if(local != null)
         {
@@ -181,13 +193,13 @@ struct PhysicalAllocator
                 local.base += MemBlock.sizeof;
                 local.size -= MemBlock.sizeof;
 
-                sizeLocal -= MemBlock.sizeof;
+                localSize -= MemBlock.sizeof;
 
                 return p;
             }
             else
             {
-                sizeLocal -= local.size;
+                localSize -= local.size;
                 local = local.next;
                 return getLocal();
             }
@@ -199,7 +211,7 @@ struct PhysicalAllocator
     /**
      * Wrapper struct for memory in the local of public pool
      */
-    struct MemBlock
+    private struct MemBlock
     {
         ulong base;
         ulong size;

@@ -6,7 +6,7 @@
  * Version: 0.1b
  */
 
-module std.mem;
+module std.stdmem;
 
 /**
  * Set a memory range to a byte value
@@ -63,21 +63,9 @@ extern(C) void memcpy(void* dest, void* src, size_t size)
     ubyte* d = cast(ubyte*)dest;
     ubyte* s = cast(ubyte*)src;
 
-    // If copying forwards is safe
-    if(dest < src)
+    for(ulong i=0; i<size; i++)
     {
-        for(ulong i=0; i<size; i++)
-        {
-            d[i] = s[i];
-        }
-    }
-    else
-    {
-        // memcpy backwards
-        for(ulong i=size-1; i>=0; i--)
-        {
-            d[i] = s[i];
-        }
+        d[i] = s[i];
     }
 }
 

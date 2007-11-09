@@ -9,7 +9,7 @@
 module object;
 
 import std.stdlib;
-import std.mem;
+import std.stdmem;
 
 alias ulong size_t;
 alias long  ptrdiff_t;

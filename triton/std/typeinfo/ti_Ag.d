@@ -1,7 +1,7 @@
 
 module std.typeinfo.ti_Ag;
 
-import std.mem;
+import std.stdmem;
 
 // byte[]
 

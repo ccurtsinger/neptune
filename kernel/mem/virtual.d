@@ -10,6 +10,8 @@ module kernel.mem.virtual;
 
 import neptune.arch.paging;
 
+import std.mem.Allocator;
+
 import std.stdlib;
 
 /**
@@ -18,22 +20,27 @@ import std.stdlib;
  * Currently performs no freeing of memory, and stores no meta-data
  * in allocated blocks.
  */
-struct Heap
+class Heap : Allocator
 {
     VirtualMemory* mem;
     void* framePtr = null;
     void* allocPtr = null;
-    ulong size = 0;
+    ulong freeSize = 0;
 
     /**
      * Initialize the heap
      */
-    void init(VirtualMemory* mem)
+    this(VirtualMemory* mem)
     {
         this.mem = mem;
         framePtr = null;
         allocPtr = null;
-        size = 0;
+        freeSize = 0;
+    }
+    
+    void add(void* base, size_t size)
+    {
+        // do nothing for now
     }
 
     /**
@@ -51,9 +58,9 @@ struct Heap
         }
         else
         {
-            mem.map(framePtr + FRAME_SIZE);
+            mem.map(framePtr + System.pageSize);
 
-            return cast(void*)(framePtr + FRAME_SIZE);
+            return cast(void*)(framePtr + System.pageSize);
         }
     }
 
@@ -65,18 +72,18 @@ struct Heap
      *
      * Returns: Pointer to the allocated memory
      */
-    void* allocate(size_t s)
+    void* allocate(size_t size)
     {
-        if(size < s || framePtr is null)
+        if(freeSize < size || framePtr is null)
         {
             framePtr = morecore();
-            size = FRAME_SIZE;
+            freeSize = System.pageSize;
             allocPtr = framePtr;
         }
 
         void* p = allocPtr;
-        allocPtr += s;
-        size -= s;
+        allocPtr += size;
+        freeSize -= size;
 
         return p;
     }
@@ -89,6 +96,6 @@ struct Heap
      */
     void free(void* p)
     {
-        // Do nothing at all
+        // Do nothing
     }
 }

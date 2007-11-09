@@ -4,15 +4,16 @@ Import('env')
 obj_list  = [env.gdc('bitarray.o', 		'bitarray.d')]
 obj_list += [env.gdc('bit.o',      		'bit.d')]
 obj_list += [env.gdc('integer.o',  		'integer.d')]
-obj_list += [env.gdc('mem.o', 	   		'mem.d')]
 obj_list += [env.gdc('modinit.o', 		'modinit.d')]
 obj_list += [env.gdc('port.o',     		'port.d')]
 obj_list += [env.gdc('stdarg.o',   		'stdarg.d')]
 obj_list += [env.gdc('stdlib.o',   		'stdlib.d')]
+obj_list += [env.gdc('stdmem.o', 	   	'stdmem.d')]
 obj_list += [env.gdc('System.o',   		'System.d')]
 
 obj_list += SConscript('collection/SConscript', exports='env')
 obj_list += SConscript('io/SConscript', exports='env')
+obj_list += SConscript('mem/SConscript', exports='env')
 obj_list += SConscript('typeinfo/SConscript', exports='env')
 
 Return('obj_list')

@@ -1,0 +1,7 @@
+# Grab the build environment
+Import('env')
+
+obj_list  = [env.gdc('Allocator.o',     'Allocator.d')]
+obj_list += [env.gdc('PageAllocator.o', 'PageAllocator.d')]
+
+Return('obj_list')

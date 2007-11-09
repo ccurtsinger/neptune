@@ -8,18 +8,7 @@
 
 module std.stdlib;
 
-const ulong FRAME_SIZE = 0x1000;
-
 extern(C)
 {
-    ulong get_physical_page();
-    bool is_canonical(void* vAddr);
     void* ptov(ulong pAddr);
-    ulong vtop(void* vAddr);
-    
-    void putc(char c);
-    char getc();
-    
-    void* malloc(size_t s);
-    void  free(void* p);
 }

@@ -17,6 +17,7 @@ import neptune.arch.gdt;
 import neptune.arch.tss;
 import neptune.arch.idt;
 import neptune.arch.paging;
+import neptune.mem.AddressSpace;
 
 import kernel.dev.screen;
 import kernel.dev.kb;
@@ -45,6 +46,8 @@ Keyboard kb;
 
 /// Screen device
 Screen screen;
+
+AddressSpace mem;
 
 /// Paging abstraction
 VirtualMemory v;
@@ -79,6 +82,8 @@ extern(C) void _main(LoaderData* loader)
     System.setOutput(screen);
     System.setError(screen);
     System.setInput(kb);
+    
+    mem = new AddressSpace(v);
 
     System.output.write("Hello Neptune!").newline;
 
@@ -88,9 +93,9 @@ extern(C) void _main(LoaderData* loader)
 	_moduleCtor();
 	_moduleUnitTests();
 	
-	spawn_thread(cast(void*)0x60000000, &thread_function);
-	spawn_thread(cast(void*)0x50000000, &thread_function);
-	spawn_thread(cast(void*)0x40000000, &thread_function);
+	spawn_thread(mem.getStack(), &thread_function);
+	spawn_thread(mem.getStack(), &thread_function);
+	spawn_thread(mem.getStack(), &thread_function);
 		
 	while(true)
 	{
@@ -272,6 +277,7 @@ void pagefault_handler(void* p, ulong interrupt, ulong error, InterruptStack* st
     else
     {
         System.output.write("failed").newline;
+        writefln("  %016#X", stack.rip);
         for(;;){}
     }
 }

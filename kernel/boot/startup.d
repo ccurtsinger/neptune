@@ -12,25 +12,24 @@ import std.stdmem;
 import std.modinit;
 import std.stdlib;
 
+import std.mem.AddressSpace;
+
 import neptune.arch.gdt;
 import neptune.arch.tss;
 import neptune.arch.idt;
 import neptune.arch.paging;
-import neptune.mem.AddressSpace;
 
+import kernel.kernel;
 import kernel.dev.screen;
 import kernel.dev.kb;
 import kernel.mem.physical;
 import kernel.mem.virtual;
 import kernel.mem.dummy;
+import kernel.mem.StackAllocator;
 import kernel.task.Scheduler;
 import kernel.task.Thread;
 
 const ulong LINEAR_MEM_BASE = 0xFFFF830000000000;
-
-DummyAllocator dummyAllocator;
-
-PhysicalAllocator pmem;
 
 /// GDT
 GDT gdt;
@@ -41,20 +40,14 @@ TSS tss;
 /// IDT
 IDT idt;
 
-/// Dynamic memory allocator (heap) for the kernel
-Heap heap;
-
 /// Keyboard device
 Keyboard kb;
 
 /// Screen device
 Screen screen;
 
-AddressSpace mem;
-
 Scheduler scheduler;
 
-/// Paging abstraction
 VirtualMemory v;
 
 /**
@@ -82,68 +75,22 @@ extern(C) void _main(LoaderData* loader)
     System.setOutput(screen);
     System.setError(screen);
     System.setInput(kb);
-    
-    mem = new AddressSpace(&v);
 
     System.output.write("Hello Neptune!").newline;
 
     System.output.write("Memory Information:").newline;
-    System.output.writef(" - Free: %016#X", pmem.getFreeSize).newline;
-    System.output.writef(" - Allocated: %016#X", pmem.getAllocatedSize).newline;
+    System.output.writef(" - Free: %016#X", System.memory.physical.getFreeSize).newline;
+    System.output.writef(" - Allocated: %016#X", System.memory.physical.getAllocatedSize).newline;
 	
 	// Run module constructors and unit tests
 	_moduleCtor();
 	_moduleUnitTests();
 	
-	spawn_thread(mem.getStack(), &thread_function);
-	spawn_thread(mem.getStack(), &thread_function);
-	spawn_thread(mem.getStack(), &thread_function);
-		
-	while(true)
-	{
-		char[] line = System.input.readln(screen);
-		System.output.write(line);
-		delete line;
-		System.output.writef("typing in thread %u", scheduler.getThreadID()).newline;
-		yield();
-	}
+	main();
 	
+	System.output.write("Kernel exited").newline;
+
 	for(;;){}
-}
-
-void thread_function()
-{
-    while(true)
-    {
-        System.output.writef("hello from thread %u", scheduler.getThreadID()).newline;
-        yield();
-    }
-}
-
-void yield()
-{
-    asm
-    {
-        "int $255";
-    }
-}
-
-ulong spawn_thread(void* stack, void function() thread)
-{
-    ulong result;
-    
-    asm
-    {
-        "int $254" : "=a" result, "=c" thread : "b" stack, "c" thread;
-    }
-    
-    if(result == 0)
-    {
-        thread();
-        assert(false, "Unhandled thread termination");
-    }
-    
-    return result;
 }
 
 /**
@@ -154,9 +101,23 @@ ulong spawn_thread(void* stack, void function() thread)
  */
 void mem_setup(LoaderData* loader)
 {
-    dummyAllocator = new(loader.tempData) DummyAllocator();
-    dummyAllocator.add(loader.tempData + System.pageSize, loader.tempDataSize - System.pageSize);
-    System.setAllocator(dummyAllocator);
+    DummyAllocator dummyAllocator;
+    PhysicalAllocator pmem;
+    Heap heap;
+    StackAllocator stack;
+    
+    AddressSpace mem;
+    
+    void* alloc = loader.tempData;
+
+    mem = new(alloc) AddressSpace();
+    alloc += System.pageSize;
+    dummyAllocator = new(alloc) DummyAllocator();
+    alloc += System.pageSize;
+    dummyAllocator.add(alloc, loader.tempDataSize - System.pageSize);
+    
+    System.setMemory(mem);
+    mem.setAllocator(dummyAllocator);
     
     pmem = new PhysicalAllocator();
 
@@ -164,7 +125,7 @@ void mem_setup(LoaderData* loader)
     pmem.add(loader.upperMemBase, loader.usedMemBase - loader.upperMemBase);
     pmem.add(loader.usedMemBase + loader.usedMemSize, loader.upperMemSize - loader.usedMemBase - loader.usedMemSize + loader.upperMemBase);
 
-    System.setPhysicalAllocator(pmem);
+    mem.setPhysicalAllocator(pmem);
 
     //v = new(alloc.ptr) VirtualMemory(loader.L4);
     v.init(loader.L4);
@@ -178,7 +139,11 @@ void mem_setup(LoaderData* loader)
     // Initialize the heap allocator object
     heap = new Heap(&v);
     
-    System.setAllocator(heap);
+    mem.setAllocator(heap);
+    
+    stack = new StackAllocator(&v);
+    
+    mem.setStackAllocator(stack);
 }
 
 /**
@@ -221,14 +186,8 @@ void tss_setup()
     tss.setRspEntry(1, cast(void*)0xFFFF810000000000);
     tss.setRspEntry(2, cast(void*)0xFFFF810000000000);
 
-    // Set IST entries
+    // Set IST entry
     tss.setIstEntry(0, cast(void*)0x7FFFFFF8);
-    /*tss.setIstEntry(1, 0x7FFFFFF8);
-    tss.setIstEntry(2, 0x7FFFFFF8);
-    tss.setIstEntry(3, 0x7FFFFFF8);
-    tss.setIstEntry(4, 0x7FFFFFF8);
-    tss.setIstEntry(5, 0x7FFFFFF8);
-    tss.setIstEntry(6, 0x7FFFFFF8);*/
 }
 
 /**
@@ -245,7 +204,7 @@ void idt_setup()
 	kb = new Keyboard();
     idt.setHandler(33, &kb.handler);
     
-    Thread t = new Thread(1, 0);
+    KernelThread t = new KernelThread(1, 0);
     scheduler = new Scheduler(t);
     
     idt.setHandler(255, &scheduler.task_switcher);
@@ -285,16 +244,6 @@ void pagefault_handler(void* p, ulong interrupt, ulong error, InterruptStack* st
 
 extern(C)
 {
-    
-    /**
-     * Abort execution
-     */
-    void abort()
-    {
-        System.output.write("abort!").newline;
-        for(;;){}
-    }
-
     /**
      * Convert a physical address to a pointer into the linear-mapped virtual address range
      *

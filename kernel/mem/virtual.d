@@ -25,7 +25,8 @@ class Heap : Allocator
     VirtualMemory* mem;
     void* framePtr = null;
     void* allocPtr = null;
-    ulong freeSize = 0;
+    size_t freeSize = 0;
+    size_t allocatedSize = 0;
 
     /**
      * Initialize the heap
@@ -36,6 +37,7 @@ class Heap : Allocator
         framePtr = null;
         allocPtr = null;
         freeSize = 0;
+        allocatedSize = 0;
     }
     
     void add(void* base, size_t size)
@@ -97,5 +99,20 @@ class Heap : Allocator
     void free(void* p)
     {
         // Do nothing
+    }
+    
+    public size_t getFreeSize()
+    {
+        return freeSize;
+    }
+    
+    public size_t getAllocatedSize()
+    {
+        return allocatedSize;
+    }
+    
+    public size_t getOverheadSize()
+    {
+        return 0;
     }
 }

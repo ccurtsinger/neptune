@@ -1,7 +1,9 @@
 # Grab the build environment
 Import('env')
 
-obj_list  = [env.gdc('Allocator.o',     'Allocator.d')]
-obj_list += [env.gdc('PageAllocator.o', 'PageAllocator.d')]
+obj_list  = [env.gdc('AddressSpace.o',      'AddressSpace.d')]
+obj_list += [env.gdc('Allocator.o',         'Allocator.d')]
+obj_list += [env.gdc('BlockAllocator.o',    'BlockAllocator.d')]
+obj_list += [env.gdc('PageAllocator.o',     'PageAllocator.d')]
 
 Return('obj_list')

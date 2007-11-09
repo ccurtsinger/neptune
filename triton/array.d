@@ -106,7 +106,7 @@ extern (C) Array _d_arrayappendT(TypeInfo ti, Array *px, byte[] y)
     auto newlength = length + y.length;
     auto newsize = newlength * sizeelem;
 
-	byte* newdata = cast(byte*)System.allocate(newCapacity(newlength, sizeelem) + 1);
+	byte* newdata = cast(byte*)System.memory.heap.allocate(newCapacity(newlength, sizeelem) + 1);
 
 	memcpy(newdata, px.data, length * sizeelem);
 	px.data = newdata;
@@ -156,7 +156,7 @@ extern (C) byte[] _d_arrayappendcTp(TypeInfo ti, inout byte[] x, void *argp)
 	
 	assert(cap >= newlength * sizeelem);
 
-	newdata = cast(byte *)System.allocate(cap + 1);
+	newdata = cast(byte *)System.memory.heap.allocate(cap + 1);
 	
 	memcpy(newdata, x.ptr, length * sizeelem);
 	
@@ -206,7 +206,7 @@ extern (C) byte[] _d_arraycatnT(TypeInfo ti, uint n, ...)
         return null;
     }
 
-    a = System.allocate(length * size);
+    a = System.memory.heap.allocate(length * size);
 
     va_start!(typeof(n))(va, n);
 

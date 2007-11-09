@@ -113,7 +113,7 @@ struct VirtualMemory
             {
                 if(!table[index].present())
                 {
-                    ulong newtable = System.getPage();
+                    ulong newtable = System.memory.physical.getPage();
                     
                     memset(ptov(newtable), 0, System.pageSize);
                     
@@ -126,7 +126,7 @@ struct VirtualMemory
             {
                 if(!table[index].present())
                 {
-                    ulong newpage = System.getPage();
+                    ulong newpage = System.memory.physical.getPage();
                     
                     table[index].setEntry(newpage, flags);
                     

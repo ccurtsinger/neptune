@@ -2,7 +2,7 @@
 Import('env')
 
 obj_list = [env.yasm('loader.o', 'loader.asm')]
-obj_list += [env.gdc('kernel.o', 'kernel.d')]
+obj_list += [env.gdc('startup.o', 'startup.d')]
 
 boot = env.PartialLink('boot.o', obj_list)
 

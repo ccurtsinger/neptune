@@ -9,20 +9,22 @@ import kernel.task.Thread;
 
 class Scheduler
 {
-    Queue!(Thread) queue;
-    Thread current;
+    Queue!(KernelThread) queue;
+    KernelThread current;
     
     ulong nextID;
     
-    this(Thread current)
+    this(KernelThread current)
     {
         this.current = current;
-        queue = new Queue!(Thread);
+        queue = new Queue!(KernelThread);
         
         nextID = current.getID()+1;
+        
+        System.setThread(current);
     }
     
-    void addThread(Thread t)
+    void addThread(KernelThread t)
     {
         queue.enqueue(t);
     }
@@ -42,7 +44,7 @@ class Scheduler
         }
         
         // Create a new thread with the stack pointer specified in rbx
-        Thread t = new Thread(nextID, stack);
+        KernelThread t = new KernelThread(nextID, stack);
         
         // Copy the current thread context
         InterruptStack newContext = *context;
@@ -89,5 +91,7 @@ class Scheduler
         context.rflags = c.rflags;
         context.rsp = c.rsp;
         context.ss = c.ss;
+        
+        System.setThread(current);
     }
 }

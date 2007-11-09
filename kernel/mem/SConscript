@@ -3,6 +3,7 @@ Import('env')
 
 obj_list  = [env.gdc('dummy.o',     'dummy.d')]
 obj_list += [env.gdc('physical.o',  'physical.d')]
+obj_list += [env.gdc('StackAllocator.o',   'StackAllocator.d')]
 obj_list += [env.gdc('virtual.o',   'virtual.d')]
 
 mem = env.PartialLink('mem.o', obj_list)

@@ -1,9 +1,10 @@
 
 module kernel.task.Thread;
 
+import std.task.Thread;
 import neptune.arch.idt;
 
-class Thread
+class KernelThread : Thread
 {
     private ulong id;
     private InterruptStack context;

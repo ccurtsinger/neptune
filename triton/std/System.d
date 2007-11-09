@@ -10,16 +10,16 @@
 module std.System;
 
 import std.io.CharStream;
-import std.mem.Allocator;
-import std.mem.PageAllocator;
+import std.mem.AddressSpace;
+import std.task.Thread;
 
 class System
 {
     private static CharInputStream stdin = null;
     private static CharOutputStream stdout = null;
     private static CharOutputStream stderr = null;
-    private static PageAllocator pmem = null;
-    private static Allocator mem = null;
+    private static AddressSpace mem;
+    private static Thread currentThread;
     
     public static CharInputStream input()
     {
@@ -56,28 +56,23 @@ class System
         return 0x1000;
     }
     
-    public static void setPhysicalAllocator(PageAllocator p)
+    public static void setMemory(AddressSpace mem)
     {
-        pmem = p;
+        this.mem = mem;
     }
     
-    public static void setAllocator(Allocator a)
+    public static AddressSpace memory()
     {
-        mem = a;
+        return mem;
     }
     
-    public static ulong getPage()
+    public static void setThread(Thread currentThread)
     {
-        return pmem.getPage();
+        this.currentThread = currentThread;
     }
     
-    public static void* allocate(size_t size)
+    public static Thread thread()
     {
-        return mem.allocate(size);
-    }
-    
-    public static void free(void* p)
-    {
-        return mem.free(p);
+        return currentThread;
     }
 }

@@ -2,7 +2,6 @@
 Import('env')
 
 obj_list  = SConscript('arch/SConscript', exports='env')
-obj_list += SConscript('mem/SConscript', exports='env')
 
 lib = env.StaticLibrary('neptune', obj_list)
 

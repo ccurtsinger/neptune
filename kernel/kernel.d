@@ -11,8 +11,6 @@ void main()
 	
 	bool run = true;
 	
-	assert(false);
-	
 	while(run)
 	{
 		System.output.write("% ");

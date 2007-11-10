@@ -26,6 +26,7 @@ class Heap : Allocator
     void* framePtr = null;
     void* allocPtr = null;
     size_t freeSize = 0;
+    size_t freedSize = 0;
     size_t allocatedSize = 0;
 
     /**
@@ -37,6 +38,7 @@ class Heap : Allocator
         framePtr = null;
         allocPtr = null;
         freeSize = 0;
+        freedSize = 0;
         allocatedSize = 0;
     }
     
@@ -76,16 +78,26 @@ class Heap : Allocator
      */
     void* allocate(size_t size)
     {
-        if(freeSize < size || framePtr is null)
+        if(freeSize < size + size_t.sizeof || framePtr is null)
         {
+        	allocatedSize += freeSize;
             framePtr = morecore();
             freeSize = System.pageSize;
             allocPtr = framePtr;
         }
 
-        void* p = allocPtr;
+		size_t* s = cast(size_t*)allocPtr;
+		*s = size;
+		
+		allocPtr += size_t.sizeof;
+		freeSize -= size_t.sizeof;
+		allocatedSize += size_t.sizeof;
+		
+		void* p = allocPtr;
+        
         allocPtr += size;
         freeSize -= size;
+        allocatedSize += size;
 
         return p;
     }
@@ -98,12 +110,27 @@ class Heap : Allocator
      */
     void free(void* p)
     {
+    	p -= size_t.sizeof;
+        size_t* s = cast(size_t*)p;
+        
+        if(*s > allocatedSize - size_t.sizeof)
+        {
+        	System.output.writef("trying to free: %016#x size %016#X", cast(ulong)(p + size_t.sizeof), *s);
+			assert(false);
+        }
+        
+        freedSize += *s;
+        allocatedSize -= *s;
+        
+        freedSize += size_t.sizeof;
+        allocatedSize -= size_t.sizeof;
+        
         // Do nothing
     }
     
     public size_t getFreeSize()
     {
-        return freeSize;
+        return freeSize + freedSize;
     }
     
     public size_t getAllocatedSize()

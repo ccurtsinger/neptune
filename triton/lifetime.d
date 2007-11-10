@@ -96,28 +96,26 @@ extern (C) void _d_delclass(Object* p)
 {
     if (*p)
     {
-        rt_finalize(cast(void*) *p);
-
-        ClassInfo** pc = cast(ClassInfo**)*p;
-        
+        ClassInfo **pc = cast(ClassInfo **)*p;
         if (*pc)
         {
             ClassInfo c = **pc;
 
+            rt_finalize(cast(void*) *p);
+
             if (c.deallocator)
             {
                 fp_t fp = cast(fp_t)c.deallocator;
-                
                 (*fp)(*p); // call deallocator
-                
                 *p = null;
-                
                 return;
             }
         }
-        
-        System.memory.heap.free(p);
-        
+        else
+        {
+            rt_finalize(cast(void*) *p);
+        }
+        System.memory.heap.free(cast(void*) *p);
         *p = null;
     }
 }

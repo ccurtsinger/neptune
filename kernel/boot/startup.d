@@ -11,6 +11,7 @@ module kernel.boot.kernel;
 import std.stdmem;
 import std.modinit;
 import std.stdlib;
+import std.port;
 
 import std.mem.AddressSpace;
 
@@ -76,12 +77,6 @@ extern(C) void _main(LoaderData* loader)
     System.setError(screen);
     System.setInput(kb);
 
-    System.output.write("Hello Neptune!").newline;
-
-    System.output.write("Memory Information:").newline;
-    System.output.writef(" - Free: %016#X", System.memory.physical.getFreeSize).newline;
-    System.output.writef(" - Allocated: %016#X", System.memory.physical.getAllocatedSize).newline;
-	
 	// Run module constructors and unit tests
 	_moduleCtor();
 	_moduleUnitTests();
@@ -89,6 +84,11 @@ extern(C) void _main(LoaderData* loader)
 	main();
 	
 	System.output.write("Kernel exited").newline;
+	
+	ubyte good = 0x02;
+    while ((good & 0x02) != 0)
+        good = inp(0x64);
+    outp(0x64, 0xFE);
 
 	for(;;){}
 }

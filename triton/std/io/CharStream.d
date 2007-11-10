@@ -23,6 +23,9 @@ class CharInputStream /*: InputStream!(char)*/
 		for(size_t i=0; i<size; i++)
 		{
 			ret[i] = read();
+			
+			if(ret[i] == '\b')
+				i--;
 		}
 		
 		return ret;
@@ -43,7 +46,10 @@ class CharInputStream /*: InputStream!(char)*/
 				output.write(c);
 			}
 			
-			buf.push(c);
+			if(c == '\b')
+				buf.pop();
+			else
+				buf.push(c);
 		
 		} while(c != delimiter);
 		

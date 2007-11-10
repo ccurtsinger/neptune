@@ -185,7 +185,7 @@ extern (C) byte[] _d_arrayappendcTp(TypeInfo ti, inout byte[] x, void *argp)
  */
 extern (C) byte[] _d_arraycatnT(TypeInfo ti, uint n, ...)
 {
-    System.output.writef("_d_arraycatnT(%s, %u, ...)", ti.toString(), n).newline;
+    //System.output.writef("_d_arraycatnT(%s, %u, ...)", ti.toString(), n).newline;
     
     void* a;
     byte[] b;

@@ -237,6 +237,17 @@ extern (C) void _d_delmemory(void** p)
 }
 
 /**
+ * Call the runtime class finalizer
+ *
+ * Params:
+ *  p = pointer to the object to finalize
+ */
+extern (C) void _d_callfinalizer(void* p)
+{
+    rt_finalize(p);
+}
+
+/**
  * Call an object and all of its parent objects' deconstructors
  *
  * Params:

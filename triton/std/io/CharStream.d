@@ -33,7 +33,7 @@ class CharInputStream /*: InputStream!(char)*/
 	
 	char[] readln(CharOutputStream output = null, char delimiter = '\n')
 	{
-		auto buf = new FastStack!(char);
+		scope auto buf = new FastStack!(char);
 			
 		char c;
 		

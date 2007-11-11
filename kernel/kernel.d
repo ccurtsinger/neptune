@@ -5,9 +5,9 @@ import std.collection.stack;
 
 void main()
 {
-    //spawn_thread(System.memory.stack.allocate(), &thread_function);
-	//spawn_thread(System.memory.stack.allocate(), &thread_function);
-	//spawn_thread(System.memory.stack.allocate(), &thread_function);
+    spawn_thread(System.memory.stack.allocate(), &thread_function);
+	spawn_thread(System.memory.stack.allocate(), &thread_function);
+	spawn_thread(System.memory.stack.allocate(), &thread_function);
 	
 	bool run = true;
 	
@@ -60,7 +60,7 @@ char[][] explode(char[] str, char separator)
 
 bool parseCommand(char[] cmd)
 {
-	char[][] parts = explode(cmd, '.');
+	char[][] parts = cmd.explode('.');
 	
 	if(parts[0] == "System")
 	{

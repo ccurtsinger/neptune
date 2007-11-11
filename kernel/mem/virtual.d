@@ -28,6 +28,7 @@ class Heap : Allocator
     size_t freeSize = 0;
     size_t freedSize = 0;
     size_t allocatedSize = 0;
+    size_t overheadSize = 0;
 
     /**
      * Initialize the heap
@@ -40,6 +41,7 @@ class Heap : Allocator
         freeSize = 0;
         freedSize = 0;
         allocatedSize = 0;
+        overheadSize = 0;
     }
     
     void add(void* base, size_t size)
@@ -91,7 +93,7 @@ class Heap : Allocator
 		
 		allocPtr += size_t.sizeof;
 		freeSize -= size_t.sizeof;
-		allocatedSize += size_t.sizeof;
+		overheadSize += size_t.sizeof;
 		
 		void* p = allocPtr;
         
@@ -113,7 +115,7 @@ class Heap : Allocator
     	p -= size_t.sizeof;
         size_t* s = cast(size_t*)p;
         
-        if(*s > allocatedSize - size_t.sizeof)
+        if(allocatedSize < *s || overheadSize < size_t.sizeof)
         {
         	System.output.writef("trying to free: %016#x size %016#X", cast(ulong)(p + size_t.sizeof), *s);
 			assert(false);
@@ -123,7 +125,7 @@ class Heap : Allocator
         allocatedSize -= *s;
         
         freedSize += size_t.sizeof;
-        allocatedSize -= size_t.sizeof;
+        overheadSize -= size_t.sizeof;
         
         // Do nothing
     }
@@ -140,6 +142,6 @@ class Heap : Allocator
     
     public size_t getOverheadSize()
     {
-        return 0;
+        return overheadSize;
     }
 }

@@ -23,6 +23,7 @@ import neptune.arch.paging;
 import kernel.kernel;
 import kernel.dev.screen;
 import kernel.dev.kb;
+import kernel.dev.Mouse;
 import kernel.mem.physical;
 import kernel.mem.virtual;
 import kernel.mem.dummy;
@@ -47,6 +48,8 @@ Keyboard kb;
 /// Screen device
 Screen screen;
 
+Mouse mouse;
+
 CooperativeScheduler scheduler;
 
 VirtualMemory v;
@@ -64,17 +67,18 @@ extern(C) void _main(LoaderData* loader)
     gdt_setup();
     tss_setup();
     idt_setup();
-
-    // Install GDT, IDT, and TSS
-    gdt.install();
-    tss.install();
-    idt.install();
     
     screen = new Screen();
     screen.clear();
     
     System.setOutput(screen);
     System.setError(screen);
+
+    // Install GDT, IDT, and TSS
+    gdt.install();
+    tss.install();
+    idt.install();
+    
     System.setInput(kb);
 
 	// Run module constructors and unit tests
@@ -203,6 +207,9 @@ void idt_setup()
 	// Initialize keyboard data and install the interrupt handler
 	kb = new Keyboard();
     idt.setHandler(33, &kb.handler);
+    
+    mouse = new Mouse();
+    idt.setHandler(44, &mouse.handler);
     
     idt.setHandler(32, &timer_interrupt);
     

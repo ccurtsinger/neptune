@@ -218,42 +218,45 @@ class CharOutputStream /*: OutputStream!(char)*/
                                 prefix = true;
                             }
                             // Print a signed integer
-                            /*else if(a[j] == 'd' || a[j] == 'i')
+                            else if(a[j] == 'd' || a[j] == 'i')
                             {
+                                long x;
+
                                 i++;
+
                                 if(args[i] == typeid(ubyte) || args[i] == typeid(byte))
-                                {
-                                    byte x = va_arg!(byte)(argptr);
-                                    print_int(x, 10, true, pad, padchar);
+                                    x = va_arg!(byte)(argptr);
 
-                                    parse = false;
-                                }
                                 else if(args[i] == typeid(ushort) || args[i] == typeid(short))
-                                {
-                                    short x = va_arg!(short)(argptr);
-                                    print_int(x, 10, true, pad, padchar);
+                                    x = va_arg!(short)(argptr);
 
-                                    parse = false;
-                                }
                                 else if(args[i] == typeid(uint) || args[i] == typeid(int))
-                                {
-                                    int x = va_arg!(int)(argptr);
-                                    print_int(x, 10, true, pad, padchar);
+                                    x = va_arg!(int)(argptr);
 
-                                    parse = false;
-                                }
                                 else if(args[i] == typeid(ulong) || args[i] == typeid(long))
-                                {
-                                    long x = va_arg!(long)(argptr);
-                                    print_int(x, 10, true, pad, padchar);
+                                    x = va_arg!(long)(argptr);
 
-                                    parse = false;
-                                }
                                 else
+                                    assert(0, "Invalid parameter type for %u format flag.");
+
+                                if(x < 0)
                                 {
-                                    assert(0, "Invalid parameter type for %d format flag.");
+                                    write('-');
+                                    x = -x;
                                 }
-                            }*/
+                                
+                                ulong y = cast(ulong)x;
+
+                                char[] str = new char[digits(y)];
+
+                                itoa(y, str.ptr);
+
+                                write(str);
+                                
+                                delete str;
+
+                                parse = false;
+                            }
                             // Print an unsigned integer
                             else if(a[j] == 'u')
                             {

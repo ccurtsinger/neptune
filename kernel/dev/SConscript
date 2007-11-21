@@ -3,6 +3,7 @@ Import('env')
 
 obj_list = [env.gdc('screen.o', 'screen.d')]
 obj_list += [env.gdc('kb.o', 'kb.d')]
+obj_list += [env.gdc('Mouse.o', 'Mouse.d')]
 
 dev = env.PartialLink('dev.o', obj_list)
 

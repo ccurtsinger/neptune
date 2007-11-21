@@ -104,7 +104,7 @@ char[] toString(ulong i, int radix = 10, bool uc = true, int min_length = 0, cha
     return str;
 }
 
-char[] toString(long i, int radix = 10, bool uc = true, int min_length = 0, char padchar = ' ')
+char[] intToString(long i, int radix = 10, bool uc = true, int min_length = 0, char padchar = ' ')
 {
     bool sign = false;
     
@@ -125,7 +125,10 @@ char[] toString(long i, int radix = 10, bool uc = true, int min_length = 0, char
     
     char[] str = new char[length];
     
-    for(size_t index=length; index>0; index--)
+    if(sign)
+        str[0] = '-';
+    
+    for(size_t index=length; (sign && index > 1) || (!sign && index>0); index--)
     {
         if(i == 0 && index < length)
             str[index-1] = padchar;

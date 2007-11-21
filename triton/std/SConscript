@@ -9,6 +9,7 @@ obj_list += [env.gdc('port.o',     		'port.d')]
 obj_list += [env.gdc('stdarg.o',   		'stdarg.d')]
 obj_list += [env.gdc('stdlib.o',   		'stdlib.d')]
 obj_list += [env.gdc('stdmem.o', 	   	'stdmem.d')]
+obj_list += [env.gdc('string.o',   		'string.d')]
 obj_list += [env.gdc('System.o',   		'System.d')]
 
 obj_list += SConscript('collection/SConscript', exports='env')

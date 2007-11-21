@@ -3,15 +3,15 @@ module std.mem.PageAllocator;
 
 class PageAllocator
 {
-    abstract void add(size_t base, size_t size);
+    public abstract void add(size_t base, size_t size);
     
-    abstract ulong getPage();
+    public abstract ulong getPage();
     
-    abstract void freePage(ulong base);
+    public abstract void freePage(ulong base);
     
-    abstract size_t getFreeSize();
+    public abstract size_t getFreeSize();
     
-    abstract size_t getAllocatedSize();
+    public abstract size_t getAllocatedSize();
     
-    abstract size_t getOverheadSize();
+    public abstract size_t getOverheadSize();
 }

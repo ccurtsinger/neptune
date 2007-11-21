@@ -2,36 +2,76 @@
 module kernel.task.Scheduler;
 
 import std.collection.queue;
+import std.task.Scheduler;
+import std.task.Thread;
 
 import neptune.arch.idt;
 
 import kernel.task.Thread;
 
-class Scheduler
+class CooperativeScheduler : Scheduler
 {
-    Queue!(KernelThread) queue;
-    KernelThread current;
+    private Queue!(KernelThread) queue;
+    private KernelThread current;
+    private ulong nextID;
     
-    ulong nextID;
-    
-    this(KernelThread current)
+    public this(KernelThread current, IDT* idt)
     {
         this.current = current;
         queue = new Queue!(KernelThread);
         
         nextID = current.getID()+1;
         
-        System.setThread(current);
+        idt.setHandler(255, &this.task_switcher);
+        idt.setHandler(254, &this.create_thread);
+        idt.setHandler(253, &this.task_switcher);
     }
     
-    void addThread(KernelThread t)
+    public void addThread(Thread t)
     {
-        queue.enqueue(t);
+        if(cast(KernelThread)t !is null)
+            queue.enqueue(cast(KernelThread)t);
     }
     
-    ulong getThreadID()
+    public ulong addThread(void function() thread)
     {
-        return current.getID();
+        ulong result;
+        
+        void* stack = System.memory.stack.allocate();
+    
+        asm
+        {
+            "int $254" : "=a" result, "=c" thread : "b" stack, "c" thread;
+        }
+        
+        if(result == 0)
+        {
+            thread();
+            assert(false, "Unhandled thread termination");
+        }
+        
+        return result;
+    }
+    
+    public Thread thread()
+    {
+        return current;
+    }
+    
+    public void yield()
+    {
+        asm
+        {
+            "int $255";
+        }
+    }
+    
+    public void exit()
+    {
+        asm
+        {
+            "int $253";
+        }
     }
     
     void create_thread(ulong interrupt, ulong error, InterruptStack* context)
@@ -62,9 +102,16 @@ class Scheduler
     
     void task_switcher(ulong interrupt, ulong error, InterruptStack* context)
     {
-        current.setContext(*context);
+        if(interrupt == 255)
+        {
+            current.setContext(*context);
         
-        queue.enqueue(current);
+            queue.enqueue(current);
+        }
+        else
+        {
+            delete current;
+        }
         
         current = queue.dequeue();
         
@@ -91,7 +138,5 @@ class Scheduler
         context.rflags = c.rflags;
         context.rsp = c.rsp;
         context.ss = c.ss;
-        
-        System.setThread(current);
     }
 }

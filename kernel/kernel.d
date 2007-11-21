@@ -2,17 +2,23 @@
 module kernel.kernel;
 
 import std.collection.stack;
+import std.string;
+import std.port;
+
+import neptune.arch.idt;
+
+ulong time;
 
 void main()
 {
-    spawn_thread(System.memory.stack.allocate(), &thread_function);
-	spawn_thread(System.memory.stack.allocate(), &thread_function);
-	spawn_thread(System.memory.stack.allocate(), &thread_function);
-	
+    time = 0;
+    
 	bool run = true;
 	
 	while(run)
 	{
+	    System.scheduler.addThread(&thread_function);
+	    
 		System.output.write("% ");
 		char[] line = System.input.readln(System.output);
 		
@@ -21,41 +27,20 @@ void main()
 		
 		delete line;
 
-		yield();
+		System.scheduler.yield();
 	}
 }
 
-char[][] explode(char[] str, char separator)
+void timer_interrupt(void* p, ulong interrupt, ulong error, InterruptStack* context)
 {
-	size_t count = 1;
-	
-	foreach(char c; str)
-	{
-		if(c == separator)
-			count++;
-	}
-	
-	char[][] ret = new char[][count];
-	
-	size_t index = 0;
-	size_t base = 0;
-	
-	foreach(size_t i, char c; str)
-	{
-		if(c == separator)
-		{
-			ret[index] = new char[i - base];
-			ret[index][] = str[base..i];
-			
-			index++;
-			base = i+1;
-		}
-	}
-	
-	ret[index] = new char[str.length - base];
-	ret[index][] = str[base..length];
-	
-	return ret;
+    System.scheduler.addThread(&timer);
+    outp(PIC1, PIC_EOI);
+}
+
+void timer()
+{
+    time++;
+    System.scheduler.exit();
 }
 
 bool parseCommand(char[] cmd)
@@ -78,7 +63,7 @@ bool parseCommand(char[] cmd)
 			{
 				if(parts.length == 3)
 				{
-					System.output.write(System.memory.physical.toString());
+					System.output.write(System.memory.physical.toString()).newline;
 				}
 				else if(parts[3] == "getFreeSize()")
 				{
@@ -160,20 +145,39 @@ bool parseCommand(char[] cmd)
 				System.output.writef("Unrecognized command 'System.memory.%s'", parts[2]).newline;
 			}
 		}
-		else if(parts[1] == "thread")
+		else if(parts[1] == "scheduler")
 		{
 			if(parts.length == 2)
 			{
-				System.output.write(System.thread.toString()).newline;
+				System.output.write(System.scheduler.toString()).newline;
 			}
-			else if(parts[2] == "getID()")
+			else if(parts[2] == "thread")
 			{
-				System.output.writef("%u", System.thread.getID()).newline;
+			    if(parts.length == 3)
+			    {
+			        System.output.write(System.scheduler.thread.toString()).newline;
+			    }
+			    else if(parts[3] == "getID()")
+			    {
+                    System.output.writef("%u", System.scheduler.thread.getID()).newline;
+			    }
+			    else
+			    {
+			        System.output.writef("Unrecognized command 'System.scheduler.thread.%s'", parts[3]).newline;
+			    }
+			}
+			else if(parts[2] == "yield()")
+			{
+			    System.scheduler.yield();
 			}
 			else
 			{
-				System.output.writef("Unrecognized command 'System.thread.%s'", parts[2]).newline;
+				System.output.writef("Unrecognized command 'System.scheduler.%s'", parts[2]).newline;
 			}
+		}
+		else if(parts[1] == "time")
+		{
+			System.output.writef("Current time: %u", time).newline;
 		}
 		else if(parts[1] == "reboot()")
 		{
@@ -203,11 +207,12 @@ void thread_function()
 {
     while(true)
     {
-        System.output.writef("hello from thread %u", System.thread.getID()).newline;
-        yield();
+        System.output.writef("hello from thread %u", System.scheduler.thread.getID()).newline;
+        System.scheduler.exit();
     }
 }
 
+/*
 void yield()
 {
     asm
@@ -232,4 +237,4 @@ ulong spawn_thread(void* stack, void function() thread)
     }
     
     return result;
-}
+}*/

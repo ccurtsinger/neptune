@@ -47,7 +47,7 @@ Keyboard kb;
 /// Screen device
 Screen screen;
 
-Scheduler scheduler;
+CooperativeScheduler scheduler;
 
 VirtualMemory v;
 
@@ -204,11 +204,12 @@ void idt_setup()
 	kb = new Keyboard();
     idt.setHandler(33, &kb.handler);
     
-    KernelThread t = new KernelThread(1, 0);
-    scheduler = new Scheduler(t);
+    idt.setHandler(32, &timer_interrupt);
     
-    idt.setHandler(255, &scheduler.task_switcher);
-    idt.setHandler(254, &scheduler.create_thread);
+    KernelThread t = new KernelThread(1, 0);
+    scheduler = new CooperativeScheduler(t, &idt);
+    
+    System.setScheduler(scheduler);
 }
 
 /**
@@ -255,6 +256,11 @@ extern(C)
     void* ptov(ulong pAddr)
     {
         return cast(void*)(pAddr + LINEAR_MEM_BASE);
+    }
+    
+    void abort()
+    {
+        assert(false, "Abort");
     }
 }
 

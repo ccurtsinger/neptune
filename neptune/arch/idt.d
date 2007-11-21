@@ -233,7 +233,7 @@ struct IDT
 /**
  * Remap the PIC to deliver IRQs at 'base', if the corresponding bit is cleared in 'mask'
  */
-void remapPic(ubyte base = 32, ushort mask = 0xFFFD)
+void remapPic(ubyte base = 32, ushort mask = 0xFFFC)
 {
 	//Sent ICW1
 	outp(PIC1, ICW1);

@@ -11,7 +11,7 @@ module std.System;
 
 import std.io.CharStream;
 import std.mem.AddressSpace;
-import std.task.Thread;
+import std.task.Scheduler;
 
 class System
 {
@@ -19,7 +19,7 @@ class System
     private static CharOutputStream stdout = null;
     private static CharOutputStream stderr = null;
     private static AddressSpace mem;
-    private static Thread currentThread;
+    private static Scheduler sched;
     
     public static CharInputStream input()
     {
@@ -66,13 +66,13 @@ class System
         return mem;
     }
     
-    public static void setThread(Thread currentThread)
+    public static void setScheduler(Scheduler sched)
     {
-        this.currentThread = currentThread;
+        this.sched = sched;
     }
     
-    public static Thread thread()
+    public static Scheduler scheduler()
     {
-        return currentThread;
+        return sched;
     }
 }

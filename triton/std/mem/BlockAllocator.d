@@ -3,17 +3,17 @@ module std.mem.BlockAllocator;
 
 class BlockAllocator
 {
-    abstract void add(void* base, size_t limit);
+    public abstract void add(void* base, size_t limit);
     
-    abstract void* allocate();
+    public abstract void* allocate();
     
-    abstract void free(void* p);
+    public abstract void free(void* p);
     
-    abstract size_t getBlockSize();
+    public abstract size_t getBlockSize();
     
-    abstract size_t getFreeSize();
+    public abstract size_t getFreeSize();
     
-    abstract size_t getAllocatedSize();
+    public abstract size_t getAllocatedSize();
     
-    abstract size_t getOverheadSize();
+    public abstract size_t getOverheadSize();
 }

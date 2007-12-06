@@ -13,5 +13,7 @@ class Allocator
     
     public abstract size_t getAllocatedSize();
     
+    public abstract size_t getAllocatedSize(void* p);
+    
     public abstract size_t getOverheadSize();
 }

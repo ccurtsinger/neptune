@@ -254,3 +254,101 @@ extern (C) void[] _d_arraycast(size_t tsize, size_t fsize, void[] a)
     
     return a;
 }
+
+/**
+ * Resize dynamic arrays with 0 initializers
+ */
+extern (C) byte[] _d_arraysetlengthT(TypeInfo ti, size_t newlength, Array *p)
+{
+    byte* newdata;
+    
+    if(newlength)
+    {
+        size_t newsize = ti.next.tsize() * newlength;
+        
+        if(p.data)
+        {
+            if(newlength > p.length)
+            {
+                size_t size = p.length * ti.next.tsize();
+                
+                if(System.memory.heap.getAllocatedSize(p.data) <= newsize + 1)
+                {
+                    newdata = cast(byte*)System.memory.heap.allocate(newsize + 1);
+                    newdata[0..size] = p.data[0..size];
+                    
+                    delete p.data;
+                }
+                
+                newdata[size..newsize] = 0;
+            }
+            else
+            {
+                newdata = p.data;
+            }
+        }
+        else
+        {
+            newdata = cast(byte*)System.memory.heap.allocate(newsize+1);
+        }
+    }
+    
+    p.data = newdata;
+    p.length = newlength;
+    
+    return newdata[0..newlength];
+}
+
+/**
+ * Resize dynamic arrays with non-zero initializers
+ */
+extern (C) byte[] _d_arraysetlengthiT(TypeInfo ti, size_t newlength, Array *p)
+{
+    byte* newdata;
+    void[] initializer = ti.next.init();
+    size_t initsize = initializer.length;
+    size_t size = 0;
+    
+    if(newlength)
+    {
+        size_t newsize = ti.next.tsize() * newlength;
+        
+        if(p.data)
+        {
+            if(newlength > p.length)
+            {
+                size = p.length * ti.next.tsize();
+                
+                if(System.memory.heap.getAllocatedSize(p.data) <= newsize + 1)
+                {
+                    newdata = cast(byte*)System.memory.heap.allocate(newsize + 1);
+                    newdata[0..size] = p.data[0..size];
+                    
+                    delete p.data;
+                }
+            }
+            else
+            {
+                size = newsize;
+                newdata = p.data;
+            }
+        }
+        else
+        {
+            newdata = cast(byte*)System.memory.heap.allocate(newsize+1);
+        }
+        
+        auto q = initializer.ptr;
+                
+        for(size_t u = size; u < newsize; u += initsize)
+        {
+            System.output.write("here").newline;
+            memcpy(newdata + u, q, initsize);
+        }
+    }
+    
+    p.data = newdata;
+    p.length = newlength;
+    
+    return newdata[0..newlength];
+}

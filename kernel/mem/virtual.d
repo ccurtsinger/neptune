@@ -130,6 +130,15 @@ class Heap : Allocator
         // Do nothing
     }
     
+    /**
+     * Get the size of a specific allocated region
+     */
+    public size_t getAllocatedSize(void* p)
+    {
+        p -= size_t.sizeof;
+        return *cast(size_t*)p;
+    }
+    
     public size_t getFreeSize()
     {
         return freeSize + freedSize;

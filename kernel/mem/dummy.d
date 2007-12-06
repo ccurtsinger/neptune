@@ -36,6 +36,11 @@ class DummyAllocator : Allocator
         // Do nothing
     }
     
+    public size_t getAllocatedSize(void* p)
+    {
+        return 0;
+    }
+    
     public size_t getFreeSize()
     {
         return limit;

@@ -1,9 +1,8 @@
 section .text
 
-extern _int_handlers
+extern _common_interrupt
 
 %macro PUSHL 0
-	push rbp
 	push r15
 	push r14
 	push r13
@@ -41,33 +40,29 @@ extern _int_handlers
 %macro INTR 1
 global _isr%1
 _isr%1:
-	push 0		 ;Push dummy error code
-	PUSHL		 ;Push all the available registers for debugging
-    mov rsi, %1	 ;Put interrupt number in 2nd argument
-    mov rcx, rsp ;Put a pointer to the interrupt stack in the 4th argument
-    lea rax, [_int_handlers + 16 * %1 wrt rip]		;Call the installed interrupt handler from the address in the table
-    lea rdi, [_int_handlers + 16 * %1 + 8 wrt rip]	;Put the this pointer in 1st argument
-    mov rdi, [rdi]
-    call [rax]
-	POPL
-	add rsp, 8
-    iretq
+	push 0	    ;Push dummy error code
+	push rbp    ;Save the frame register
+	mov rbp, %1 ;Put the interrupt number in the frame register (everything else is unsaved)
+	jmp _isr_common_stub
 %endmacro
 
 %macro INTR_EC 1
 global _isr%1
 _isr%1:
-	PUSHL		 ;Push all the available registers for debugging
-	mov rsi, %1	 ;Put interrupt number in 2nd argument
-    mov rcx, rsp ;Put a pointer to the interrupt stack in the 4th argument
-    lea rax, [_int_handlers + 16 * %1 wrt rip]		;Call the installed interrupt handler from the address in the table
-    lea rdi, [_int_handlers + 16 * %1 + 8 wrt rip]	;Put the this pointer in 1st argument
-    mov rdi, [rdi]
-    call [rax]
-	POPL
-	add rsp, 8
-    iretq
+	push rbp    ;Save the frame register
+	mov rbp, %1 ;Put the interrupt number in the frame register (everything else is unsaved)
+	jmp _isr_common_stub
 %endmacro
+
+_isr_common_stub:
+    PUSHL
+    mov rdi, rbp
+    mov rsi, rsp
+    lea rax, [_common_interrupt wrt rip]
+    call rax
+    POPL
+    add rsp, 8
+    iretq
 
 INTR 0
 INTR 1

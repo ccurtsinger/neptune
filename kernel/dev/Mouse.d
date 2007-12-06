@@ -87,7 +87,7 @@ class Mouse
         return inp(0x60);
     }
     
-    public void handler(ulong interrupt, ulong error, InterruptStack* context)
+    public void handler(ulong interrupt, InterruptStack* context)
     {
         if(inp(0x64) & 0x21 == 0x21)
         {

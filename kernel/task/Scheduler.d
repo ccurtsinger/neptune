@@ -1,7 +1,7 @@
 
 module kernel.task.Scheduler;
 
-import std.collection.queue;
+import std.collection.Queue;
 import std.task.Scheduler;
 import std.task.Thread;
 
@@ -74,7 +74,7 @@ class CooperativeScheduler : Scheduler
         }
     }
     
-    void create_thread(ulong interrupt, ulong error, InterruptStack* context)
+    void create_thread(ulong interrupt, InterruptStack* context)
     {
         ulong stack;
         
@@ -100,7 +100,7 @@ class CooperativeScheduler : Scheduler
         nextID++;
     }
     
-    void task_switcher(ulong interrupt, ulong error, InterruptStack* context)
+    void task_switcher(ulong interrupt, InterruptStack* context)
     {
         if(interrupt == 255)
         {

@@ -14,9 +14,8 @@ import std.integer;
 /// Array of isr addresses
 void* isrs[256];
 
-
 /// Table of interrupt handler addresses (and 'this' pointers) for isrs
-extern(C) IntHandler _int_handlers[256];
+extern(C) IntHandler interruptHandlers[256];
 
 const ubyte PIC1 = 0x20;
 const ubyte PIC2 = 0xA0;
@@ -74,8 +73,37 @@ private void init_isr_array()
  */
 struct IntHandler
 {
-	void* base;
-	void* pThis;
+	bool func;
+	void function(ulong interrupt, InterruptStack* stack) functionHandler;
+	void delegate(ulong interrupt, InterruptStack* stack) delegateHandler;
+	
+	static IntHandler opCall(void function(ulong interrupt, InterruptStack* stack) handler)
+	{
+	    IntHandler i;
+	    
+	    i.func = true;
+	    i.functionHandler = handler;
+	    
+	    return i;
+	}
+	
+	static IntHandler opCall(void delegate(ulong interrupt, InterruptStack* stack) handler)
+	{
+	    IntHandler i;
+	    
+	    i.func = false;
+	    i.delegateHandler = handler;
+	    
+	    return i;
+	}
+	
+	void call(ulong interrupt, InterruptStack* stack)
+	{
+	    if(func)
+            functionHandler(interrupt, stack);
+        else
+            delegateHandler(interrupt, stack);
+	}
 }
 
 /**
@@ -158,7 +186,7 @@ struct IDT
 	{
 		init_isr_array();
 		
-		remapPic();
+		remapPic(32, 0xFFFD);
 		
 		for(ushort i=0; i<256; i++)
 		{
@@ -190,7 +218,7 @@ struct IDT
 	 */
 	void setDefaultHandler(ubyte interrupt)
 	{
-		setHandler(interrupt, &_int_handler);
+		setHandler(interrupt, &defaultHandler);
 	}
 
 	/**
@@ -200,10 +228,9 @@ struct IDT
 	 *  interrupt = Index of the interrupt to set the handler for
 	 *  handler = Function pointer to the interrupt handler
 	 */
-	void setHandler(ubyte interrupt, void function(void* p, ulong interrupt, ulong error, InterruptStack* stack) handler)
+	void setHandler(ubyte interrupt, void function(ulong interrupt, InterruptStack* stack) handler)
 	{
-		_int_handlers[interrupt].base = handler;
-		_int_handlers[interrupt].pThis = null;
+	    interruptHandlers[interrupt] = IntHandler(handler);
 	}
 	
 	/**
@@ -213,10 +240,9 @@ struct IDT
 	 *  interrupt = Index of the interrupt to set the handler for
 	 *  handler = Delegate to teh interrupt handler
 	 */
-	void setHandler(ubyte interrupt, void delegate(ulong interrupt, ulong error, InterruptStack* stack) handler)
+	void setHandler(ubyte interrupt, void delegate(ulong interrupt, InterruptStack* stack) handler)
 	{
-		_int_handlers[interrupt].base = handler.funcptr;
-		_int_handlers[interrupt].pThis = handler.ptr;
+		interruptHandlers[interrupt] = IntHandler(handler);
 	}
 	
 	/**
@@ -284,62 +310,27 @@ struct InterruptStack
 	ulong ss;
 }
 
-/**
- * Default interrupt handler
- *
- * Params:
- *  p = empty pointer - used for compatibility with delegate handlers
- *  interrupt = interrupt number
- *  error = error code (or 0)
- *  stack = pointer to pre-interrupt context information on the stack
- */
-void _int_handler(void* p, ulong interrupt, ulong error, InterruptStack* stack)
+extern(C) void _common_interrupt(ulong interrupt, InterruptStack* stack)
 {
-	System.output.newline.writef("Interrupt %u", interrupt).newline;
-	System.output.writef("Error Code: %#X", stack.error).newline;
-	System.output.writef("  Context\n  -------").newline;
-	System.output.writef("  rip    %#016X", stack.rip).newline;
-	System.output.writef("  rsp    %#016X", stack.rsp).newline;
-	System.output.writef("  rbp    %#016X", stack.rbp).newline;
-	/*
-	System.output.writef("  rax    %#016X", stack.rax).newline;
-	System.output.writef("  rbx    %#016X", stack.rbx).newline;
-	System.output.writef("  rcx    %#016X", stack.rcx).newline;
-	System.output.writef("  rdx    %#016X", stack.rdx).newline;
-	System.output.writef("  rsi    %#016X", stack.rsi).newline;
-	System.output.writef("  rdi    %#016X", stack.rdi).newline;
-	System.output.writef("  r8     %#016X", stack.r8).newline;
-	System.output.writef("  r9     %#016X", stack.r9).newline;
-	System.output.writef("  r10    %#016X", stack.r10).newline;
-	System.output.writef("  r11    %#016X", stack.r11).newline;
-	System.output.writef("  r12    %#016X", stack.r12).newline;
-	System.output.writef("  r13    %#016X", stack.r13).newline;
-	System.output.writef("  r14    %#016X", stack.r14).newline;
-	System.output.writef("  r15    %#016X", stack.r15).newline;
-	*/
-	System.output.writef("  ss     %#02X", stack.ss).newline;
-	System.output.writef("  cs     %#02X", stack.cs).newline;
-
-	for(;;){}
+    interruptHandlers[interrupt].call(interrupt, stack);
 }
 
-/**
- * Default IRQ handler
- *
- * Params:
- *  p = empty pointer -used for compatibility with delegate handlers
- *  interrupt = interrupt number (NOT IRQ NUMBER)
- *  error = error code (0 for IRQs)
- *  stack = pointer to pre-interrupt context information on the stack
- */
-void _irq_handler(void* p, ulong interrupt, ulong error, InterruptStack* stack)
+void defaultHandler(ulong interrupt, InterruptStack* stack)
 {
-	System.output.newline.writef("IRQ %u", interrupt).newline;
+    System.output.writef("Unhandled interrupt: %u", interrupt).newline;
+    
+    for(;;){}
+}
 
-	// Acknowledge irq on PIC1
-	outp(PIC1, PIC_EOI);
-
-	// Acknowledge irq on PIC2
-	if(interrupt >= 40)
-		outp(PIC2, PIC_EOI);
+void stackUnwind(ulong stack, ulong frame, size_t depth = 6)
+{
+	ulong* rsp = cast(ulong*)stack;
+	ulong* rbp = cast(ulong*)frame;
+	
+	for(size_t i=0; i<depth; i++)
+	{
+		rsp = rbp;
+		rbp = cast(ulong*)rsp[0];
+		System.output.writef("unwind %016#X", rsp[1]).newline;
+	}
 }

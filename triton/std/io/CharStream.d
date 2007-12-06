@@ -4,7 +4,7 @@ module std.io.CharStream;
 
 import std.io.Stream;
 import std.integer;
-import std.collection.stack;
+import std.collection.Stack;
 import std.c.stdarg;
 
 class CharInputStream /*: InputStream!(char)*/
@@ -33,7 +33,7 @@ class CharInputStream /*: InputStream!(char)*/
 	
 	char[] readln(CharOutputStream output = null, char delimiter = '\n')
 	{
-		scope auto buf = new FastStack!(char);
+		scope auto buf = new Stack!(char);
 			
 		char c;
 		

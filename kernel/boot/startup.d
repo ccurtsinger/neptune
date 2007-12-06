@@ -211,8 +211,6 @@ void idt_setup()
     mouse = new Mouse();
     idt.setHandler(44, &mouse.handler);
     
-    idt.setHandler(32, &timer_interrupt);
-    
     KernelThread t = new KernelThread(1, 0);
     scheduler = new CooperativeScheduler(t, &idt);
     
@@ -228,7 +226,7 @@ void idt_setup()
  *  error = error code
  *  stack = pointer to context information
  */
-void pagefault_handler(void* p, ulong interrupt, ulong error, InterruptStack* stack)
+void pagefault_handler(ulong interrupt, InterruptStack* stack)
 {
     ulong vAddr;
 	asm

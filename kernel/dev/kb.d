@@ -9,7 +9,7 @@
 module kernel.dev.kb;
 
 import std.port;
-import std.collection.queue;
+import std.collection.Queue;
 import std.io.CharStream;
 
 import neptune.arch.idt;
@@ -62,7 +62,7 @@ class Keyboard : CharInputStream
 	private Key[256] keymap;
 	
 	/// Character buffer to use for keypresses
-	private FastQueue!(char, true) chars;
+	private Queue!(char) chars;
 
     /**
      * Create and initialize a Keyboard object, keymap, and character buffer
@@ -70,7 +70,7 @@ class Keyboard : CharInputStream
 	this()
 	{
 		caps = false;
-		chars = new FastQueue!(char, true);
+		chars = new Queue!(char);
 
 		for(int i=0; i<256; i++)
 		{
@@ -207,7 +207,7 @@ class Keyboard : CharInputStream
      *  error = error code - ignored in this case
      *  stack = pointer to context information
      */
-	void handler(ulong interrupt, ulong error, InterruptStack* stack)
+	void handler(ulong interrupt, InterruptStack* stack)
 	{
 		ubyte s = inp(0x60);
 

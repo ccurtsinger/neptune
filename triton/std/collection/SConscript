@@ -1,9 +1,7 @@
 # Grab the build environment
 Import('env')
 
-obj_list  = [env.gdc('heap.o',    	'heap.d')]
-obj_list += [env.gdc('list.o', 	  	'list.d')]
-obj_list += [env.gdc('queue.o',   	'queue.d')]
-obj_list += [env.gdc('stack.o',   	'stack.d')]
+obj_list  = [env.gdc('Queue.o', 'Queue.d')]
+obj_list += [env.gdc('Stack.o', 'Stack.d')]
 
 Return('obj_list')

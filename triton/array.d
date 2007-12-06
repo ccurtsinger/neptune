@@ -342,7 +342,6 @@ extern (C) byte[] _d_arraysetlengthiT(TypeInfo ti, size_t newlength, Array *p)
                 
         for(size_t u = size; u < newsize; u += initsize)
         {
-            System.output.write("here").newline;
             memcpy(newdata + u, q, initsize);
         }
     }

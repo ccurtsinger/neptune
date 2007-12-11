@@ -41,15 +41,20 @@ class CharInputStream /*: InputStream!(char)*/
 		{
 			c = read();
 			
-			if(output !is null)
+			if(c == '\b' && buf.size() > 0)
 			{
-				output.write(c);
-			}
-			
-			if(c == '\b')
 				buf.pop();
-			else
+				
+				if(output !is null)
+					output.write(c);
+			}
+			else if(c != '\b')
+			{
 				buf.push(c);
+				
+				if(output !is null)
+					output.write(c);
+			}
 		
 		} while(c != delimiter);
 		

@@ -8,12 +8,9 @@
 
 module object;
 
-import std.stdlib;
-import std.stdmem;
+public import std.type;
 
-alias ulong size_t;
-alias long  ptrdiff_t;
-alias size_t hash_t;
+import std.stdmem;
 
 extern (C) Object _d_newclass(ClassInfo ci);
 

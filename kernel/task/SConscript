@@ -4,6 +4,4 @@ Import('env')
 obj_list  = [env.gdc('Scheduler.o', 'Scheduler.d')]
 obj_list += [env.gdc('Thread.o', 'Thread.d')]
 
-task = env.PartialLink('task.o', obj_list)
-
-Return('task')
+Return('obj_list')

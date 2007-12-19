@@ -36,7 +36,6 @@
 module array;
 
 import error;
-import std.stdlib;
 import std.stdarg;
 import std.stdmem;
 

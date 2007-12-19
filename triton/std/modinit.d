@@ -10,8 +10,6 @@
 
 module std.modinit;
 
-import std.stdlib;
-
 /**
  * Represents one ModuleInfo object created by
  * a constructor function

@@ -6,10 +6,11 @@
  * Version: 0.2a
  */
 
-module kernel.mem.physical;
+module kernel.mem.PhysicalAllocator;
 
-import std.stdlib;
 import std.mem.PageAllocator;
+
+import kernel.arch.Arch;
 
 /**
  * Physical memory allocator that distributes free pages
@@ -65,7 +66,7 @@ class PhysicalAllocator : PageAllocator
      *  base = base address of the block
      *  size = size of the block
      */
-    public void add(size_t base, size_t size)
+    public void add(paddr_t base, size_t size)
     {
         // Move the base up to the next frame-aligned address
         ulong baseShift = System.pageSize - (base % System.pageSize);
@@ -111,13 +112,13 @@ class PhysicalAllocator : PageAllocator
      *
      * Returns: the physical address of the allocated memory
      */
-    public ulong getPage()
+    public paddr_t getPage()
     {
         if(freeSize >= System.pageSize && free !is null)
         {
             if(free.size >= System.pageSize)
             {
-                ulong pAddr = free.base;
+                paddr_t pAddr = free.base;
                 free.base += System.pageSize;
                 free.size -= System.pageSize;
                 freeSize -= System.pageSize;
@@ -146,7 +147,7 @@ class PhysicalAllocator : PageAllocator
      *  base = base address of the block
      *  size = size of the block
      */
-    public void freePage(ulong base)
+    public void freePage(paddr_t base)
     {
         add(base, System.pageSize);
         allocatedSize -= System.pageSize;
@@ -159,7 +160,7 @@ class PhysicalAllocator : PageAllocator
      *  base = base address of the block
      *  size = size of the block
      */
-    private void addLocal(ulong base, ulong size = System.pageSize)
+    private void addLocal(paddr_t base, size_t size = System.pageSize)
     {
         MemBlock* newblock = getLocal();
 
@@ -213,8 +214,8 @@ class PhysicalAllocator : PageAllocator
      */
     private struct MemBlock
     {
-        ulong base;
-        ulong size;
+        paddr_t base;
+        size_t size;
         MemBlock* next;
     }
 }

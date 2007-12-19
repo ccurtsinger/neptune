@@ -10,28 +10,29 @@ module kernel.boot.kernel;
 
 import std.stdmem;
 import std.modinit;
-import std.stdlib;
 import std.port;
-
 import std.mem.AddressSpace;
 
-import neptune.arch.gdt;
-import neptune.arch.tss;
-import neptune.arch.idt;
-import neptune.arch.paging;
-
 import kernel.kernel;
-import kernel.dev.screen;
-import kernel.dev.kb;
-import kernel.dev.Mouse;
-import kernel.mem.physical;
-import kernel.mem.virtual;
-import kernel.mem.dummy;
+
+import kernel.arch.Arch;
+import kernel.arch.Descriptor;
+import kernel.arch.GDT;
+import kernel.arch.IDT;
+import kernel.arch.TSS;
+import kernel.arch.PageTable;
+
+import kernel.mem.PhysicalAllocator;
+import kernel.mem.HeapAllocator;
+import kernel.mem.DummyAllocator;
 import kernel.mem.StackAllocator;
+
+import kernel.dev.Screen;
+import kernel.dev.Keyboard;
+import kernel.dev.Mouse;
+
 import kernel.task.Scheduler;
 import kernel.task.Thread;
-
-const ulong LINEAR_MEM_BASE = 0xFFFF830000000000;
 
 /// GDT
 GDT gdt;
@@ -42,57 +43,55 @@ TSS tss;
 /// IDT
 IDT idt;
 
-/// Keyboard device
-Keyboard kb;
+VirtualMemory v;
 
-/// Screen device
-Screen screen;
-
-Mouse mouse;
+PageTable* L4;
 
 CooperativeScheduler scheduler;
-
-VirtualMemory v;
 
 /**
  * Starting function for D
  *
  * Params:
  *  loader = Pointer to the loader data struct - contains memory information
+ *  isrtable = Array of virtual addresses for interrupt service routines (256 ulongs)
  */
-extern(C) void _main(LoaderData* loader)
+extern(C) void _main(LoaderData* loader, ulong* isrtable)
 {
 	// Initialize important data structures
     mem_setup(loader);
-    gdt_setup();
+    idt_setup(isrtable);
     tss_setup();
-    idt_setup();
+    gdt_setup();
     
-    screen = new Screen();
-    screen.clear();
-    
-    System.setOutput(screen);
-    System.setError(screen);
-
     // Install GDT, IDT, and TSS
     gdt.install();
     tss.install();
     idt.install();
     
-    System.setInput(kb);
+    Screen screen = new Screen();
+    screen.clear();
+    
+    System.output = screen;
+    System.error = screen;
+    
+    Keyboard kb = new Keyboard();
+    System.input = kb;
 
 	// Run module constructors and unit tests
 	_moduleCtor();
 	_moduleUnitTests();
 	
+	L4 = cast(PageTable*)ptov(loader.L4);
+	
+	if((*L4)[ptov(loader.L4)].present)
+	{
+	    System.output.write("yay").newline;
+	}
+	
 	main();
 	
 	System.output.write("Kernel exited").newline;
-	
-	ubyte good = 0x02;
-    while ((good & 0x02) != 0)
-        good = inp(0x64);
-    outp(0x64, 0xFE);
 
 	for(;;){}
 }
@@ -107,7 +106,7 @@ void mem_setup(LoaderData* loader)
 {
     DummyAllocator dummyAllocator;
     PhysicalAllocator pmem;
-    Heap heap;
+    HeapAllocator heap;
     StackAllocator stack;
     
     AddressSpace mem;
@@ -120,7 +119,8 @@ void mem_setup(LoaderData* loader)
     alloc += System.pageSize;
     dummyAllocator.add(alloc, loader.tempDataSize - System.pageSize);
     
-    System.setMemory(mem);
+    System.memory = mem;
+    
     mem.setAllocator(dummyAllocator);
     
     pmem = new PhysicalAllocator();
@@ -131,21 +131,44 @@ void mem_setup(LoaderData* loader)
 
     mem.setPhysicalAllocator(pmem);
 
-    //v = new(alloc.ptr) VirtualMemory(loader.L4);
-    v.init(loader.L4);
-
-    // Map a 16k interrupt stack for IST1
-    v.map(cast(void*)0x7FFFC000);
-    v.map(cast(void*)0x7FFFD000);
-    v.map(cast(void*)0x7FFFE000);
-    v.map(cast(void*)0x7FFFF000);
+    v = new VirtualMemory(loader.L4);
+    
+    Page* p;
+    
+    p = v[0x7FFFC000];
+    p.address = System.memory.physical.getPage();
+    p.superuser = true;
+    p.writable = true;
+    p.present = true;
+    p.invalidate();
+    
+    p = v[0x7FFFD000];
+    p.address = System.memory.physical.getPage();
+    p.superuser = true;
+    p.writable = true;
+    p.present = true;
+    p.invalidate();
+    
+    p = v[0x7FFFE000];
+    p.address = System.memory.physical.getPage();
+    p.superuser = true;
+    p.writable = true;
+    p.present = true;
+    p.invalidate();
+    
+    p = v[0x7FFFF000];
+    p.address = System.memory.physical.getPage();
+    p.superuser = true;
+    p.writable = true;
+    p.present = true;
+    p.invalidate();
 
     // Initialize the heap allocator object
-    heap = new Heap(&v);
+    heap = new HeapAllocator(v);
     
     mem.setAllocator(heap);
     
-    stack = new StackAllocator(&v);
+    stack = new StackAllocator(v);
     
     mem.setStackAllocator(stack);
 }
@@ -156,26 +179,47 @@ void mem_setup(LoaderData* loader)
 void gdt_setup()
 {
     gdt.init();
-
-    // Create null descriptor in GDT
-    gdt.addEntry(GDTEntry(GDTEntryType.NULL));
-
-    // Create kernel code descriptor in GDT
-    gdt.addEntry(GDTEntry(GDTEntryType.CODE, DPL.KERNEL));
-
-    // Create kernel data descriptor in GDT
-    gdt.addEntry(GDTEntry(GDTEntryType.DATA, DPL.KERNEL));
-
-    // Create user code desciptor in GDT
-    gdt.addEntry(GDTEntry(GDTEntryType.CODE, DPL.USER));
-
-    // Create user data descriptor in GDT
-    gdt.addEntry(GDTEntry(GDTEntryType.DATA, DPL.USER));
-
-    // Create TSS Descriptor entry in GDT
-    ushort tssSelector = gdt.addEntry(GDTEntry(&tss));
-
-    tss.setSelector(tssSelector);
+    
+    NullDescriptor* n = gdt.getEntry!(NullDescriptor);
+    *n = NullDescriptor();
+    
+    CodeDescriptor* kc = gdt.getEntry!(CodeDescriptor);
+    *kc = CodeDescriptor();
+    kc.conforming = false;
+    kc.privilege = 0;
+    kc.present = true;
+    kc.longmode = true;
+    kc.operand = false;
+    
+    DataDescriptor* kd = gdt.getEntry!(DataDescriptor);
+    *kd = DataDescriptor();
+    kd.privilege = 0;
+    kd.writable = true;
+    kd.present = true;
+    
+    CodeDescriptor* uc = gdt.getEntry!(CodeDescriptor);
+    *uc = CodeDescriptor();
+    uc.conforming = false;
+    uc.privilege = 3;
+    uc.present = true;
+    uc.longmode = true;
+    uc.operand = false;
+    
+    DataDescriptor* ud = gdt.getEntry!(DataDescriptor);
+    *ud = DataDescriptor();
+    ud.privilege = 3;
+    ud.present = true;
+    
+    tss.selector = gdt.getSelector();
+    
+    SystemDescriptor* t = gdt.getEntry!(SystemDescriptor);
+    *t = SystemDescriptor();
+    t.base = tss.address;
+    t.limit = 0x67;
+    t.type = DescriptorType.TSS;
+    t.privilege = 0;
+    t.present = true;
+    t.granularity = false;
 }
 
 /**
@@ -183,38 +227,49 @@ void gdt_setup()
  */
 void tss_setup()
 {
-    tss.init();
-
-    // Set the permission-level stacks
-    tss.setRspEntry(0, cast(void*)0xFFFF810000000000);
-    tss.setRspEntry(1, cast(void*)0xFFFF810000000000);
-    tss.setRspEntry(2, cast(void*)0xFFFF810000000000);
-
-    // Set IST entry
-    tss.setIstEntry(0, cast(void*)0x7FFFFFF8);
+    tss = new TSS();
+    
+    tss.rsp0 = 0xFFFF810000000000;
+    tss.rsp1 = 0xFFFF810000000000;
+    tss.rsp2 = 0xFFFF810000000000;
+    
+    tss.ist1 = 0x7FFFFFF8;
 }
 
 /**
  * Set up an IDT and install handlers for keyboard an page fault
  */
-void idt_setup()
+void idt_setup(ulong* isrtable)
 {
-	idt.init();
+    for(size_t i=0; i<256; i++)
+    {
+        GateDescriptor* d = idt[i];
+        
+        *d = GateDescriptor();
+        
+        d.target = isrtable[i];
+        d.selector = 0x08;
+        d.type = DescriptorType.INTERRUPT;
+        d.stack = 0;
+        d.privilege = 0;
+        d.present = true;
+    }
+}
 
-	// Install the page fault handler
-	idt.setHandler(14, &pagefault_handler);
-
-	// Initialize keyboard data and install the interrupt handler
-	kb = new Keyboard();
-    idt.setHandler(33, &kb.handler);
+extern(C) void _common_interrupt(ulong interrupt, InterruptStack* stack)
+{
+    if(interrupt == 14)
+    {
+        pagefault_handler(interrupt, stack);
+    }
+    else
+    {
+        System.output.writef("interrupt %u", interrupt).newline;
+        System.output.writef("error: %X", stack.error).newline;
+        System.output.writef("%%rip: %016#X", stack.rip).newline;
     
-    mouse = new Mouse();
-    idt.setHandler(44, &mouse.handler);
-    
-    KernelThread t = new KernelThread(1, 0);
-    scheduler = new CooperativeScheduler(t, &idt);
-    
-    System.setScheduler(scheduler);
+        for(;;){}
+    }
 }
 
 /**
@@ -234,39 +289,14 @@ void pagefault_handler(ulong interrupt, InterruptStack* stack)
 	    "mov %%cr2, %[addr]" : [addr] "=a" vAddr;
     }
 
-    System.output.writef("\nPage Fault: %#X", vAddr, "\nMapping...");
-
-    if(v.map(cast(void*)vAddr))
-    {
-        System.output.write("done").newline;
-    }
-    else
-    {
-        System.output.write("failed").newline;
-        System.output.writef("  %016#X", stack.rip).newline;
-        for(;;){}
-    }
-}
-
-extern(C)
-{
-    /**
-     * Convert a physical address to a pointer into the linear-mapped virtual address range
-     *
-     * Params:
-     *  pAddr = physical address to reference
-     *
-     * Returns: a pointer to memory that will allow read/write access to pAddr
-     */
-    void* ptov(ulong pAddr)
-    {
-        return cast(void*)(pAddr + LINEAR_MEM_BASE);
-    }
+    System.output.writef("\nPage Fault: %#X %#X", vAddr, stack.error).newline;
     
-    void abort()
-    {
-        assert(false, "Abort");
-    }
+    Page* p = (*L4)[vAddr];
+    p.present = true;
+    p.writable = true;
+    p.address = System.memory.physical.getPage();
+    p.superuser = true;
+    p.invalidate();
 }
 
 /**
@@ -276,25 +306,25 @@ struct LoaderData
 {
     align(1):
     /// Physical address of the top-level page directory
-	ulong L4;
+	paddr_t L4;
 	
 	/// Base address of the used memory
-	ulong usedMemBase;
+	paddr_t usedMemBase;
 	
 	/// Size of the used memory
-	ulong usedMemSize;
+	size_t usedMemSize;
 	
 	/// Base address of lower memory
-	ulong lowerMemBase;
+	paddr_t lowerMemBase;
 	
 	/// Size of lower memory
-	ulong lowerMemSize;
+	size_t lowerMemSize;
 	
 	/// Base address of upper memory
-	ulong upperMemBase;
+	paddr_t upperMemBase;
 	
 	/// Size of upper memory
-	ulong upperMemSize;
+	size_t upperMemSize;
 	
 	ulong regions;
 	

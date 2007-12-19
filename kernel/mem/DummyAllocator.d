@@ -1,5 +1,5 @@
 
-module kernel.mem.dummy;
+module kernel.mem.DummyAllocator;
 
 import std.mem.Allocator;
 

@@ -2,7 +2,8 @@
 module kernel.task.Thread;
 
 import std.task.Thread;
-import neptune.arch.idt;
+//import neptune.arch.idt;
+import kernel.arch.IDT;
 
 class KernelThread : Thread
 {

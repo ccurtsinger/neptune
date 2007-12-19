@@ -1,6 +1,7 @@
 section .text
 
 extern _common_interrupt
+global _isrtable
 
 %macro PUSHL 0
 	push r15
@@ -102,5 +103,18 @@ INTR 33
 %assign i 34
 %rep 255 - 34 + 1
 INTR i
+%assign i i+1
+%endrep
+
+%macro ISRREF 1
+dq _isr%1
+%endmacro
+
+section .rodata
+
+_isrtable:
+%assign i 0
+%rep 256
+ISRREF i
 %assign i i+1
 %endrep

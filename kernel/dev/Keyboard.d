@@ -6,13 +6,14 @@
  * Version: 0.1b
  */
 
-module kernel.dev.kb;
+module kernel.dev.Keyboard;
 
 import std.port;
 import std.collection.Queue;
 import std.io.CharStream;
 
-import neptune.arch.idt;
+//import neptune.arch.idt;
+import kernel.arch.IDT;
 
 /**
  * Keyboard abstraction with keymap support

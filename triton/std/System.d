@@ -26,9 +26,19 @@ class System
         return stdin;
     }
     
+    public static void input(CharInputStream stdin)
+    {
+        this.stdin = stdin;
+    }
+    
     public static CharOutputStream output()
     {
         return stdout;
+    }
+    
+    public static void output(CharOutputStream stdout)
+    {
+        this.stdout = stdout;
     }
     
     public static CharOutputStream error()
@@ -36,17 +46,7 @@ class System
         return stderr;
     }
     
-    public static void setInput(CharInputStream stdin)
-    {
-        this.stdin = stdin;
-    }
-    
-    public static void setOutput(CharOutputStream stdout)
-    {
-        this.stdout = stdout;
-    }
-    
-    public static void setError(CharOutputStream stderr)
+    public static void error(CharOutputStream stderr)
     {
         this.stderr = stderr;
     }
@@ -55,24 +55,24 @@ class System
     {
         return 0x1000;
     }
-    
-    public static void setMemory(AddressSpace mem)
-    {
-        this.mem = mem;
-    }
-    
+
     public static AddressSpace memory()
     {
         return mem;
     }
     
-    public static void setScheduler(Scheduler sched)
+    public static void memory(AddressSpace mem)
     {
-        this.sched = sched;
+        this.mem = mem;
     }
     
     public static Scheduler scheduler()
     {
         return sched;
+    }
+    
+    public static void scheduler(Scheduler sched)
+    {
+        this.sched = sched;
     }
 }

@@ -1,10 +1,8 @@
 # Grab the build environment
 Import('env')
 
-obj_list = [env.gdc('screen.o', 'screen.d')]
-obj_list += [env.gdc('kb.o', 'kb.d')]
+obj_list = [env.gdc('Screen.o', 'Screen.d')]
+obj_list += [env.gdc('Keyboard.o', 'Keyboard.d')]
 obj_list += [env.gdc('Mouse.o', 'Mouse.d')]
 
-dev = env.PartialLink('dev.o', obj_list)
-
-Return('dev')
+Return('obj_list')

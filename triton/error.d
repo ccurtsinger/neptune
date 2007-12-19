@@ -29,7 +29,7 @@ void onError(char[] msg, char[] file = null, ulong line = 0)
 	
 	System.output.newline;
 	
-	stackUnwind();
+	//stackUnwind();
 		
 	for(;;){}
 }

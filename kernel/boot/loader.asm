@@ -5,6 +5,7 @@ extern _setup, _main
 extern data
 extern start_ctors, end_ctors
 extern _Dmodule_ref
+extern _isrtable
 
 section .text
 _loader:
@@ -31,6 +32,8 @@ _loader:
 	lea rax, [_loader_data wrt rip]
 	mov [rax], rdi
 	
+	lea rsi, [_isrtable wrt rip]
+	
 	; Jump to D code
     call _main
 
@@ -42,6 +45,6 @@ _loader_data:
 	dq 0
 
 section .bss
-    ; Reserve an 8K kernel stack
+    ; Reserve a 16K kernel stack
     resb 0x4000
     stack:

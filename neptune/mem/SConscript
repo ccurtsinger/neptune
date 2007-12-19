@@ -1,6 +1,0 @@
-# Grab the build environment
-Import('env')
-
-obj_list  = [env.gdc('AddressSpace.o', 'AddressSpace.d')]
-
-Return('obj_list')

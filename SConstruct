@@ -66,14 +66,12 @@ loader = SConscript('loader/SConscript', exports='i586_env')
 triton = SConscript('triton/SConscript', exports='env')
 
 # Build Neptune
-neptune = SConscript('neptune/SConscript', exports='env')
+#neptune = SConscript('neptune/SConscript', exports='env')
 
 # Build the Kernel
 kernel = SConscript('kernel/SConscript', exports='env')
 
 Depends(kernel, triton)
-Depends(neptune, triton)
-Depends(kernel, neptune)
 Depends(kernel, 'kernel/link/linker.ld');
 
 # Build the CD

@@ -39,7 +39,6 @@
 
 module lifetime;
 
-import std.stdlib;
 import std.stdmem;
 
 import array;

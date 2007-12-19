@@ -1,7 +1,8 @@
 
 module kernel.dev.Mouse;
 
-import neptune.arch.idt;
+//import neptune.arch.idt;
+import kernel.arch.IDT;
 
 import std.port;
 

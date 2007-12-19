@@ -5,7 +5,8 @@ import std.collection.Queue;
 import std.task.Scheduler;
 import std.task.Thread;
 
-import neptune.arch.idt;
+//import neptune.arch.idt;
+import kernel.arch.IDT;
 
 import kernel.task.Thread;
 
@@ -15,16 +16,16 @@ class CooperativeScheduler : Scheduler
     private KernelThread current;
     private ulong nextID;
     
-    public this(KernelThread current, IDT* idt)
+    public this(KernelThread current, IDT idt)
     {
         this.current = current;
         queue = new Queue!(KernelThread);
         
         nextID = current.getID()+1;
         
-        idt.setHandler(255, &this.task_switcher);
-        idt.setHandler(254, &this.create_thread);
-        idt.setHandler(253, &this.task_switcher);
+        //idt.setHandler(255, &this.task_switcher);
+        //idt.setHandler(254, &this.create_thread);
+        //idt.setHandler(253, &this.task_switcher);
     }
     
     public void addThread(Thread t)

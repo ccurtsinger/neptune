@@ -6,13 +6,12 @@
  * Version: 0.1b
  */
 
-module kernel.mem.virtual;
+module kernel.mem.HeapAllocator;
 
-import neptune.arch.paging;
+//import neptune.arch.paging;
+import kernel.arch.PageTable;
 
 import std.mem.Allocator;
-
-import std.stdlib;
 
 /**
  * Temporary heap allocation with built-in page allocation
@@ -20,9 +19,9 @@ import std.stdlib;
  * Currently performs no freeing of memory, and stores no meta-data
  * in allocated blocks.
  */
-class Heap : Allocator
+class HeapAllocator : Allocator
 {
-    VirtualMemory* mem;
+    VirtualMemory mem;
     void* framePtr = null;
     void* allocPtr = null;
     size_t freeSize = 0;
@@ -33,7 +32,7 @@ class Heap : Allocator
     /**
      * Initialize the heap
      */
-    this(VirtualMemory* mem)
+    this(VirtualMemory mem)
     {
         this.mem = mem;
         framePtr = null;
@@ -58,13 +57,23 @@ class Heap : Allocator
     {
         if(framePtr is null)
         {
-            mem.map(cast(void*)0x10000000);
-
+            Page* p = mem[0x10000000];
+            p.address = System.memory.physical.getPage();
+            p.writable = true;
+            p.present = true;
+            p.superuser = true;
+            p.invalidate;
+            
             return cast(void*)0x10000000;
         }
         else
         {
-            mem.map(framePtr + System.pageSize);
+            Page* p = mem[framePtr + System.pageSize];
+            p.address = System.memory.physical.getPage();
+            p.writable = true;
+            p.present = true;
+            p.superuser = true;
+            p.invalidate();
 
             return cast(void*)(framePtr + System.pageSize);
         }
@@ -82,10 +91,10 @@ class Heap : Allocator
     {
         if(freeSize < size + size_t.sizeof || framePtr is null)
         {
-        	allocatedSize += freeSize;
+        	//allocatedSize += freeSize;
             framePtr = morecore();
-            freeSize = System.pageSize;
-            allocPtr = framePtr;
+            freeSize += System.pageSize;
+            //allocPtr = framePtr;
         }
 
 		size_t* s = cast(size_t*)allocPtr;

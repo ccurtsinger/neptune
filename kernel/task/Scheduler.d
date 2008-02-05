@@ -4,140 +4,110 @@ module kernel.task.Scheduler;
 import std.collection.Queue;
 import std.task.Scheduler;
 import std.task.Thread;
+import std.port;
 
-//import neptune.arch.idt;
 import kernel.arch.IDT;
-
 import kernel.task.Thread;
+import kernel.event.Interrupt;
 
-class CooperativeScheduler : Scheduler
+class BasicScheduler : Scheduler
 {
-    private Queue!(KernelThread) queue;
-    private KernelThread current;
-    private ulong nextID;
+    private Queue!(Thread) queue;
+    private Thread currentThread;
     
-    public this(KernelThread current, IDT idt)
+    public this()
     {
-        this.current = current;
-        queue = new Queue!(KernelThread);
+        currentThread = null;
         
-        nextID = current.getID()+1;
+        queue = new Queue!(Thread);
         
-        //idt.setHandler(255, &this.task_switcher);
-        //idt.setHandler(254, &this.create_thread);
-        //idt.setHandler(253, &this.task_switcher);
+        setHandler(255, &task_switcher);
+        setHandler(32, &timer_int);
     }
     
-    public void addThread(Thread t)
+    public Thread current()
     {
-        if(cast(KernelThread)t !is null)
-            queue.enqueue(cast(KernelThread)t);
+        return currentThread;
     }
     
-    public ulong addThread(void function() thread)
+    public synchronized void addThread(Thread t)
     {
-        ulong result;
-        
-        void* stack = System.memory.stack.allocate();
-    
-        asm
-        {
-            "int $254" : "=a" result, "=c" thread : "b" stack, "c" thread;
-        }
-        
-        if(result == 0)
-        {
-            thread();
-            assert(false, "Unhandled thread termination");
-        }
-        
-        return result;
+        queue.enqueue(t);
     }
     
-    public Thread thread()
+    public synchronized void removeThread(Thread t)
     {
-        return current;
+        assert(false, "Thread removal is not yet implemented");
     }
     
-    public void yield()
+    public void taskSwitch(ThreadState s = ThreadState.Ready)
     {
         asm
         {
-            "int $255";
+            "int $255" : : "a" s;
         }
     }
     
-    public void exit()
+    public bool timer_int(InterruptStack* context)
     {
-        asm
-        {
-            "int $253";
-        }
+        // Save rax and set to ready state
+        size_t rax = context.rax;
+        context.rax = ThreadState.Ready;
+        
+        // Perform context switch
+        task_switcher(context);
+        
+        // Restore rax
+        context.rax = rax;
+        
+        return true;
     }
     
-    void create_thread(ulong interrupt, InterruptStack* context)
+    public synchronized bool task_switcher(InterruptStack* context)
     {
-        ulong stack;
+		if(currentThread !is null)
+		{
+			currentThread.saveContext(context);
+			
+			if(context.rax == ThreadState.Ready || context.rax == ThreadState.Waiting) 
+			{
+                currentThread.state = cast(ThreadState)context.rax;
+			}
+			else
+			{
+			    currentThread.state = ThreadState.Ready;
+			}
+			
+			queue.enqueue(currentThread);
+		}
+		
+		bool found = false;
+		
+		while(!found)
+		{
+            currentThread = queue.dequeue();
+            
+            if(currentThread.state == ThreadState.Ready || currentThread.state == ThreadState.New)
+            {
+                found = true;
+            }
+            else
+            {
+                queue.enqueue(currentThread);
+            }
+		}
+		
+		if(currentThread.state == ThreadState.New)
+		{
+			currentThread.saveContext(context);
+			currentThread.init();
+			currentThread.state = ThreadState.Ready;
+		}
+		
+		currentThread.loadContext(context);
+		
+		currentThread.state = ThreadState.Running;
         
-        asm
-        {
-            "mov %%rbx, %[stack]" : [stack] "=Nd" stack;
-        }
-        
-        // Create a new thread with the stack pointer specified in rbx
-        KernelThread t = new KernelThread(nextID, stack);
-        
-        // Copy the current thread context
-        InterruptStack newContext = *context;
-        
-        newContext.rax = 0;
-        newContext.rsp = stack;
-        
-        t.setContext(newContext);
-        addThread(t);
-        
-        context.rax = nextID;
-        
-        nextID++;
-    }
-    
-    void task_switcher(ulong interrupt, InterruptStack* context)
-    {
-        if(interrupt == 255)
-        {
-            current.setContext(*context);
-        
-            queue.enqueue(current);
-        }
-        else
-        {
-            delete current;
-        }
-        
-        current = queue.dequeue();
-        
-        InterruptStack* c = current.getContext();
-        
-        context.rax = c.rax;
-        context.rbx = c.rbx;
-        context.rcx = c.rcx;
-        context.rdx = c.rdx;
-        context.rsi = c.rsi;
-        context.rdi = c.rdi;
-        context.r8 = c.r8;
-        context.r9 = c.r9;
-        context.r10 = c.r10;
-        context.r11 = c.r11;
-        context.r12 = c.r12;
-        context.r13 = c.r13;
-        context.r14 = c.r14;
-        context.r15 = c.r15;
-        context.rbp = c.rbp;
-        context.error = c.error;
-        context.rip = c.rip ;
-        context.cs = c.cs;
-        context.rflags = c.rflags;
-        context.rsp = c.rsp;
-        context.ss = c.ss;
+        return true;
     }
 }

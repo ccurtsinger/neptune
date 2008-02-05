@@ -12,8 +12,9 @@ import std.port;
 import std.collection.Queue;
 import std.io.CharStream;
 
-//import neptune.arch.idt;
 import kernel.arch.IDT;
+import kernel.event.Interrupt;
+import kernel.event.Event;
 
 /**
  * Keyboard abstraction with keymap support
@@ -173,6 +174,10 @@ class Keyboard : CharInputStream
 		// 93 is right-click menu
 
 		keymap[170] = Key('\0', '\0', true);
+		
+		//setHandler(33, &handler);
+		
+		System.dispatcher.register(&eventHandler);
 	}
 	
 	/**
@@ -208,7 +213,7 @@ class Keyboard : CharInputStream
      *  error = error code - ignored in this case
      *  stack = pointer to context information
      */
-	void handler(ulong interrupt, InterruptStack* stack)
+	bool handler(InterruptStack* stack)
 	{
 		ubyte s = inp(0x60);
 
@@ -234,11 +239,38 @@ class Keyboard : CharInputStream
 		{
 			chars.enqueue(c);
 		}
+
+		outp(0x20, 0x20);
 		
-		/*if(s < 128 && k.lc == '\0')
-    	{
-    	    writef("(%u)", s);
-    	}*/
+		return true;
+	}
+	
+	void eventHandler(KeyboardIRQEvent e)
+	{
+		ubyte s = inp(0x60);
+
+		Key k = keymap[s];
+		
+		char c = '\0';
+
+		if(caps)
+		{
+			c = k.uc;
+		}
+		else
+		{
+			c = k.lc;
+		}
+
+		if(k.shift)
+		{
+			caps = !caps;
+		}
+		
+		if(c != '\0')
+		{
+			chars.enqueue(c);
+		}
 
 		outp(0x20, 0x20);
 	}

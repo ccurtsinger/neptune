@@ -1,94 +1,52 @@
 module kernel.kernel;
 
-import std.string;
-import std.port;
+import kernel.task.Thread;
 
-alias void function(Event e) handler_t;
+import std.event.Event;
 
 void main()
 {
     System.output.write("Hello D!").newline;
     
-    Dispatcher d = new Dispatcher();
+    KernelThread t = new KernelThread(&thread);
     
-    d.register(&test);
-    d.register(&test2);
+    System.input.readln(System.output);
     
-    d.dispatch(new EventA());
-
-    int* x = cast(int*)0xA000F000;
-    *x = 123;
-    System.output.writef("%u", *x).newline;
+    System.dispatcher.register(&handler);
+    
+    System.dispatcher.dispatch(new EventA());
+    
+    t.start();
+    
+    thread();
+    
+    for(;;){}
 }
 
-void test(EventA e)
+void handler(EventA e)
 {
-    System.output.write("test").newline;
+	System.output.write("EventA handler").newline;
 }
 
-void test2(EventB e)
+void thread()
 {
-    System.output.write("test2").newline;
+	while(true)
+	{
+		System.output.writef("thread %u", System.scheduler.current.id).newline;
+		
+		pause();
+	}
 }
 
-class HandlerList
+void pause()
 {
-    handler_t[] handlers;
-    TypeInfo t;
-    
-    public this(TypeInfo t)
+    for(size_t i=0; i<10000000; i++)
     {
-        this.t = t;
-    }
-    
-    public void register(T)(void function(T e) h)
-    {
-        handlers.length = handlers.length + 1;
-        handlers[length-1] = cast(handler_t)h;
-    }
-    
-    public void dispatch(T)(T e)
-    {
-        foreach(handler_t h; handlers)
-        {
-            h(e);
-        }
-    }
-}
-
-class Dispatcher
-{
-    HandlerList[TypeInfo] handlers;
-
-    public void register(T)(void function(T e) handler)
-    {
-        TypeInfo t = typeid(T);
         
-        if(!(t in handlers))
-            handlers[t] = new HandlerList(t);
-        
-        handlers[t].register(handler);
     }
-    
-    public void dispatch(T)(T e)
-    {
-        TypeInfo t = typeid(T);
-        
-        handlers[t].dispatch(e);
-    }
-}
-
-class Event
-{
-    
 }
 
 class EventA : Event
 {
-    
-}
-
-class EventB : Event
-{
-    
+	
 }

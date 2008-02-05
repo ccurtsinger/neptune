@@ -1,18 +1,35 @@
+/**
+ * IDT abstraction, utilities, and related constants
+ *
+ * Authors: Charlie Curtsinger
+ * Date: January 15th, 2008
+ * Version: 0.2a
+ */
+
 module kernel.arch.IDT;
 
 import std.port;
 
 import kernel.arch.Descriptor;
 
+/**
+ * IDT abstraction
+ */
 struct IDT
 {
     GateDescriptor[256] data;
     
+    /**
+     * Return a pointer to the given entry
+     */
     public GateDescriptor* opIndex(size_t index)
     {
         return &(data[index]);
     }
     
+    /**
+     * Load the IDT
+     */
     public void install()
     {
         DTPtr idtp;
@@ -20,7 +37,7 @@ struct IDT
         idtp.limit = 256 * 16 - 1;
         idtp.address = data.ptr;
         
-        remapPic(32, 0xFFFF);
+        remapPic(32, 0xFFFC);
 
         asm
         {
@@ -31,37 +48,28 @@ struct IDT
     }
 }
 
+/// Master PIC port
 const ubyte PIC1 = 0x20;
+
+/// Slave PIC port
 const ubyte PIC2 = 0xA0;
+
+/// Initialization code word 1
 const ubyte ICW1 = 0x11;
+
+/// Initialization code word 4
 const ubyte ICW4 = 0x01;
+
+/// PIC interrupt acknowledgement data
 const ubyte PIC_EOI = 0x20;
 
-struct InterruptStack
-{
-	ulong rax;
-	ulong rbx;
-	ulong rcx;
-	ulong rdx;
-	ulong rsi;
-	ulong rdi;
-	ulong r8;
-	ulong r9;
-	ulong r10;
-	ulong r11;
-	ulong r12;
-	ulong r13;
-	ulong r14;
-	ulong r15;
-	ulong rbp;
-	ulong error;
-	ulong rip;
-	ulong cs;
-	ulong rflags;
-	ulong rsp;
-	ulong ss;
-}
-
+/**
+ * Remap the PIC base IRQ and set the IRQ mask
+ *
+ * Params:
+ *  base = base interrupt for IRQ 0
+ *  mask = IRQ mask
+ */
 void remapPic(ubyte base = 32, ushort mask = 0x0)
 {
 	//Sent ICW1
@@ -79,8 +87,7 @@ void remapPic(ubyte base = 32, ushort mask = 0x0)
 	//Send ICW4
 	outp(PIC1+1, ICW4);
 	outp(PIC2+1, ICW4);
-
-	//Disable all but IRQ 1
+	
 	outp(PIC1+1, cast(ubyte)(mask&0xFF));
 	outp(PIC2+1, cast(ubyte)((mask>>8)&0xFF));
 }

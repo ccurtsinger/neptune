@@ -1,3 +1,10 @@
+/**
+ * Memory allocator that allocates from a fixed size
+ *
+ * Authors: Charlie Curtsinger
+ * Date: January 15th, 2008
+ * Version: 0.2a
+ */
 
 module kernel.mem.DummyAllocator;
 

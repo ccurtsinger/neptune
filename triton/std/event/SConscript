@@ -1,0 +1,7 @@
+# Grab the build environment
+Import('env')
+
+obj_list  = [env.gdc('Dispatcher.o', 'Dispatcher.d')]
+obj_list += [env.gdc('Event.o', 'Event.d')]
+
+Return('obj_list')

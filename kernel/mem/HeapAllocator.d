@@ -9,6 +9,7 @@
 module kernel.mem.HeapAllocator;
 
 //import neptune.arch.paging;
+import kernel.arch.Arch;
 import kernel.arch.PageTable;
 
 import std.mem.Allocator;
@@ -21,7 +22,7 @@ import std.mem.Allocator;
  */
 class HeapAllocator : Allocator
 {
-    VirtualMemory mem;
+    PageTable* mem;
     void* framePtr = null;
     void* allocPtr = null;
     size_t freeSize = 0;
@@ -32,7 +33,7 @@ class HeapAllocator : Allocator
     /**
      * Initialize the heap
      */
-    this(VirtualMemory mem)
+    this(PageTable* mem)
     {
         this.mem = mem;
         framePtr = null;
@@ -57,25 +58,27 @@ class HeapAllocator : Allocator
     {
         if(framePtr is null)
         {
-            Page* p = mem[0x10000000];
+            Page* p = (*mem)[0x10000000];
             p.address = System.memory.physical.getPage();
             p.writable = true;
             p.present = true;
             p.superuser = true;
             p.invalidate;
             
+			allocPtr = cast(void*)0x10000000;
+            
             return cast(void*)0x10000000;
         }
         else
         {
-            Page* p = mem[framePtr + System.pageSize];
+            Page* p = (*mem)[framePtr + FRAME_SIZE];
             p.address = System.memory.physical.getPage();
             p.writable = true;
             p.present = true;
             p.superuser = true;
             p.invalidate();
 
-            return cast(void*)(framePtr + System.pageSize);
+            return cast(void*)(framePtr + FRAME_SIZE);
         }
     }
 
@@ -93,7 +96,7 @@ class HeapAllocator : Allocator
         {
         	//allocatedSize += freeSize;
             framePtr = morecore();
-            freeSize += System.pageSize;
+            freeSize += FRAME_SIZE;
             //allocPtr = framePtr;
         }
 

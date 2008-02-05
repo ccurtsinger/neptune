@@ -969,23 +969,33 @@ class ModuleInfo
     void (*unitTest)();
 }
 
-extern (C) void _d_monitordelete(Object h, bool det)
-{
-    /*Monitor* m = getMonitor(h);
+/************************
+ * Monitor stuff
+ */
 
-    if (m !is null)
-    {
-        IMonitor i = m.impl;
-        if (i is null)
-        {
-            _d_monitor_destroy(h);
-            setMonitor(h, null);
-            return;
-        }
-        if (det && (cast(void*) i) !is (cast(void*) h))
-            delete i;
-        setMonitor(h, null);
-    }*/
+alias Object.Monitor IMonitor;
+
+struct Monitor
+{
+	IMonitor impl;
+}
+
+Monitor* getMonitor(Object h)
+{
+	return cast(Monitor*) (cast(void**)h)[1];
+}
+
+void setMonitor(Object h, Monitor* m)
+{
+	(cast(void**)h)[1] = m;
+}
+
+enum ThreadState
+{
+    New,
+	Running,
+	Ready,
+	Waiting
 }
 
 public import std.System;

@@ -2,37 +2,51 @@
 module kernel.task.Thread;
 
 import std.task.Thread;
-//import neptune.arch.idt;
-import kernel.arch.IDT;
+import kernel.event.Interrupt;
+
+static this()
+{
+	Thread.nextID = 0;
+}
 
 class KernelThread : Thread
 {
-    private ulong id;
-    private InterruptStack context;
+	private InterruptStack context;
+	
+    private void function() task;
     
-    this(ulong id, ulong stack)
+    public this(void function() task)
     {
-        this.id = id;
-        context.rsp = stack;
+        this.task = task;
+        
+        super();
     }
     
-    public void setID(ulong id)
+    public void init()
     {
-        this.id = id;
+    	void delegate() r = &this.run;
+		
+		context.rip = cast(ulong)r.funcptr;
+		context.rdi = cast(ulong)r.ptr;
+		context.rsp = cast(ulong)System.mem.stack.allocate();
     }
     
-    public ulong getID()
+    protected void run()
     {
-        return id;
+        task();
+        
+        System.output.writef("Thread %u returned", id).newline;
+        
+        for(;;){}
     }
     
-    public void setContext(InterruptStack context)
+    public synchronized void saveContext(void* context)
     {
-        this.context = context;
+    	this.context = *cast(InterruptStack*)context;
     }
     
-    public InterruptStack* getContext()
+    public synchronized void loadContext(void* context)
     {
-        return &context;
+    	*cast(InterruptStack*)context = this.context;
     }
 }

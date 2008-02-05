@@ -58,6 +58,8 @@ class CharInputStream /*: InputStream!(char)*/
 		
 		} while(c != delimiter);
 		
+		buf.pop();
+		
 		char[] line = new char[buf.size()];
 		
 		for(size_t i=buf.size(); i>0; i--)

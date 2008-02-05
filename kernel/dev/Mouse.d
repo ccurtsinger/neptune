@@ -1,11 +1,18 @@
+/**
+ * Simple Mouse driver
+ */
 
 module kernel.dev.Mouse;
 
 //import neptune.arch.idt;
 import kernel.arch.IDT;
+import kernel.event.Interrupt;
 
 import std.port;
 
+/**
+ * Mouse device abstraction
+ */
 class Mouse
 {
     private byte cycle = 0;
@@ -15,6 +22,9 @@ class Mouse
     
     bool[5] buttons;
     
+    /**
+     * Initialize the mouse device
+     */
     public this()
     {
         buttons[0] = false;
@@ -48,6 +58,9 @@ class Mouse
         read();
     }
     
+    /**
+     * Wait for a response from the mouse
+     */
     private void wait(int type)
     {
         int timeout = 100000;
@@ -74,6 +87,9 @@ class Mouse
         }
     }
     
+    /**
+     * Write to the mouse port
+     */
     private void write(int b)
     {
         wait(1);
@@ -82,12 +98,18 @@ class Mouse
         outp(0x60, cast(byte)b);
     }
     
+    /**
+     * Read from the mouse port
+     */
     private byte read()
     {
         wait(0);
         return inp(0x60);
     }
     
+    /**
+     * Interrupt handler for the mouse IRQ
+     */
     public void handler(ulong interrupt, InterruptStack* context)
     {
         if(inp(0x64) & 0x21 == 0x21)

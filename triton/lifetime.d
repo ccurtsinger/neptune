@@ -42,6 +42,7 @@ module lifetime;
 import std.stdmem;
 
 import array;
+import sync;
 
 private
 {
@@ -276,12 +277,12 @@ extern (C) void rt_finalize(void* p, bool det = true)
 				} while (c);
 			}
 			
-			/*
-			if ((cast(void**)p)[1]) // if monitor is not null
+			
+			if (getMonitor(cast(Object)p) !is null) // if monitor is not null
 			{
 				_d_monitordelete(cast(Object)p, det);
 			}
-			*/
+			
 			
             *pc = null;
         }

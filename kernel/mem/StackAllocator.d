@@ -3,16 +3,17 @@ module kernel.mem.StackAllocator;
 
 import std.mem.BlockAllocator;
 
+import kernel.arch.Arch;
 import kernel.arch.PageTable;
 
 class StackAllocator : BlockAllocator
 {
-	VirtualMemory mem;
+	PageTable* mem;
 	
 	void* nextStack;
 	size_t stackSize;
 	
-	this(VirtualMemory mem)
+	this(PageTable* mem)
 	{
 		this.mem = mem;
 		nextStack = cast(void*)0x100000000;
@@ -25,14 +26,14 @@ class StackAllocator : BlockAllocator
 		
 		for(int i=0; i<stackSize; i++)
 		{
-		    Page* p = mem[nextStack];
+		    Page* p = (*mem)[nextStack];
 		    p.address = System.memory.physical.getPage();
 		    p.writable = true;
 		    p.present = true;
 		    p.superuser = true;
             p.invalidate();
 			
-			nextStack -= System.pageSize;
+			nextStack -= FRAME_SIZE;
 		}
 		
 		return top;
@@ -50,7 +51,7 @@ class StackAllocator : BlockAllocator
     
     public size_t getBlockSize()
     {
-        return System.pageSize * stackSize;
+        return FRAME_SIZE * stackSize;
     }
     
     public size_t getFreeSize()

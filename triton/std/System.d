@@ -12,6 +12,7 @@ module std.System;
 import std.io.CharStream;
 import std.mem.AddressSpace;
 import std.task.Scheduler;
+import std.event.Dispatcher;
 
 class System
 {
@@ -20,6 +21,7 @@ class System
     private static CharOutputStream stderr = null;
     private static AddressSpace mem;
     private static Scheduler sched;
+    private static Dispatcher disp;
     
     public static CharInputStream input()
     {
@@ -50,11 +52,6 @@ class System
     {
         this.stderr = stderr;
     }
-    
-    public static size_t pageSize()
-    {
-        return 0x1000;
-    }
 
     public static AddressSpace memory()
     {
@@ -74,5 +71,15 @@ class System
     public static void scheduler(Scheduler sched)
     {
         this.sched = sched;
+    }
+    
+    public static Dispatcher dispatcher()
+    {
+    	return disp;
+    }
+    
+    public static void dispatcher(Dispatcher disp)
+    {
+    	this.disp = disp;
     }
 }

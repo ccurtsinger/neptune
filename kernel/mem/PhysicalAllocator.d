@@ -69,25 +69,25 @@ class PhysicalAllocator : PageAllocator
     public void add(paddr_t base, size_t size)
     {
         // Move the base up to the next frame-aligned address
-        ulong baseShift = System.pageSize - (base % System.pageSize);
+        ulong baseShift = FRAME_SIZE - (base % FRAME_SIZE);
 
-        if(baseShift < System.pageSize)
+        if(baseShift < FRAME_SIZE)
         {
             base += baseShift;
             size -= baseShift;
         }
 
         // Adjust the size so it is FRAME_SIZE aligned
-        size -= size % System.pageSize;
+        size -= size % FRAME_SIZE;
 
         // Check to make sure at least one page is being added
-        if(size >= System.pageSize)
+        if(size >= FRAME_SIZE)
         {
             if(localSize < 2*MemBlock.sizeof)
             {
                 addLocal(base);
-                base += System.pageSize;
-                size -= System.pageSize;
+                base += FRAME_SIZE;
+                size -= FRAME_SIZE;
             }
 
             MemBlock* newblock = getLocal();
@@ -114,15 +114,15 @@ class PhysicalAllocator : PageAllocator
      */
     public paddr_t getPage()
     {
-        if(freeSize >= System.pageSize && free !is null)
+        if(freeSize >= FRAME_SIZE && free !is null)
         {
-            if(free.size >= System.pageSize)
+            if(free.size >= FRAME_SIZE)
             {
                 paddr_t pAddr = free.base;
-                free.base += System.pageSize;
-                free.size -= System.pageSize;
-                freeSize -= System.pageSize;
-                allocatedSize += System.pageSize;
+                free.base += FRAME_SIZE;
+                free.size -= FRAME_SIZE;
+                freeSize -= FRAME_SIZE;
+                allocatedSize += FRAME_SIZE;
 
                 return pAddr;
             }
@@ -149,8 +149,8 @@ class PhysicalAllocator : PageAllocator
      */
     public void freePage(paddr_t base)
     {
-        add(base, System.pageSize);
-        allocatedSize -= System.pageSize;
+        add(base, FRAME_SIZE);
+        allocatedSize -= FRAME_SIZE;
     }
 
     /**
@@ -160,7 +160,7 @@ class PhysicalAllocator : PageAllocator
      *  base = base address of the block
      *  size = size of the block
      */
-    private void addLocal(paddr_t base, size_t size = System.pageSize)
+    private void addLocal(paddr_t base, size_t size = FRAME_SIZE)
     {
         MemBlock* newblock = getLocal();
 

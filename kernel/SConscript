@@ -2,11 +2,13 @@
 Import('env')
 
 obj_list = [env.gdc('kernel.o', 'kernel.d')]
-obj_list += SConscript('arch/SConscript',         exports='env')
-obj_list += SConscript('boot/SConscript',         exports='env')
-obj_list += SConscript('dev/SConscript',          exports='env')
-obj_list += SConscript('mem/SConscript',          exports='env')
-obj_list += SConscript('task/SConscript',         exports='env')
+
+obj_list += SConscript('arch/SConscript', exports='env')
+obj_list += SConscript('boot/SConscript', exports='env')
+obj_list += SConscript('dev/SConscript', exports='env')
+obj_list += SConscript('event/SConscript', exports='env')
+obj_list += SConscript('mem/SConscript', exports='env')
+obj_list += SConscript('task/SConscript', exports='env')
 
 kernel = env.Link('kernel', obj_list, LINKSCRIPTS = ['kernel/link/linker.ld'], _LIBDIRFLAGS = '-Ltriton', _LIBFLAGS = '-lgphobos')
 

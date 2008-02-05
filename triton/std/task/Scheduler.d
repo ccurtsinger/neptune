@@ -5,13 +5,11 @@ import std.task.Thread;
 
 class Scheduler
 {
-    public abstract void addThread(Thread t);
+    public abstract Thread current();
     
-    public abstract ulong addThread(void function() thread);
+    public abstract synchronized void addThread(Thread t);
     
-    public abstract Thread thread();
+    public abstract synchronized void removeThread(Thread t);
     
-    public abstract void yield();
-    
-    public abstract void exit();
+    public abstract void taskSwitch(ThreadState s = ThreadState.Ready);
 }

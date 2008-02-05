@@ -1,7 +1,7 @@
 BITS 64
 
 global _loader           ; making entry point visible to linker
-extern _setup, _main
+extern _setup, _main, _exit
 extern data
 extern start_ctors, end_ctors
 extern _Dmodule_ref
@@ -36,6 +36,8 @@ _loader:
 	
 	; Jump to D code
     call _main
+    
+    call _exit
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

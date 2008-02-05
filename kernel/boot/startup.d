@@ -12,6 +12,7 @@ import std.stdmem;
 import std.modinit;
 import std.port;
 import std.mem.AddressSpace;
+import std.event.Dispatcher;
 
 import kernel.kernel;
 
@@ -31,6 +32,8 @@ import kernel.dev.Screen;
 import kernel.dev.Keyboard;
 import kernel.dev.Mouse;
 
+import kernel.event.Interrupt;
+
 import kernel.task.Scheduler;
 import kernel.task.Thread;
 
@@ -43,11 +46,11 @@ TSS tss;
 /// IDT
 IDT idt;
 
-VirtualMemory v;
-
 PageTable* L4;
 
-CooperativeScheduler scheduler;
+BasicScheduler scheduler;
+
+Dispatcher dispatcher;
 
 /**
  * Starting function for D
@@ -64,10 +67,10 @@ extern(C) void _main(LoaderData* loader, ulong* isrtable)
     tss_setup();
     gdt_setup();
     
-    // Install GDT, IDT, and TSS
-    gdt.install();
-    tss.install();
-    idt.install();
+    _moduleCtor();
+	
+    dispatcher = new Dispatcher();
+	System.dispatcher = dispatcher;
     
     Screen screen = new Screen();
     screen.clear();
@@ -77,22 +80,37 @@ extern(C) void _main(LoaderData* loader, ulong* isrtable)
     
     Keyboard kb = new Keyboard();
     System.input = kb;
+	
+	setHandler(14, &pagefault_handler);
+	
+	scheduler = new BasicScheduler();
+	System.scheduler = scheduler;
+	
+	KernelThread t = new KernelThread(&main);
+	
+	t.start();
+	
+    // Install GDT, IDT, and TSS
+    gdt.install();
+    tss.install();
+    idt.install();
 
-	// Run module constructors and unit tests
-	_moduleCtor();
 	_moduleUnitTests();
 	
-	L4 = cast(PageTable*)ptov(loader.L4);
+	System.scheduler.taskSwitch();
 	
-	if((*L4)[ptov(loader.L4)].present)
-	{
-	    System.output.write("yay").newline;
-	}
-	
-	main();
-	
-	System.output.write("Kernel exited").newline;
+	for(;;){}
+}
 
+/**
+ * Called on kernel exit
+ */
+extern(C) void _exit()
+{
+	System.output.write("Kernel exited").newline;
+	
+	_moduleDtor();
+	
 	for(;;){}
 }
 
@@ -114,10 +132,10 @@ void mem_setup(LoaderData* loader)
     void* alloc = loader.tempData;
 
     mem = new(alloc) AddressSpace();
-    alloc += System.pageSize;
+    alloc += FRAME_SIZE;
     dummyAllocator = new(alloc) DummyAllocator();
-    alloc += System.pageSize;
-    dummyAllocator.add(alloc, loader.tempDataSize - System.pageSize);
+    alloc += FRAME_SIZE;
+    dummyAllocator.add(alloc, loader.tempDataSize - FRAME_SIZE);
     
     System.memory = mem;
     
@@ -131,32 +149,32 @@ void mem_setup(LoaderData* loader)
 
     mem.setPhysicalAllocator(pmem);
 
-    v = new VirtualMemory(loader.L4);
+    L4 = cast(PageTable*)ptov(loader.L4);
     
     Page* p;
     
-    p = v[0x7FFFC000];
+    p = (*L4)[0x7FFFC000];
     p.address = System.memory.physical.getPage();
     p.superuser = true;
     p.writable = true;
     p.present = true;
     p.invalidate();
     
-    p = v[0x7FFFD000];
+    p = (*L4)[0x7FFFD000];
     p.address = System.memory.physical.getPage();
     p.superuser = true;
     p.writable = true;
     p.present = true;
     p.invalidate();
     
-    p = v[0x7FFFE000];
+    p = (*L4)[0x7FFFE000];
     p.address = System.memory.physical.getPage();
     p.superuser = true;
     p.writable = true;
     p.present = true;
     p.invalidate();
     
-    p = v[0x7FFFF000];
+    p = (*L4)[0x7FFFF000];
     p.address = System.memory.physical.getPage();
     p.superuser = true;
     p.writable = true;
@@ -164,11 +182,11 @@ void mem_setup(LoaderData* loader)
     p.invalidate();
 
     // Initialize the heap allocator object
-    heap = new HeapAllocator(v);
+    heap = new HeapAllocator(L4);
     
     mem.setAllocator(heap);
     
-    stack = new StackAllocator(v);
+    stack = new StackAllocator(L4);
     
     mem.setStackAllocator(stack);
 }
@@ -210,8 +228,6 @@ void gdt_setup()
     ud.privilege = 3;
     ud.present = true;
     
-    tss.selector = gdt.getSelector();
-    
     SystemDescriptor* t = gdt.getEntry!(SystemDescriptor);
     *t = SystemDescriptor();
     t.base = tss.address;
@@ -228,6 +244,8 @@ void gdt_setup()
 void tss_setup()
 {
     tss = new TSS();
+    
+    tss.selector = 0x28;
     
     tss.rsp0 = 0xFFFF810000000000;
     tss.rsp1 = 0xFFFF810000000000;
@@ -253,22 +271,11 @@ void idt_setup(ulong* isrtable)
         d.stack = 0;
         d.privilege = 0;
         d.present = true;
-    }
-}
-
-extern(C) void _common_interrupt(ulong interrupt, InterruptStack* stack)
-{
-    if(interrupt == 14)
-    {
-        pagefault_handler(interrupt, stack);
-    }
-    else
-    {
-        System.output.writef("interrupt %u", interrupt).newline;
-        System.output.writef("error: %X", stack.error).newline;
-        System.output.writef("%%rip: %016#X", stack.rip).newline;
-    
-        for(;;){}
+        
+        if(i == 14 || i == 32)
+        {
+        	d.stack = 0;
+        }
     }
 }
 
@@ -281,7 +288,7 @@ extern(C) void _common_interrupt(ulong interrupt, InterruptStack* stack)
  *  error = error code
  *  stack = pointer to context information
  */
-void pagefault_handler(ulong interrupt, InterruptStack* stack)
+bool pagefault_handler(InterruptStack* stack)
 {
     ulong vAddr;
 	asm
@@ -290,6 +297,7 @@ void pagefault_handler(ulong interrupt, InterruptStack* stack)
     }
 
     System.output.writef("\nPage Fault: %#X %#X", vAddr, stack.error).newline;
+    System.output.writef("%016#X", stack.rip).newline;
     
     Page* p = (*L4)[vAddr];
     p.present = true;
@@ -297,6 +305,8 @@ void pagefault_handler(ulong interrupt, InterruptStack* stack)
     p.address = System.memory.physical.getPage();
     p.superuser = true;
     p.invalidate();
+    
+    return true;
 }
 
 /**

@@ -8,6 +8,7 @@ sys.path.append(os.path.join('build', 'scripts'))
 from linker import Linker
 from linker import PartialLinker
 from cd import CDBuilder
+from buildinfo import InfoBuilder
 
 # Set up custom builders
 yasm = Builder(action = 'yasm $YASMFLAGS -o $TARGET $SOURCE')
@@ -29,6 +30,7 @@ def setupEnv(target, **kw_args):
     env['BUILDERS']['obj']         = obj
     env['BUILDERS']['Link']        = link
     env['BUILDERS']['PartialLink'] = partial_link
+    env['BUILDERS']['info']        = InfoBuilder
 
     # Set to the maximum warning level
     env['CXXFLAGS'] += ['-Wall']
@@ -71,14 +73,16 @@ loader = SConscript('loader/SConscript', exports='i586_env')
 triton = SConscript('triton/SConscript', exports='env')
 
 # Build the Kernel
-kernel = SConscript('kernel/SConscript', exports='env')
+kernel = AlwaysBuild(SConscript('kernel/SConscript', exports='env'))
 
 # Set library and linker script dependencies
 Depends(kernel, triton)
 Depends(kernel, 'kernel/link/linker.ld')
 
+Depends('neptune.iso', kernel)
+
 # Build the CD
 cd_env = Environment(BUILDERS={'CD': CDBuilder})
-cd_env.CD('neptune.iso', [loader, kernel, 'grub/stage2_eltorito', 'grub/iso-menu.lst'])
+AlwaysBuild(cd_env.CD('neptune.iso', [loader, kernel, 'grub/stage2_eltorito', 'grub/iso-menu.lst']))
 
 Default('neptune.iso')

@@ -1,12 +1,14 @@
 module kernel.kernel;
 
 import kernel.task.Thread;
+import kernel.buildinfo;
 
 import std.event.Event;
 
 void main()
 {
     System.output.write("Neptune Kernel - SVN version").newline;
+    System.output.write(svninfo).newline;
 
     KernelThread t = new KernelThread(&thread);
 

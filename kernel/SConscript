@@ -3,8 +3,8 @@ Import('env')
 
 build_info = env.AlwaysBuild(env.info('buildinfo.d', 'buildinfo.d.in'))
 
-obj_list  = [env.AlwaysBuild(env.gdc('kernel.o', 'kernel.d'))]
-obj_list += [env.AlwaysBuild(env.gdc('buildinfo.o', 'buildinfo.d'))]
+obj_list  = [env.AlwaysBuild(env.gdc('buildinfo.o', 'buildinfo.d'))]
+obj_list += [env.AlwaysBuild(env.gdc('kernel.o', 'kernel.d'))]
 
 obj_list += SConscript('arch/SConscript', exports='env')
 obj_list += SConscript('boot/SConscript', exports='env')

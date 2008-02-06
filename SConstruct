@@ -2,6 +2,9 @@ import sys
 import os
 import os.path
 
+# Imports for the svn command execution
+import popen2, fcntl, select
+
 # Import our special build scripts
 sys.path.append(os.path.join('build', 'scripts'))
 
@@ -37,6 +40,16 @@ def setupEnv(target, **kw_args):
         env[key] = kw_args[key]
 
     return env
+    
+def runCommand(command):
+    child = os.popen(command)
+    data = child.read()
+    err = child.close()
+    if err:
+	raise RuntimeError, '%s failed w/ exit code %d' % (command, err)
+    return data
+    
+print runCommand('svn info')
                                                                         
 i586_env = setupEnv('i586-pc-elf',  YASMFLAGS = '-f elf', 
 

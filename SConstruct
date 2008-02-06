@@ -2,11 +2,6 @@ import sys
 import os
 import os.path
 
-# Imports for the svn command execution
-import popen2, fcntl, select
-
-from xml.dom.minidom import parseString
-
 # Import our special build scripts
 sys.path.append(os.path.join('build', 'scripts'))
 
@@ -42,29 +37,6 @@ def setupEnv(target, **kw_args):
         env[key] = kw_args[key]
 
     return env
-
-def runCommand(command):
-    child = os.popen(command)
-    data = child.read()
-    err = child.close()
-    if err:
-	raise RuntimeError, '%s failed w/ exit code %d' % (command, err)
-    return data
-
-svninfo = runCommand('svn info --xml')
-
-dom = parseString(svninfo)
-
-base = dom.childNodes[0]
-
-revision = base.getElementsByTagName('commit')[0]
-
-revision = revision.getAttribute('revision')
-
-f = open('kernel/svn.d', 'w')
-f.write('module kernel.svn;\n')
-f.write('const char[] svninfo = "' + revision + '";\n')
-f.close()
 
 i586_env = setupEnv('i586-pc-elf',  YASMFLAGS = '-f elf',
 
@@ -103,7 +75,7 @@ kernel = SConscript('kernel/SConscript', exports='env')
 
 # Set library and linker script dependencies
 Depends(kernel, triton)
-Depends(kernel, 'kernel/link/linker.ld');
+Depends(kernel, 'kernel/link/linker.ld')
 
 # Build the CD
 cd_env = Environment(BUILDERS={'CD': CDBuilder})

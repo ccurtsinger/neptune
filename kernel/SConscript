@@ -2,7 +2,6 @@
 Import('env')
 
 obj_list = [env.gdc('kernel.o', 'kernel.d')]
-obj_list += [env.gdc('svn.o', 'svn.d')]
 
 obj_list += SConscript('arch/SConscript', exports='env')
 obj_list += SConscript('boot/SConscript', exports='env')

@@ -17,7 +17,7 @@ module std.integer;
  *  radix = base to convert with
  *  uc = If true, A-Z will be used for values over 9, otherwise a-z will be used
  */
-extern(C) void itoa(ulong i, char* s, int radix = 10, bool uc = true)
+extern(C) void itoa(size_t i, char* s, int radix = 10, bool uc = true)
 {
     if(i == 0)
     {
@@ -25,8 +25,8 @@ extern(C) void itoa(ulong i, char* s, int radix = 10, bool uc = true)
         return;
     }
 
-    long digit = digits(i, radix) - 1;
-    ulong value;
+    size_t digit = digits(i, radix) - 1;
+    size_t value;
 
     while(i > 0)
     {
@@ -54,7 +54,7 @@ extern(C) void itoa(ulong i, char* s, int radix = 10, bool uc = true)
  * 
  * Returns: Number of digits in i with base radix
  */
-size_t digits(ulong i, int radix = 10)
+size_t digits(size_t i, int radix = 10)
 {
     if(i == 0)
         return 1;
@@ -71,86 +71,89 @@ size_t digits(ulong i, int radix = 10)
     return d;
 }
 
-char[] toString(ulong i, int radix = 10, bool uc = true, int min_length = 0, char padchar = ' ')
+version(x86_64)
 {
-    size_t length = digits(i, radix);
-    
-    if(length < min_length)
-        length = min_length;
-    
-    char[] str = new char[length];
-    
-    for(size_t index=length; index>0; index--)
+    char[] toString(ulong i, int radix = 10, bool uc = true, int min_length = 0, char padchar = ' ')
     {
-        if(i == 0 && index < length)
-            str[index-1] = padchar;
-        else if(i == 0)
-            str[index-1] = '0';
-        else
+        size_t length = digits(i, radix);
+        
+        if(length < min_length)
+            length = min_length;
+        
+        char[] str = new char[length];
+        
+        for(size_t index=length; index>0; index--)
         {
-            ulong d = i%radix;
-            i -= d;
-            i /= radix;
-            
-            if(d < 10)
-                str[index-1] = '0' + d;
-            else if(uc)
-                str[index-1] = 'A' + (d - 10);
+            if(i == 0 && index < length)
+                str[index-1] = padchar;
+            else if(i == 0)
+                str[index-1] = '0';
             else
-                str[index-1] = 'a' + (d - 10);
-        }
-    }
-    
-    return str;
-}
-
-char[] intToString(long i, int radix = 10, bool uc = true, int min_length = 0, char padchar = ' ')
-{
-    bool sign = false;
-    
-    size_t length = 0;
-    
-    if(i < 0)
-    {
-        i = -i;
-        sign = true;
-        length++;
-    }
-    
-    size_t digit_count = digits(cast(ulong)i, radix);
-    length += digit_count;
-    
-    if(length < min_length)
-        length = min_length;
-    
-    char[] str = new char[length];
-    
-    if(sign)
-        str[0] = '-';
-    
-    for(size_t index=length; (sign && index > 1) || (!sign && index>0); index--)
-    {
-        if(i == 0 && index < length)
-            str[index-1] = padchar;
-        else if(i == 0)
-            str[index-1] = 0;
-        else
-        {
-            ulong d = i%radix;
-            i -= d;
-            i /= radix;
-            
-            if(d < 10)
-                str[index-1] = '0' + d;
-            else if(uc)
-                str[index-1] = 'A' + (d - 10);
-            else
-                str[index-1] = 'a' + (d - 10);
+            {
+                ulong d = i%radix;
+                i -= d;
+                i /= radix;
+                
+                if(d < 10)
+                    str[index-1] = '0' + d;
+                else if(uc)
+                    str[index-1] = 'A' + (d - 10);
+                else
+                    str[index-1] = 'a' + (d - 10);
+            }
         }
         
-        if(sign && index == length - digit_count)
-            str[index-1] = '-';
+        return str;
     }
-    
-    return str;
+
+    char[] intToString(long i, int radix = 10, bool uc = true, int min_length = 0, char padchar = ' ')
+    {
+        bool sign = false;
+        
+        size_t length = 0;
+        
+        if(i < 0)
+        {
+            i = -i;
+            sign = true;
+            length++;
+        }
+        
+        size_t digit_count = digits(cast(ulong)i, radix);
+        length += digit_count;
+        
+        if(length < min_length)
+            length = min_length;
+        
+        char[] str = new char[length];
+        
+        if(sign)
+            str[0] = '-';
+        
+        for(size_t index=length; (sign && index > 1) || (!sign && index>0); index--)
+        {
+            if(i == 0 && index < length)
+                str[index-1] = padchar;
+            else if(i == 0)
+                str[index-1] = 0;
+            else
+            {
+                ulong d = i%radix;
+                i -= d;
+                i /= radix;
+                
+                if(d < 10)
+                    str[index-1] = '0' + d;
+                else if(uc)
+                    str[index-1] = 'A' + (d - 10);
+                else
+                    str[index-1] = 'a' + (d - 10);
+            }
+            
+            if(sign && index == length - digit_count)
+                str[index-1] = '-';
+        }
+        
+        return str;
+    }
 }

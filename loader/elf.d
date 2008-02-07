@@ -1,12 +1,12 @@
-typedef unsigned long long int	Elf64_Addr;
-typedef unsigned short int		Elf64_Half;
-typedef unsigned long long int	Elf64_Off;
-typedef int						Elf64_Sword;
-typedef long int				Elf64_Sxword;
-typedef unsigned int			Elf64_Word;
-typedef unsigned long long int	Elf64_Xword;
-typedef unsigned char			Elf64_Byte;
-typedef unsigned short int		Elf64_Section;
+alias ulong	    Elf64_Addr;
+alias ushort	Elf64_Half;
+alias ulong	    Elf64_Off;
+alias int		Elf64_Sword;
+alias int		Elf64_Sxword;
+alias uint		Elf64_Word;
+alias ulong	    Elf64_Xword;
+alias ubyte		Elf64_Byte;
+alias ushort	Elf64_Section;
 
 const Elf64_Word PT_NULL = 0;
 const Elf64_Word PT_LOAD = 1;
@@ -22,12 +22,13 @@ const Elf64_Word SHT_SYMTAB = 2;
 const Elf64_Word SHT_STRTAB = 3;
 const Elf64_Word SHT_NOBITS = 8;
 
-typedef struct Elf64Header
+struct Elf64Header
 {
-    Elf64_Byte	ident[16];  ///<Ident
+    align(1):
+    Elf64_Byte[16]	ident;  ///<Identifier
     Elf64_Half	type;	    ///<Type
     Elf64_Half	machine;    ///<Machine
-    Elf64_Word  version;    ///<Format version
+    Elf64_Word  ver;        ///<Format version
     Elf64_Addr  entry;	    ///<Process entry address
     Elf64_Off   phoff;	    ///<Program Header Table offset
     Elf64_Off   shoff;	    ///<Section Header Table offset
@@ -39,10 +40,11 @@ typedef struct Elf64Header
     Elf64_Half  shnum;	    ///<Number of Section Header Entries
     Elf64_Half  shstrndx;   ///<Address of Section Header String Table
 
-} Elf64Header;
+}
 
-typedef struct Elf64ProgramHeader
+struct Elf64ProgramHeader
 {
+    align(1):
     Elf64_Word type;	    ///<Segment descriptor type
     Elf64_Word flags;	    ///<Flags
     Elf64_Off offset;	    ///<File offset of segment
@@ -50,12 +52,12 @@ typedef struct Elf64ProgramHeader
     Elf64_Addr pAddr;	    ///<Physical start address
     Elf64_Xword fileSize;   ///<Byte size in file
     Elf64_Xword memSize;    ///<Byte size in memory
-    Elf64_Xword align;	    ///<Required alignment
+    Elf64_Xword algn;	    ///<Required alignment
+}
 
-} Elf64ProgramHeader;
-
-typedef struct Elf64SectionHeader
+struct Elf64SectionHeader
 {
+    align(1):
     Elf64_Word name;	    ///<Index into Section Header String Table
     Elf64_Word type;	    ///<Section type
     Elf64_Xword flags;	    ///<Flags
@@ -64,6 +66,6 @@ typedef struct Elf64SectionHeader
     Elf64_Xword size;	    ///<Section size (bytes)
     Elf64_Word link;	    ///<Table Index Link
     Elf64_Word info;	    ///<Extra Info
-    Elf64_Xword align;	    ///<Address alignment constraint
+    Elf64_Xword algn;	    ///<Address alignment constraint
     Elf64_Xword entsize;    ///<Size of fixed-sized entries in section, or zero
-} Elf64SectionHeader;
+}

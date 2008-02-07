@@ -4,9 +4,12 @@ Import('env')
 
 # Build object files
 obj_list  = [env.yasm('loader.o', 'loader.asm')]
-obj_list += [env.Object('main.cpp'), env.Object('util.cpp')]
+obj_list += [env.gdc('elf.o', 'elf.d')]
+obj_list += [env.gdc('main.o', 'main.d')]
+obj_list += [env.gdc('multiboot.o', 'multiboot.d')]
+obj_list += [env.gdc('util.o', 'util.d')]
 
 # Build the loader
-loader = env.Link('loader', obj_list, LINKSCRIPTS=[env.File('linker.ld')])
+loader = env.Link('loader', obj_list, LINKSCRIPTS = [env.File('linker.ld')], _LIBDIRFLAGS = '-Lbuild/i586', _LIBFLAGS = '-lgphobos')
 
 Return('loader')

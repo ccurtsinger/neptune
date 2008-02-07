@@ -45,6 +45,8 @@ def createCD(target, source, env):
             link(source_file.path, stage2_path)
         elif basename == 'iso-menu.lst':
             link(source_file.path, os.path.join(grub_path, 'menu.lst'))
+        else:
+            link(source_file.path, os.path.join(iso_path, source_file.path))
         
     call(['mkisofs', '-R', '-no-emul-boot', '-boot-info-table',
           '-boot-load-size', '4',

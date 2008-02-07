@@ -304,11 +304,19 @@ public void print(char[] str)
     }
 }
 
-public void print(ulong i)
+public void printmem(char* str, size_t len)
 {
-    char[16] s;
-    size_t d = digits(i, 16);
-    itoa(i, s.ptr, 16);
+    for(size_t i=0; i<len; i++)
+    {
+        write(str[i]);
+    }
+}
+
+public void print(ulong i, int base = 16)
+{
+    char[32] s;
+    size_t d = digits(i, base);
+    itoa(i, s.ptr, base);
     
     print(s[0..d]);
 }

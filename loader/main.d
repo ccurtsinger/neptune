@@ -199,21 +199,22 @@ void startLongMode(ulong pAddress, ulong kAddress, ulong kLength)
 
 ulong readMemInfo(MultibootInfo* boot)
 {
-	ulong base, length;
-	MemoryMap* mem = cast(MemoryMap*)boot.mmap_addr;
+    ulong base;
+    ulong length;
+    
+    size_t size = boot.getMemoryMapSize();
+    MemoryMap* region = boot.getMemoryMap();
+    
+    while(cast(uint)region < cast(uint)boot.getMemoryMap() + size)
+    {
+        _mem[_data.regions].base = region.getBase();
+        _mem[_data.regions].length = region.getLength();
+        _mem[_data.regions].type = region.getType();
 
-	while(cast(uint)mem < boot.mmap_addr + boot.mmap_length)
-	{
-		base = (cast(ulong)mem.baseHigh)*0xFFFFFFFF + mem.baseLow;
-		length = (cast(ulong)mem.lengthHigh)*0xFFFFFFFF + mem.lengthLow;
-
-		_mem[_data.regions].base = base;
-		_mem[_data.regions].length = length;
-		_mem[_data.regions].type = mem.type;
-
-		mem = cast(MemoryMap*)(cast(uint)mem + mem.size + uint.sizeof);
-		_data.regions++;
-	}
+        _data.regions++;
+        
+        region = region.next();
+    }
 
 	return 0;
 }
@@ -231,56 +232,61 @@ ulong readMemInfo(MultibootInfo* boot)
  */
 extern(C) ulong _setup(MultibootInfo* boot, uint magic)
 {
-    static assert(Elf64Header.sizeof == 64, "Incorrect size for Elf64Header");
-    static assert(Elf64ProgramHeader.sizeof == 56, "Incorrect size for Elf64ProgramHeader");
-    static assert(Elf64SectionHeader.sizeof == 64, "Incorrect size for Elf64SectionHeader");
+    Elf64Header* elf;
     
     clear();
     print("Executing 32 bit loader...\n");
     
+    print("\n Boot Command: ");
+    print(boot.getCommand());
     
+    auto modules = boot.getModules();
     
-	MultibootModule* mod = cast(MultibootModule*)boot.mods_addr;
-    Elf64Header* elf = cast(Elf64Header*)mod.mod_start;
-    Elf64ProgramHeader* pheader = cast(Elf64ProgramHeader*)(cast(Elf64_Off)elf+elf.phoff);
-
-    memcopy(cast(uint*)(cast(Elf64_Off)elf + pheader.offset),cast(uint*)pheader.pAddr,pheader.memSize);
-    nextPage = cast(uint)(pheader.pAddr+pheader.memSize+0x1000) & 0xFFFFF000;
-    
-    print("Entering long mode:\n");
-    print("  kernel physical address: 0x");
-    print(pheader.pAddr);
-    print("\n  kernel virtual address: 0x");
-    print(pheader.vAddr);
-    print("\n  kernel memory size: 0x");
-    print(pheader.memSize);
-    print("\n");
-
-    startLongMode(pheader.pAddr, pheader.vAddr, pheader.memSize);
-
-    _data.usedMemBase = pheader.pAddr;
-
-    _data.upperMemBase = 0x100000;
-    _data.upperMemSize = 1024*boot.mem_upper;
-
-    _data.lowerMemBase = 0x500;
-    _data.lowerMemSize = 1024*boot.mem_lower;
-
-	_data.regions = 0;
-	_data.memInfo = cast(ulong)(&_mem) + LINEAR_MEM_BASE;
-
-	readMemInfo(boot);
-
-	_data.usedMemSize = cast(ulong)(cast(uint)morecore()) - _data.usedMemBase;
-
-    return cast(ulong)elf.entry;
-}
-
-void spin()
-{
-    char* c = cast(char*)0xB8000;
-    while(true)
+    print("\n Modules Loaded: ");
+    print(modules.length, 10);
+        
+    foreach(mod; modules)
     {
-        c[0]++;
+        print("\n  ");
+        print(mod.getString());
+        
+        if(mod.getString() == "/boot/kernel")
+        {
+            byte[] data = mod.getData();
+            
+            elf = cast(Elf64Header*)data.ptr;
+        }
+    }
+    
+    if(elf !is null)
+    {
+        Elf64ProgramHeader* pheader = cast(Elf64ProgramHeader*)(cast(Elf64_Off)elf+elf.phoff);
+
+        memcopy(cast(uint*)(cast(Elf64_Off)elf + pheader.offset), cast(uint*)pheader.pAddr, pheader.memSize);
+        nextPage = cast(uint)(pheader.pAddr+pheader.memSize+0x1000) & 0xFFFFF000;
+        
+        startLongMode(pheader.pAddr, pheader.vAddr, pheader.memSize);
+        
+        _data.usedMemBase = pheader.pAddr;
+        
+        _data.upperMemBase = 0x100000;
+        _data.upperMemSize = boot.getUpperMemSize();
+
+        _data.lowerMemBase = 0x500;
+        _data.lowerMemSize = boot.getLowerMemSize();
+
+        _data.regions = 0;
+        _data.memInfo = cast(ulong)(&_mem) + LINEAR_MEM_BASE;
+
+        readMemInfo(boot);
+
+        _data.usedMemSize = cast(ulong)(cast(uint)morecore()) - _data.usedMemBase;
+
+        return cast(ulong)elf.entry;
+    }
+    else
+    {
+        print("\n\nError: 64 bit kernel was not loaded.  System will halt.\n");
+        for(;;){}
     }
 }

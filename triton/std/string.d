@@ -33,3 +33,15 @@ char[][] explode(char[] str, char separator)
 	
 	return ret;
 }
+
+public size_t cstrlen(char* str)
+{
+    int i=0;
+    
+    while(str[i] != '\0')
+    {
+        i++;
+    }
+    
+    return i;
+}

@@ -9,8 +9,9 @@ extern code, bss, end
 MODULEALIGN equ  1<<0                   ; align loaded modules on page boundaries
 MEMINFO     equ  1<<1                   ; provide memory map
 AOUT_KLUDGE equ  1<<16
+GRAPHICS    equ  1<<2
 
-FLAGS       equ  MODULEALIGN | MEMINFO | AOUT_KLUDGE ; this is the Multiboot 'flag' field
+FLAGS       equ  MODULEALIGN | MEMINFO | AOUT_KLUDGE | GRAPHICS
 MAGIC       equ  0x1BADB002           ; 'magic number' lets bootloader find the header
 CHECKSUM    equ -(MAGIC + FLAGS)        ; checksum required
 
@@ -28,6 +29,10 @@ MultiBootHeader:
 	dd bss ; end of kernel .data section
 	dd end   ; end of kernel BSS
 	dd _loader ; kernel entry point (initial EIP)
+	dd 0
+	dd 800
+	dd 600
+	dd 32
 
 ;Use a 32K stack for the kernel
 STACKSIZE equ 0x8000

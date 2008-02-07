@@ -88,8 +88,6 @@ extern(C) void _main(LoaderData* loader, ulong* isrtable)
 	
 	KernelThread t = new KernelThread(&main);
 	
-	t.start();
-	
     // Install GDT, IDT, and TSS
     gdt.install();
     tss.install();
@@ -97,7 +95,17 @@ extern(C) void _main(LoaderData* loader, ulong* isrtable)
 
 	_moduleUnitTests();
 	
-	System.scheduler.taskSwitch();
+	MemoryRegion[] regions = loader.memInfo[0..loader.regions];
+	
+	System.output.writef("%016#X", loader.upperMemSize).newline;
+	
+	System.output.write("Memory Regions:").newline;
+	foreach(region; regions)
+	{
+	    System.output.writef("  %016#X size %016#X (%d)", region.base, region.length, region.type).newline;
+	}
+	
+	t.start();
 	
 	for(;;){}
 }
@@ -338,9 +346,16 @@ struct LoaderData
 	
 	ulong regions;
 	
-	ulong memInfo;
+	MemoryRegion* memInfo;
 	
 	void* tempData;
 	
 	size_t tempDataSize;
+}
+
+struct MemoryRegion
+{
+    ulong base;
+    ulong length;
+    ulong type;
 }

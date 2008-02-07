@@ -28,29 +28,30 @@ void onError(char[] msg, char[] file = null, ulong line = 0)
 	}
 	
 	System.output.newline;
-	
-	//stackUnwind();
 		
 	for(;;){}
 }
 
-void stackUnwind(size_t depth = 6)
+version(x86_64)
 {
-	ulong* rsp;
-	ulong* rbp;
-	
-	asm
-	{
-		"mov %%rsp, %[stack]" : [stack] "=a" rsp;
-		"mov %%rbp, %[frame]" : [frame] "=a" rbp;
-	}
-	
-	for(size_t i=0; i<depth; i++)
-	{
-		rsp = rbp;
-		rbp = cast(ulong*)rsp[0];
-		System.output.writef("unwind %016#X", rsp[1]).newline;
-	}
+    void stackUnwind(size_t depth = 6)
+    {
+        ulong* rsp;
+        ulong* rbp;
+        
+        asm
+        {
+            "mov %%rsp, %[stack]" : [stack] "=a" rsp;
+            "mov %%rbp, %[frame]" : [frame] "=a" rbp;
+        }
+        
+        for(size_t i=0; i<depth; i++)
+        {
+            rsp = rbp;
+            rbp = cast(ulong*)rsp[0];
+            System.output.writef("unwind %016#X", rsp[1]).newline;
+        }
+    }
 }
 
 /**

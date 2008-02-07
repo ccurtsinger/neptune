@@ -1,7 +1,6 @@
 # Grab the build environment
 
-Import('i586_env')
-env = i586_env
+Import('env')
 
 # Build object files
 obj_list  = [env.yasm('loader.o', 'loader.asm')]

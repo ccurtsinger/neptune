@@ -54,30 +54,38 @@ i586_env = setupEnv('i586-pc-elf',  YASMFLAGS = '-f elf',
                                                 ' -nodefaultlibs')
 
 # Set up the x86_64 environment
-env = setupEnv('x86_64-pc-elf', YASMFLAGS = '-f elf64',
+x86_64_env = setupEnv('x86_64-pc-elf',  YASMFLAGS = '-f elf64',
 
-                                GDCFLAGS =  ' -fversion=x86_64' +
-                                            ' -funittest' +
-                                            ' -Itriton' +
-                                            ' -mno-red-zone' +
-                                            ' -fno-exceptions' +
-                                            ' -O0' +
-                                            ' -mcmodel=kernel',
+                                        GDCFLAGS =  ' -fversion=x86_64' +
+                                                    ' -funittest' +
+                                                    ' -Itriton' +
+                                                    ' -mno-red-zone' +
+                                                    ' -fno-exceptions' +
+                                                    ' -O0' +
+                                                    ' -mcmodel=kernel',
 
-                                LINKFLAGS = ' -nostdlib')
+                                        LINKFLAGS = ' -nostdlib')
 
 # Build the Loader
-loader = SConscript('loader/SConscript', exports='i586_env')
+env = i586_env
+loader = SConscript('loader/SConscript', exports='env')
 
-# Build Triton
-triton = SConscript('triton/SConscript', exports='env')
+# Build Triton for x86_64-pc-elf
+env = x86_64_env
+triton = SConscript('triton/SConscript', exports='env', build_dir='build/x86_64')
+
+# Build Triton for i586-pc-elf
+env = i586_env
+triton32 = SConscript('triton/SConscript', exports='env', build_dir='build/i586')
 
 # Build the Kernel
+env = x86_64_env
 kernel = AlwaysBuild(SConscript('kernel/SConscript', exports='env'))
 
 # Set library and linker script dependencies
 Depends(kernel, triton)
 Depends(kernel, 'kernel/link/linker.ld')
+Depends(loader, triton32)
 
 Depends('neptune.iso', kernel)
 

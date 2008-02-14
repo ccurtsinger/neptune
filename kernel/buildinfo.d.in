@@ -1,5 +1,0 @@
-module kernel.buildinfo;
-
-const int revision = %(revision)s;
-
-const char[] svninfo = "%(svninfo)s";

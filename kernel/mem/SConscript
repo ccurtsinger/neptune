@@ -1,9 +1,0 @@
-# Grab the build environment
-Import('env')
-
-obj_list  = [env.gdc('DummyAllocator.o',    'DummyAllocator.d')]
-obj_list += [env.gdc('PhysicalAllocator.o', 'PhysicalAllocator.d')]
-obj_list += [env.gdc('StackAllocator.o',    'StackAllocator.d')]
-obj_list += [env.gdc('HeapAllocator.o',     'HeapAllocator.d')]
-
-Return('obj_list')

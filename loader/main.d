@@ -10,6 +10,8 @@
  */
 
 import arch.x86_64.arch;
+import arch.x86_64.gdt;
+import arch.x86_64.descriptor;
 import arch.x86_64.paging;
 
 import spec.multiboot;
@@ -26,6 +28,8 @@ extern(C) LoaderData _data;
 
 PageTable* L4;
 MemoryRegion[256] _mem;
+
+GDT gdt;
 
 struct LoaderData
 {
@@ -76,6 +80,8 @@ extern(C) ulong _setup(MultibootInfo* boot, uint magic)
 
     if(elf !is null)
     {
+        gdt_setup();
+        
         Elf64ProgramHeader* pheader = cast(Elf64ProgramHeader*)(cast(Elf64_Off)elf+elf.phoff);
 
         memcpy(cast(uint*)pheader.pAddr, cast(uint*)(cast(Elf64_Off)elf + pheader.offset), pheader.memSize);
@@ -105,6 +111,38 @@ extern(C) ulong _setup(MultibootInfo* boot, uint magic)
         write("\n\nError: 64 bit kernel was not loaded.  System will halt.\n");
         for(;;){}
     }
+}
+
+void gdt_setup()
+{
+    gdt.init();
+    
+    NullDescriptor* n = gdt.getEntry!(NullDescriptor);
+    *n = NullDescriptor();
+    
+    CodeDescriptor* kc64 = gdt.getEntry!(CodeDescriptor);
+    *kc64 = CodeDescriptor();
+    kc64.conforming = false;
+    kc64.privilege = 0;
+    kc64.present = true;
+    kc64.longmode = true;
+    kc64.operand = false;
+    
+    DataDescriptor* kd = gdt.getEntry!(DataDescriptor);
+    *kd = DataDescriptor();
+    kd.privilege = 0;
+    kd.writable = true;
+    kd.present = true;
+    
+    CodeDescriptor* kc = gdt.getEntry!(CodeDescriptor);
+    *kc = CodeDescriptor();
+    kc.conforming = false;
+    kc.privilege = 0;
+    kc.present = true;
+    kc.longmode = false;
+    kc.operand = true;
+    
+    gdt.install();
 }
 
 void mapDir(ulong base, ulong addr)

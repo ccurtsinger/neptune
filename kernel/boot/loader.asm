@@ -31,6 +31,7 @@ _loader:
 	lea rax, [_loader_data wrt rip]
 	mov [rax], rdi
 	
+	; Put table of interrupt serice routines into 2nd argument
 	lea rsi, [_isrtable wrt rip]
 	
 	; Jump to D code

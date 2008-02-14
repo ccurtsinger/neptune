@@ -1,0 +1,7 @@
+# Grab the build environment
+Import('env')
+
+obj_list  = [env.gdc('kb.o', 'kb.d')]
+obj_list += [env.gdc('screen.o', 'screen.d')]
+
+Return('obj_list')

@@ -1,0 +1,8 @@
+# Grab the build environment
+Import('env')
+
+obj_list  = [env.yasm('interrupts.o', 'interrupts.asm')]
+obj_list += [env.gdc('interrupt.o', 'interrupt.d')]
+obj_list += [env.gdc('host.o', 'host.d')]
+
+Return('obj_list')

@@ -1,0 +1,11 @@
+# Grab the build environment
+Import('env')
+
+obj_list  = SConscript('boot/SConscript', exports='env')
+obj_list += SConscript('core/SConscript', exports='env')
+obj_list += SConscript('dev/SConscript',  exports='env')
+obj_list += SConscript('mem/SConscript',  exports='env')
+
+kernel = env.AlwaysBuild(env.Link('kernel', obj_list, LINKSCRIPTS = ['kernel/link/linker.ld'], _LIBDIRFLAGS = '-Lbuild/x86_64/triton', _LIBFLAGS = '-lgphobos'))
+
+Return('kernel')

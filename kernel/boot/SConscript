@@ -1,0 +1,7 @@
+# Grab the build environment
+Import('env')
+
+obj_list  = [env.yasm('loader.o', 'loader.asm')]
+obj_list += [env.gdc('startup.o', 'startup.d')]
+
+Return('obj_list')

@@ -1,15 +1,25 @@
 module kernel.boot.startup;
 
+import modinit;
+
 import std.stdio;
 
-import kernel.core.host;
+import arch.x86_64.arch;
+import arch.x86_64.descriptor;
+import arch.x86_64.gdt;
+import arch.x86_64.idt;
+import arch.x86_64.paging;
+
+import kernel.core.env;
+import kernel.dev.screen;
 
 extern(C) void _startup(LoaderData* loader, ulong* isrtable)
 {
     screen = cast(Screen*)0xFFFF8300000B8000;
     screen.clear();
     
-    writeln("Hello D!");
+    writeln("Running module constructors");
+    _moduleCtor();
     
     writeln("Initializing GDT");
     gdt_setup();
@@ -20,13 +30,13 @@ extern(C) void _startup(LoaderData* loader, ulong* isrtable)
     writeln("Initializing memory system");
     memory_setup(loader);
     
+    writeln("Running module unit tests");
+    _moduleUnitTests();
+    
+    writeln("Setting up devices");
     kb.init(33);
 
-    int* x = new int;
-
-    *x = 12345;
-
-    writefln("%u at %016#X", *x, cast(ulong)x);
+    
     
     for(;;){}
 }

@@ -10,6 +10,8 @@
 
 module modinit;
 
+import std.stdio;
+
 /**
  * Represents one ModuleInfo object created by
  * a constructor function
@@ -50,6 +52,7 @@ void _moduleCtor()
 	{
 		ModuleInfo m = modules.mod;
 		
+		writefln("  %s", m.name);
 		_moduleCtor2(m);
 		
 		modules = modules.next;
@@ -69,6 +72,7 @@ void _moduleUnitTests()
 		
 		if(m.unitTest)
 		{
+		    writefln("  %s", m.name);
 			m.unitTest();
 		}
 		

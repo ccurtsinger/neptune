@@ -1,31 +1,10 @@
 module kernel.core.host;
 
-public import arch.x86_64.arch;
-public import arch.x86_64.cpu;
-public import arch.x86_64.paging;
-public import arch.x86_64.descriptor;
-public import arch.x86_64.gdt;
-public import arch.x86_64.idt;
-
 import std.stdio;
 
-public import kernel.dev.screen;
-public import kernel.dev.kb;
+import arch.x86_64.arch;
 
-public import kernel.core.interrupt;
-
-public import kernel.mem.physical;
-public import kernel.mem.kernel;
-
-Screen* screen;
-Keyboard kb;
-
-PhysicalMemory physical;
-KernelMemory heap;
-
-CPU cpu;
-
-InterruptScope localscope;
+import kernel.core.env;
 
 extern(C) void* _d_malloc(size_t size)
 {
@@ -80,56 +59,33 @@ extern(C) void _d_abort()
 }
 
 /**
- * Data passed from the 32 bit loader
+ * Unit tests for the physical page frame allocator
  */
-struct LoaderData
+unittest
 {
-	ulong L4;
-	
-	ulong usedMemBase;
-	ulong usedMemSize;
-	
-	ulong lowerMemBase;
-	ulong lowerMemSize;
-	
-	ulong upperMemBase;
-	ulong upperMemSize;
-	
-	ulong regions;
-	MemoryRegion* memInfo;
-	
-	ulong tempData;
-	size_t tempDataSize;
+    ulong a = _d_palloc();
+    ulong b = _d_palloc();
+    
+    _d_pfree(a);
+    
+    ulong c = _d_palloc();
+    
+    assert(a == c && b == a + FRAME_SIZE, "physical allocator unit test failed"); 
+    
+    _d_pfree(b);
+    _d_pfree(c);
 }
 
-struct MemoryRegion
+/**
+ * Unit tests for the kernel heap allocator
+ */
+unittest
 {
-    ulong base;
-    ulong length;
-    ulong type;
-}
-
-struct InterruptStack
-{
-	ulong rax;
-	ulong rbx;
-	ulong rcx;
-	ulong rdx;
-	ulong rsi;
-	ulong rdi;
-	ulong r8;
-	ulong r9;
-	ulong r10;
-	ulong r11;
-	ulong r12;
-	ulong r13;
-	ulong r14;
-	ulong r15;
-	ulong rbp;
-	ulong error;
-	ulong rip;
-	ulong cs;
-	ulong rflags;
-	ulong rsp;
-	ulong ss;
+    void* a = _d_malloc(ulong.sizeof);
+    void* b = _d_malloc(ulong.sizeof);
+    
+    assert(b >= a + ulong.sizeof, "heap allocator unit test failed");
+    
+    _d_free(a);
+    _d_free(b);
 }

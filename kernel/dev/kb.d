@@ -3,7 +3,7 @@ module kernel.dev.kb;
 import std.stdio;
 import std.port;
 
-import kernel.core.host;
+import kernel.core.env;
 
 struct Keyboard
 {

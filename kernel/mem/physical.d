@@ -1,9 +1,11 @@
 module kernel.mem.physical;
 
+import arch.x86_64.arch;
+
 import std.bit;
 import std.stdio;
 
-import kernel.core.host;
+import kernel.core.env;
 
 const ulong PAGE_BLOCK_SIZE = FRAME_SIZE * 8 * FRAME_SIZE; // The number of bytes that can tracked by a page-sized bitmap
 

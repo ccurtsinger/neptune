@@ -5,7 +5,7 @@ import arch.x86_64.idt;
 import std.port;
 import std.stdio;
 
-import kernel.core.host;
+import kernel.core.env;
 
 /**
  * Abstraction for function and delegate interrupt handlers

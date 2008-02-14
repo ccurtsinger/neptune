@@ -66,19 +66,19 @@ x86_64_env = setupEnv('x86_64-pc-elf',  YASMFLAGS = '-f elf64',
 
 # Build the Loader
 env = i586_env
-loader = SConscript('loader/SConscript', exports='env')
+loader = SConscript('loader/SConscript', exports='env', build_dir='build/i586/loader', duplicate=0)
 
 # Build Triton for x86_64-pc-elf
 env = x86_64_env
-triton = SConscript('triton/SConscript', exports='env', build_dir='build/x86_64')
+triton = SConscript('triton/SConscript', exports='env', build_dir='build/x86_64/triton', duplicate=0)
 
 # Build Triton for i586-pc-elf
 env = i586_env
-triton32 = SConscript('triton/SConscript', exports='env', build_dir='build/i586')
+triton32 = SConscript('triton/SConscript', exports='env', build_dir='build/i586/triton', duplicate=0)
 
 # Build the Kernel
 env = x86_64_env
-kernel = AlwaysBuild(SConscript('kernel/SConscript', exports='env'))
+kernel = AlwaysBuild(SConscript('kernel/SConscript', exports='env', build_dir='build/x86_64/kernel', duplicate=0))
 
 # Set library and linker script dependencies
 Depends(kernel, triton)

@@ -39,7 +39,7 @@
 
 module lifetime;
 
-import std.stdmem;
+import std.mem;
 
 import array;
 import sync;
@@ -59,7 +59,7 @@ private
  */
 extern (C) Object _d_newclass(ClassInfo ci)
 {
-    void* p = System.memory.heap.allocate(ci.init.length);
+    void* p = _d_malloc(ci.init.length);
     
     (cast(byte*) p)[0 .. ci.init.length] = ci.init[];
     
@@ -115,7 +115,7 @@ extern (C) void _d_delclass(Object* p)
         {
             rt_finalize(cast(void*) *p);
         }
-        System.memory.heap.free(cast(void*) *p);
+        _d_free(cast(void*) *p);
         *p = null;
     }
 }
@@ -139,7 +139,7 @@ extern (C) Array _d_newarrayT(TypeInfo ti, size_t length)
         result.length = length;
         size *= length;
 
-        result.data = cast(byte*)System.memory.heap.allocate(size+1);
+        result.data = cast(byte*)_d_malloc(size+1);
 
         memset(result.data, 0, size);
     }
@@ -169,7 +169,7 @@ extern (C) Array _d_newarrayiT(TypeInfo ti, size_t length)
 
         size *= length;
 
-        auto p = cast(byte*)System.memory.heap.allocate(size+1);
+        auto p = cast(byte*)_d_malloc(size+1);
 
         if (isize == 1)
         {
@@ -213,7 +213,7 @@ extern (C) void _d_delarray(Array *p)
 
         if (p.data)
         {
-            System.memory.heap.free(p.data);
+            _d_free(p.data);
         }
         
         p.data = null;
@@ -231,7 +231,7 @@ extern (C) void _d_delmemory(void** p)
 {
     if (*p)
     {
-        System.memory.heap.free(*p);
+        _d_free(*p);
         *p = null;
     }
 }
@@ -278,10 +278,10 @@ extern (C) void rt_finalize(void* p, bool det = true)
 			}
 			
 			
-			if (getMonitor(cast(Object)p) !is null) // if monitor is not null
+			/*if (getMonitor(cast(Object)p) !is null) // if monitor is not null
 			{
 				_d_monitordelete(cast(Object)p, det);
-			}
+			}*/
 			
 			
             *pc = null;

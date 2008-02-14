@@ -1,0 +1,11 @@
+# Grab the build environment
+Import('env')
+
+obj_list  = [env.gdc('arch.o', 'arch.d')]
+obj_list += [env.gdc('descriptor.o', 'descriptor.d')]
+obj_list += [env.gdc('gdt.o', 'gdt.d')]
+obj_list += [env.gdc('idt.o', 'idt.d')]
+obj_list += [env.gdc('paging.o', 'paging.d')]
+obj_list += [env.gdc('tss.o', 'tss.d')]
+
+Return('obj_list')

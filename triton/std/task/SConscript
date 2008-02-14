@@ -1,7 +1,0 @@
-# Grab the build environment
-Import('env')
-
-obj_list  = [env.gdc('Scheduler.o', 'Scheduler.d')]
-obj_list += [env.gdc('Thread.o', 'Thread.d')]
-
-Return('obj_list')

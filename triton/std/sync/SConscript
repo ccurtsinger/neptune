@@ -1,7 +1,0 @@
-# Grab the build environment
-Import('env')
-
-obj_list  = [env.gdc('Lock.o', 'Lock.d')]
-obj_list += [env.gdc('SimpleMonitor.o', 'SimpleMonitor.d')]
-
-Return('obj_list')

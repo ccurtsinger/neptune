@@ -9,7 +9,7 @@
  * Version: 0.1b
  */
  
-module std.bits;
+module std.bit;
 
 /**
  * Scan for the first set bit
@@ -27,7 +27,7 @@ int bsf(uint v)
 	
 	uint i;
 	
-	for (i = 0; i < 64; i++,m<<=1) 
+	for (i = 0; i < 32; i++,m<<=1) 
 	{
 	    if (v&m)
 	    {

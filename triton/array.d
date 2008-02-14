@@ -36,8 +36,8 @@
 module array;
 
 import error;
-import std.stdarg;
-import std.stdmem;
+import std.c.stdarg;
+import std.mem;
 
 struct Array
 {
@@ -54,7 +54,7 @@ struct Array
  */
 extern (C) void _d_array_bounds(char[] file, uint line)
 {
-    onError("array index out of bounds", file, line);
+    _d_error("array index out of bounds", file, line);
 }
 
 /**
@@ -71,7 +71,7 @@ extern (C) byte[] _d_arraycopy(size_t size, byte[] from, byte[] to)
 {
     if (to.length != from.length)
     {
-    	onError("lengths don't match for array copy");
+    	_d_error("lengths don't match for array copy", null, 0);
         //throw new Exception("lengths don't match for array copy");
     }
     else if(cast(byte*)to   + to.length   * size <= cast(byte*)from ||
@@ -81,7 +81,7 @@ extern (C) byte[] _d_arraycopy(size_t size, byte[] from, byte[] to)
     }
     else
     {
-        onError("overlapping array copy");
+        _d_error("overlapping array copy", null, 0);
         //throw new Exception("overlapping array copy");
     }
 
@@ -105,7 +105,7 @@ extern (C) Array _d_arrayappendT(TypeInfo ti, Array *px, byte[] y)
     auto newlength = length + y.length;
     auto newsize = newlength * sizeelem;
 
-	byte* newdata = cast(byte*)System.memory.heap.allocate(newCapacity(newlength, sizeelem) + 1);
+	byte* newdata = cast(byte*)_d_malloc(newCapacity(newlength, sizeelem) + 1);
 
 	memcpy(newdata, px.data, length * sizeelem);
 	px.data = newdata;
@@ -155,7 +155,7 @@ extern (C) byte[] _d_arrayappendcTp(TypeInfo ti, inout byte[] x, void *argp)
 	
 	assert(cap >= newlength * sizeelem);
 
-	newdata = cast(byte *)System.memory.heap.allocate(cap + 1);
+	newdata = cast(byte *)_d_malloc(cap + 1);
 	
 	memcpy(newdata, x.ptr, length * sizeelem);
 	
@@ -205,7 +205,7 @@ extern (C) byte[] _d_arraycatnT(TypeInfo ti, uint n, ...)
         return null;
     }
 
-    a = System.memory.heap.allocate(length * size);
+    a = _d_malloc(length * size);
 
     va_start!(typeof(n))(va, n);
 
@@ -243,7 +243,7 @@ extern (C) void[] _d_arraycast(size_t tsize, size_t fsize, void[] a)
     
     if (nbytes % tsize != 0)
     {
-        onError("array cast misalignment");
+        _d_error("array cast misalignment", null, 0);
         //throw new Exception("array cast misalignment");
     }
     
@@ -271,9 +271,9 @@ extern (C) byte[] _d_arraysetlengthT(TypeInfo ti, size_t newlength, Array *p)
             {
                 size_t size = p.length * ti.next.tsize();
                 
-                if(System.memory.heap.getAllocatedSize(p.data) <= newsize + 1)
+                if(_d_allocsize(p.data) <= newsize + 1)
                 {
-                    newdata = cast(byte*)System.memory.heap.allocate(newsize + 1);
+                    newdata = cast(byte*)_d_malloc(newsize + 1);
                     newdata[0..size] = p.data[0..size];
                     
                     delete p.data;
@@ -288,7 +288,7 @@ extern (C) byte[] _d_arraysetlengthT(TypeInfo ti, size_t newlength, Array *p)
         }
         else
         {
-            newdata = cast(byte*)System.memory.heap.allocate(newsize+1);
+            newdata = cast(byte*)_d_malloc(newsize+1);
         }
     }
     
@@ -318,9 +318,9 @@ extern (C) byte[] _d_arraysetlengthiT(TypeInfo ti, size_t newlength, Array *p)
             {
                 size = p.length * ti.next.tsize();
                 
-                if(System.memory.heap.getAllocatedSize(p.data) <= newsize + 1)
+                if(_d_allocsize(p.data) <= newsize + 1)
                 {
-                    newdata = cast(byte*)System.memory.heap.allocate(newsize + 1);
+                    newdata = cast(byte*)_d_malloc(newsize + 1);
                     newdata[0..size] = p.data[0..size];
                     
                     delete p.data;
@@ -334,7 +334,7 @@ extern (C) byte[] _d_arraysetlengthiT(TypeInfo ti, size_t newlength, Array *p)
         }
         else
         {
-            newdata = cast(byte*)System.memory.heap.allocate(newsize+1);
+            newdata = cast(byte*)_d_malloc(newsize+1);
         }
         
         auto q = initializer.ptr;

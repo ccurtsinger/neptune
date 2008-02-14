@@ -1,6 +1,7 @@
 
 module sync;
 
+/*
 import std.sync.Lock;
 import std.sync.SimpleMonitor;
 
@@ -64,12 +65,12 @@ extern(C) void _d_criticalenter(CriticalSection* cs)
 extern(C) void _d_criticalexit(CriticalSection* cs)
 {
 	cs.mutex.unlock();
-}
+}*/
 
 /*********************
  * Monitors
  */
-
+/*
 extern (C) void _d_monitordelete(Object h, bool det)
 {
     Monitor* m = getMonitor(h);
@@ -121,4 +122,4 @@ extern (C) void _d_monitorexit(Object h)
     IMonitor i = m.impl;
 
     i.unlock();
-}
+}*/

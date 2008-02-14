@@ -1,0 +1,6 @@
+# Grab the build environment
+Import('env')
+
+obj_list = []
+
+Return('obj_list')

@@ -39,7 +39,7 @@
  * Modified by Charlie Curtsinger for use with Neptune
  */
 
-import std.stdmem;
+import std.mem;
 
 static size_t[] prime_list = [
     97UL,         389UL,
@@ -273,7 +273,7 @@ body
     //printf("create new one\n");
     size_t size = aaA.sizeof + keysize + valuesize;
 
-    e = cast(aaA *) System.memory.heap.allocate(size);
+    e = cast(aaA *) _d_malloc(size);
     memcpy(e + 1, pkey, keysize);
     e.hash = key_hash;
     *pe = e;
@@ -473,7 +473,7 @@ body
     if (aa.a)
     {
         a.length = _aaLen(aa);
-        a.ptr = cast(byte*) System.memory.heap.allocate(a.length * valuesize);
+        a.ptr = cast(byte*) _d_malloc(a.length * valuesize);
         
         resi = 0;
         foreach (e; aa.a.b)
@@ -610,7 +610,7 @@ Array _aaKeys(AA aa, size_t keysize)
     auto len = _aaLen(aa);
     if (!len)
         return a;
-    res = (cast(byte*) System.memory.heap.allocate(len * keysize))[0 .. len * keysize];
+    res = (cast(byte*) _d_malloc(len * keysize))[0 .. len * keysize];
     resi = 0;
     foreach (e; aa.a.b)
     {

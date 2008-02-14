@@ -294,3 +294,31 @@ struct BitArray
         }
     }
 }
+
+struct BitArray2(T)
+{
+    T data;
+    
+    bool opIndex(size_t i)
+    in
+    {
+        assert(i < T.sizeof*8);
+    }
+    body
+    {
+        return cast(bool)bt(cast(uint*)&data, i);
+    }
+    
+    void opIndexAssign(bool b, size_t i)
+    in
+    {
+        assert(i < T.sizeof*8);
+    }
+    body
+    {
+        if(b)
+            bts(cast(uint*)&data, i);
+        else
+            btr(cast(uint*)&data, i);
+    }
+}

@@ -8,11 +8,13 @@
 
 module object;
 
-public import std.type;
+public import type;
+public import host;
 
-import std.stdmem;
+import std.mem;
 
-extern (C) Object _d_newclass(ClassInfo ci);
+// Defined in triton/lifetime.d
+extern(C) Object _d_newclass(ClassInfo ci);
 
 /**
  * All D class objects inherit from Object.
@@ -997,5 +999,3 @@ enum ThreadState
 	Ready,
 	Waiting
 }
-
-public import std.System;

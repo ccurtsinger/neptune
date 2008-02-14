@@ -9,28 +9,23 @@
  * - formats memory information to be passed to the kernel
  */
 
-import loader.multiboot;
-import loader.elf;
-import loader.util;
+import arch.x86_64.arch;
+import arch.x86_64.paging;
+
+import spec.multiboot;
+import spec.elf64;
 
 import std.integer;
+import std.stdio;
+import std.mem;
 
-struct GDTEntry
-{
-    align(1):
-    ushort limit;
-    ushort baseLow;
-    ubyte baseMid;
-    ushort flags;
-    ubyte baseHigh;
-}
+import loader.host;
+import loader.util;
 
-struct GDTPtr
-{
-    align(1):
-    ushort limit;
-    uint base;
-}
+extern(C) LoaderData _data;
+
+PageTable* L4;
+MemoryRegion[256] _mem;
 
 struct LoaderData
 {
@@ -54,221 +49,42 @@ struct MemoryRegion
     ulong type;
 }
 
-extern(C) LoaderData _data;
-MemoryRegion[256] _mem;
-GDTPtr* _gdtp;
-
-const ulong LINEAR_MEM_BASE = 0xFFFF830000000000;
-
-/**
- * \brief
- * Set the Portable Address Extensions bit in cr4
- *
- * \todo mark asm statements as volatile (?)
- * \todo set clobbered registers in asm
- */
-void enablePAE()
-{
-    asm
-    {
-        "mov %%cr4, %%eax";
-        "or $0x20, %%eax";
-        "mov %%eax, %%cr4";
-    }
-}
-
-/**
- * \brief
- * Set the Write Protect bit in cr0
- *
- * \todo mark asm statements as volatile (?)
- * \todo set clobbered registers in asm
- */
-void enableWP()
-{
-    asm
-    {
-        "mov %%cr0, %%eax";
-        "bts $16, %%eax";
-        "mov %%eax, %%cr0";
-    }
-}
-
-/**
- * \brief
- * Load 0xA00000 into the paging register as the top-level directory
- *
- * \todo mark asm statements as volatile (?)
- * \todo set clobbered registers in asm
- */
-void installPaging(uint L4)
-{
-    asm
-    {
-        "mov %[L4], %%eax" : : [L4] "Nd" L4;
-        "mov %%eax, %%cr3";
-    }
-}
-
-/**
- * \brief
- * Use model-specific registers to switch on long mode
- *
- * \todo mark asm statements as volatile (?)
- * \todo set clobbered registers in asm
- */
-void enableLongMode()
-{
-    asm
-    {
-        "mov $0xC0000080, %%ecx";
-        "rdmsr";
-        "bts $8, %%eax";
-        "wrmsr";
-    }
-}
-
-/**
- * \brief
- * Set bit 31 of cr0 to enable paging
- *
- * \todo mark asm statements as volatile (?)
- * \todo set clobbered registers in asm
- */
-void enablePaging()
-{
-    asm
-    {
-        "mov %%cr0, %%eax";
-        "bts $31, %%eax";
-        "mov %%eax, %%cr0";
-    }
-}
-
-/**
- * \brief
- * Do the necessary setup for long mode paging and 64-bit addresses
- *
- * -# Enable address extensions
- * -# Create top level paging directory with pageDir()
- * -# Using mapPages():
- *  -# Identity map the first 8MB of physical memory
- *  -# Map the kernel entry address to 16MB physical
- * -# Enable paging to start long mode
- */
-void startLongMode(ulong pAddress, ulong kAddress, ulong kLength)
-{
-	ulong* L4 = pageDir();
-
-	_data.L4 = cast(ulong)L4;
-
-    enablePAE();
-    enableWP();
-
-	//Identity Map the first 8MB
-    mapPages(L4, 0x00000000, 0x00000000);
-    mapPages(L4, 0x00200000, 0x00200000);
-    mapPages(L4, 0x00400000, 0x00400000);
-    mapPages(L4, 0x00600000, 0x00600000);
-
-	//Map 16MB to the kernel entry address, up to kernel length+2MB (just to be safe)
-	ulong c = 0;
-	while(c < kLength)
-	{
-		mapPages(L4, kAddress+c, pAddress + c);
-		c += 0x200000;
-	}
-
-	// Map a temporary data region for the kernel to use for setup
-	mapPages(L4, kAddress+c, pAddress+c);
-	_data.tempData = kAddress+c;
-	_data.tempDataSize = 0x200000;
-
-	//Map memory to the LINEAR_START base address
-	c = 0;
-	while(c < 0xFFD00001)
-	{
-		mapPages(L4, LINEAR_MEM_BASE + c, c);
-		c += 0x200000;
-	}
-
-    installPaging(cast(uint)L4);
-    enableLongMode();
-    enablePaging();
-}
-
-ulong readMemInfo(MultibootInfo* boot)
-{
-    ulong base;
-    ulong length;
-    
-    size_t size = boot.getMemoryMapSize();
-    MemoryMap* region = boot.getMemoryMap();
-    
-    while(cast(uint)region < cast(uint)boot.getMemoryMap() + size)
-    {
-        _mem[_data.regions].base = region.getBase();
-        _mem[_data.regions].length = region.getLength();
-        _mem[_data.regions].type = region.getType();
-
-        _data.regions++;
-        
-        region = region.next();
-    }
-
-	return 0;
-}
-
-/**
- * \brief
- * Load the kernel and start long mode.
- *
- * Called by loader.asm
- *
- * -# Read the GRUB multiboot structure to find the kernel module
- * -# Copy the kernel to 16MB (physical)
- * -# Call startLongMode()
- * -# Return the kernel entry address
- */
 extern(C) ulong _setup(MultibootInfo* boot, uint magic)
 {
     Elf64Header* elf;
-    
+
     clear();
-    print("Executing 32 bit loader...\n");
-    
-    print("\n Boot Command: ");
-    print(boot.getCommand());
-    
+    writeln("Executing 32 bit loader...");
+
+    writefln("Boot Command: %s", boot.getCommand());
+
     auto modules = boot.getModules();
-    
-    print("\n Modules Loaded: ");
-    print(modules.length, 10);
-        
+
+    writefln("Modules Loaded: %u", modules.length);
+
     foreach(mod; modules)
     {
-        print("\n  ");
-        print(mod.getString());
-        
+        writefln("  %s", mod.getString());
+
         if(mod.getString() == "/boot/kernel")
         {
             byte[] data = mod.getData();
-            
+
             elf = cast(Elf64Header*)data.ptr;
         }
     }
-    
+
     if(elf !is null)
     {
         Elf64ProgramHeader* pheader = cast(Elf64ProgramHeader*)(cast(Elf64_Off)elf+elf.phoff);
 
-        memcopy(cast(uint*)(cast(Elf64_Off)elf + pheader.offset), cast(uint*)pheader.pAddr, pheader.memSize);
+        memcpy(cast(uint*)pheader.pAddr, cast(uint*)(cast(Elf64_Off)elf + pheader.offset), pheader.memSize);
         nextPage = cast(uint)(pheader.pAddr+pheader.memSize+0x1000) & 0xFFFFF000;
-        
+
         startLongMode(pheader.pAddr, pheader.vAddr, pheader.memSize);
-        
+
         _data.usedMemBase = pheader.pAddr;
-        
+
         _data.upperMemBase = 0x100000;
         _data.upperMemSize = boot.getUpperMemSize();
 
@@ -280,13 +96,94 @@ extern(C) ulong _setup(MultibootInfo* boot, uint magic)
 
         readMemInfo(boot);
 
-        _data.usedMemSize = cast(ulong)(cast(uint)morecore()) - _data.usedMemBase;
+        _data.usedMemSize = nextPage - _data.usedMemBase;
 
         return cast(ulong)elf.entry;
     }
     else
     {
-        print("\n\nError: 64 bit kernel was not loaded.  System will halt.\n");
+        write("\n\nError: 64 bit kernel was not loaded.  System will halt.\n");
         for(;;){}
     }
+}
+
+void mapDir(ulong base, ulong addr)
+{
+    Page[] dir = (*L4)[base, 1];
+    
+    ulong count = 0;
+    
+    for(size_t i=0; i<512; i++)
+    {
+        Page* p = &(dir[i]);
+        p.address = addr + count;
+        p.writable = true;
+        p.present = true;
+        
+        count += FRAME_SIZE;
+    }
+}
+
+void startLongMode(ulong pAddress, ulong kAddress, ulong kLength)
+{
+	L4 = new PageTable;
+
+	_data.L4 = cast(ulong)L4;
+
+    enablePAE();
+    enableWP();
+
+    writeln("Identity mapping low memory");
+    mapDir(0x00000000, 0x00000000);
+    mapDir(0x00200000, 0x00200000);
+    mapDir(0x00400000, 0x00400000);
+    mapDir(0x00600000, 0x00600000);
+
+	//Map 16MB to the kernel entry address, up to kernel length+2MB (just to be safe)
+	writeln("Mapping 64 bit kernel memory");
+	ulong c;
+	for(c = 0; c<kLength; c += 0x200000)
+	{
+	    mapDir(kAddress+c, pAddress+c);
+		c += 0x200000;
+	}
+
+	// Map a temporary data region for the kernel to use for setup
+	writeln("Mapping temporary memory region");
+	mapDir(kAddress+c, pAddress+c);
+	
+	_data.tempData = kAddress+c;
+	_data.tempDataSize = 0x200000;
+
+	writefln("Linear mapping physical memory to %08#X%08X", LINEAR_MEM_BASE>>32, LINEAR_MEM_BASE);
+    for(c = 0; c < 0x1FEF0000; c += 0x200000)
+    {
+	    mapDir(LINEAR_MEM_BASE + c, c);
+	}
+
+    installPaging(cast(uint)L4);
+    enableLongMode();
+    enablePaging();
+}
+
+ulong readMemInfo(MultibootInfo* boot)
+{
+    ulong base;
+    ulong length;
+
+    size_t size = boot.getMemoryMapSize();
+    MemoryMap* region = boot.getMemoryMap();
+
+    while(cast(uint)region < cast(uint)boot.getMemoryMap() + size)
+    {
+        _mem[_data.regions].base = region.getBase();
+        _mem[_data.regions].length = region.getLength();
+        _mem[_data.regions].type = region.getType();
+
+        _data.regions++;
+
+        region = region.next();
+    }
+
+	return 0;
 }

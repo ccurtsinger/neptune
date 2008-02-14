@@ -1,4 +1,4 @@
 #!/bin/bash
 
 export PATH=$PATH:/usr/cross/bin
-scons neptune.iso $1
+scons $1 $2

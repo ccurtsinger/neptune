@@ -1,6 +1,17 @@
+/**
+ * Interrupt handling code
+ *
+ * Authors: Charlie Curtsinger
+ * Date: March 1st, 2008
+ * Version: 0.3
+ *
+ * Copyright: 2008 Charlie Curtsinger
+ */
+
 module kernel.core.interrupt;
 
 import arch.x86_64.idt;
+import arch.x86_64.apic;
 
 import std.port;
 import std.stdio;
@@ -90,9 +101,28 @@ extern(C) void _common_interrupt(ulong interrupt, InterruptStack* stack)
     }
     else if(interrupt < 32)
     {
+        cpu.disableInterrupts();
+        
         writefln("Interrupt %u", interrupt);
         writefln("  error: %#X", stack.error);
         writefln("  %%rip: %016#X", stack.rip);
+        writefln("  %%cs: %#X", stack.cs);
+        writefln("  %%ss: %#X", stack.ss);
+        writefln("  %%rsp: %016#X", stack.rsp);
+        writefln("  %%rbp: %016#X", stack.rbp);
+        writefln("  %%rax: %016#X", stack.rax);
+        writefln("  %%rbx: %016#X", stack.rbx);
+        writefln("  %%rcx: %016#X", stack.rcx);
+        writefln("  %%rdx: %016#X", stack.rdx);
+        writefln("  %%rdi: %016#X", stack.rdi);
+        writefln("  %%rsi: %016#X", stack.rsi);
+        
+        version(unwind)
+        {
+            stackUnwind(cast(ulong*)stack.rsp, cast(ulong*)stack.rbp);
+        }
+        
+        for(;;){}
     }
     
     if(interrupt >= 32 && interrupt < 47)
@@ -104,4 +134,6 @@ extern(C) void _common_interrupt(ulong interrupt, InterruptStack* stack)
             outp(PIC2, PIC_EOI);
         }
     }
+
+    cpu.apic.write(APIC_EOI, 1);
 }

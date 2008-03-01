@@ -1,19 +1,14 @@
-/* multiboot.h - the header for Multiboot */
-/* Copyright (C) 1999, 2001  Free Software Foundation, Inc.
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. */
+/**
+ * Multiboot header structures and utilities
+ *
+ * Developed from the GNU-licenesed Multiboot specification
+ *
+ * Authors: Charlie Curtsinger
+ * Date: March 1st, 2008
+ * Version: 0.3
+ *
+ * Copyright: 2008 Charlie Curtsinger
+ */
 
 module spec.multiboot;
 
@@ -37,7 +32,11 @@ struct MultibootHeader
 struct MultibootInfo
 {
     /// Flags that indicate which information is usable
-	private uint flags;
+    union
+    {
+        private uint flags;
+        private BitArray flag_bits;
+    }
 	
 	/// Upper and lower memory sizes
 	private uint mem_lower;
@@ -84,9 +83,7 @@ struct MultibootInfo
 	
 	public ulong getLowerMemSize()
 	{
-	    BitArray b = BitArray(&flags, 32);
-	    
-	    if(b[0])
+	    if(flag_bits[0])
 	        return mem_lower * 1024;
 	    
 	    return 0;
@@ -94,9 +91,7 @@ struct MultibootInfo
 	
 	public ulong getUpperMemSize()
 	{
-	    BitArray b = BitArray(&flags, 32);
-	    
-	    if(b[0])
+	    if(flag_bits[0])
 	        return mem_upper * 1024;
 	    
 	    return 0;
@@ -104,10 +99,9 @@ struct MultibootInfo
 	
 	public char[] getCommand()
 	{
-	    BitArray b = BitArray(&flags, 32);
 	    size_t len = cstrlen(cmdline);
 	    
-	    if(b[2])
+	    if(flag_bits[2])
             return cmdline[0..len];
         
         return "";
@@ -115,8 +109,6 @@ struct MultibootInfo
 	
 	public MultibootModule[] getModules()
 	{
-	    BitArray b = BitArray(&flags, 32);
-	    
         return mods_addr[0..mods_count];
 	}
 	
@@ -169,6 +161,16 @@ struct MultibootModule
 	    size_t size = mod_end - mod_start;
 	    
 	    return mod_start[0..size];
+	}
+	
+	size_t getBase()
+	{
+	    return cast(size_t)mod_start;
+	}
+	
+	size_t getSize()
+	{
+	    return cast(size_t)(mod_end - mod_start);
 	}
 }
 

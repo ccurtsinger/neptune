@@ -1,11 +1,20 @@
+/**
+ * Required support functions for the Triton
+ * runtime library
+ *
+ * Authors: Charlie Curtsinger
+ * Date: March 1st, 2008
+ * Version: 0.3
+ *
+ * Copyright: 2008 Charlie Curtsinger
+ */
+
 module loader.host;
 
 import arch.x86_64.arch;
 import std.port;
 import std.mem;
 import std.stdio;
-
-import loader.util;
 
 /// Memory address of the last allocated physical page
 uint nextPage;

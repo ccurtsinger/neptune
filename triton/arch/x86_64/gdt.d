@@ -1,9 +1,11 @@
 /**
- * Struct representation of the GDT
- * 
+ * GDT Abstraction
+ *
  * Authors: Charlie Curtsinger
- * Date: January 15th, 2008
- * Version: 0.2a
+ * Date: March 1st, 2008
+ * Version: 0.3
+ *
+ * Copyright: 2008 Charlie Curtsinger
  */
 
 module arch.x86_64.gdt;

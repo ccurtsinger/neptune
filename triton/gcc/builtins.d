@@ -2,14 +2,14 @@
  * Built-in functions for GCC
  *
  * Authors: David Friedman
- * Date: October 31st, 2007
- * Version: 0.1b
+ * Date: March 1st, 2008
+ * Version: 0.3
  *
- * Copyright: 2004 David Friedman
+ * Copyright: 2008 David Friedman
  */
 
 /* GDC -- D front-end for GCC
-   Copyright (C) 2004 David Friedman
+   Copyright (C) 2008 David Friedman
    
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by

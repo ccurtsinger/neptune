@@ -4,14 +4,14 @@
  * Based on code in Phobos (Walter Bright) and Tango (Sean Kelly)
  *
  * Authors: Walter Bright, Sean Kelly, Charlie Curtsinger
- * Date: October 31st, 2007
- * Version: 0.1b
+ * Date: March 1st, 2008
+ * Version: 0.3
  *
- * Copyright: 2004-2007 Digital Mars, www.digitalmars.com
+ * Copyright: 2004-2008 Digital Mars, www.digitalmars.com
  */
 
 /*
- *  Copyright (C) 2004-2007 by Digital Mars, www.digitalmars.com
+ *  Copyright (C) 2004-2008 by Digital Mars, www.digitalmars.com
  *  Written by Walter Bright
  *
  *  This software is provided 'as-is', without any express or implied
@@ -72,7 +72,6 @@ extern (C) byte[] _d_arraycopy(size_t size, byte[] from, byte[] to)
     if (to.length != from.length)
     {
     	_d_error("lengths don't match for array copy", null, 0);
-        //throw new Exception("lengths don't match for array copy");
     }
     else if(cast(byte*)to   + to.length   * size <= cast(byte*)from ||
 			cast(byte*)from + from.length * size <= cast(byte*)to)
@@ -82,271 +81,248 @@ extern (C) byte[] _d_arraycopy(size_t size, byte[] from, byte[] to)
     else
     {
         _d_error("overlapping array copy", null, 0);
-        //throw new Exception("overlapping array copy");
     }
 
     return to;
 }
 
-/**
- * Concatenate two array
- *
- * Params:
- *  ti = TypeInfo for the array elements
- *  px = pointer to the first array
- *  y = the second array
- *
- * Returns: the concatenated array
- */
-extern (C) Array _d_arrayappendT(TypeInfo ti, Array *px, byte[] y)
+version(dynamic_array)
 {
-    auto sizeelem = ti.next.tsize();
-    auto length = px.length;
-    auto newlength = length + y.length;
-    auto newsize = newlength * sizeelem;
-
-	byte* newdata = cast(byte*)_d_malloc(newCapacity(newlength, sizeelem) + 1);
-
-	memcpy(newdata, px.data, length * sizeelem);
-	px.data = newdata;
-
-    px.length = newlength;
-    memcpy(px.data + length * sizeelem, y.ptr, y.length * sizeelem);
-    return *px;
-}
-
-/**
- * Calculate the new capacity of an array, given a minimum length and element size
- *
- * Becomes non-trivial when larger-than-needed blocks may be allocated
- *
- * Params:
- *  newlength = the new array length
- *  size = the size of each element
- *
- * Returns: the capacity that will be allocated
- */
-size_t newCapacity(size_t newlength, size_t size)
-{
-    return newlength * size;
-}
-
-/**
- * Append an element to an array
- *
- * Params:
- *  ti = TypeInfo for the array elements
- *  x = base array
- *  argp = pointer to the element to append
- *
- * Returns: the newly appended-to array
- */
-extern (C) byte[] _d_arrayappendcTp(TypeInfo ti, inout byte[] x, void *argp)
-{
-    auto sizeelem = ti.next.tsize();            // array element size
-    auto length = x.length;
-    auto newlength = length + 1;
-    auto newsize = newlength * sizeelem;
-    size_t cap;
-
-	byte* newdata;
-
-	cap = newCapacity(newlength, sizeelem);
-	
-	assert(cap >= newlength * sizeelem);
-
-	newdata = cast(byte *)_d_malloc(cap + 1);
-	
-	memcpy(newdata, x.ptr, length * sizeelem);
-	
-	(cast(void**)(&x))[1] = newdata;
-
-    *cast(size_t *)&x = newlength;
-    
-    byte* b = cast(byte*)x.ptr;
-    
-    memcpy(&(b[length*sizeelem]), argp, sizeelem);
-    
-    assert((cast(size_t)x.ptr & 15) == 0);
-
-    return x;
-}
-
-/**
- * Concatenate a variable number of arrays
- *
- * Params:
- *  ti = TypeInfo for the array elements
- *  n = number of arrays to concatenate
- *  ... = list of arrays to concatenate
- *
- * Returns: The resulting array
- */
-extern (C) byte[] _d_arraycatnT(TypeInfo ti, uint n, ...)
-{
-    //System.output.writef("_d_arraycatnT(%s, %u, ...)", ti.toString(), n).newline;
-    
-    void* a;
-    byte[] b;
-    size_t length;
-    va_list va = void;
-    size_t size = ti.next.tsize();
-
-    va_start!(typeof(n))(va, n);
-
-    for (uint i = 0; i < n; i++)
+    /**
+     * Concatenate two arrays
+     *
+     * Params:
+     *  ti = TypeInfo for the array elements
+     *  px = pointer to the first array
+     *  y = the second array
+     *
+     * Returns: the concatenated array
+     */
+    extern (C) Array _d_arrayappendT(TypeInfo ti, Array *px, byte[] y)
     {
-        b = va_arg!(typeof(b))(va);
-        length += b.length;
-    }
-    
-    if (!length)
-    {
-        return null;
+        auto sizeelem = ti.next.tsize();
+        auto length = px.length;
+        auto newlength = length + y.length;
+        auto newsize = newlength * sizeelem;
+
+        byte* newdata = cast(byte*)_d_malloc(newlength * sizeelem);
+
+        memcpy(newdata, px.data, length * sizeelem);
+        px.data = newdata;
+
+        px.length = newlength;
+        memcpy(px.data + length * sizeelem, y.ptr, y.length * sizeelem);
+        return *px;
     }
 
-    a = _d_malloc(length * size);
-
-    va_start!(typeof(n))(va, n);
-
-    uint j = 0;
-    
-    for (uint i = 0; i < n; i++)
+    /**
+     * Append an element to an array
+     *
+     * Params:
+     *  ti = TypeInfo for the array elements
+     *  x = base array
+     *  argp = pointer to the element to append
+     *
+     * Returns: the newly appended-to array
+     */
+    extern (C) byte[] _d_arrayappendcTp(TypeInfo ti, inout byte[] x, void *argp)
     {
-        b = va_arg!(typeof(b))(va);
-        
-        if (b.length)
+        auto sizeelem = ti.next.tsize();            // array element size
+        auto length = x.length;
+        auto newlength = length + 1;
+        auto newsize = newlength * sizeelem;
+
+        if(_d_allocsize(x.ptr) < newsize)
         {
-            memcpy(a + j, b.ptr, b.length * size);
-            j += b.length * size;
+            byte* newdata = cast(byte *)_d_malloc(newsize);
+            
+            memcpy(newdata, x.ptr, length * sizeelem);
+            
+            (cast(void**)(&x))[1] = newdata;
         }
-    }
 
-    return (cast(byte*)a)[0..length];
-}
-
-/**
- * Helper function for casting dynamic arrays
- *
- * Params:
- *  tsize = size of elements in the target array
- *  fsize = size of elements in the source array
- *  a = array to cast
- *
- * Returns: array a with new length set
- */
-extern (C) void[] _d_arraycast(size_t tsize, size_t fsize, void[] a)
-{
-    auto length = a.length;
-
-    auto nbytes = length * fsize;
-    
-    if (nbytes % tsize != 0)
-    {
-        _d_error("array cast misalignment", null, 0);
-        //throw new Exception("array cast misalignment");
-    }
-    
-    length = nbytes / tsize;
-    
-    *cast(size_t *)&a = length; // jam new length
-    
-    return a;
-}
-
-/**
- * Resize dynamic arrays with 0 initializers
- */
-extern (C) byte[] _d_arraysetlengthT(TypeInfo ti, size_t newlength, Array *p)
-{
-    byte* newdata;
-    
-    if(newlength)
-    {
-        size_t newsize = ti.next.tsize() * newlength;
+        *cast(size_t *)&x = newlength;
         
-        if(p.data)
+        byte* b = cast(byte*)x.ptr;
+        
+        memcpy(&(b[length*sizeelem]), argp, sizeelem);
+
+        return x;
+    }
+
+    /**
+     * Concatenate a variable number of arrays
+     *
+     * Params:
+     *  ti = TypeInfo for the array elements
+     *  n = number of arrays to concatenate
+     *  ... = list of arrays to concatenate
+     *
+     * Returns: The resulting array
+     */
+    extern (C) byte[] _d_arraycatnT(TypeInfo ti, uint n, ...)
+    {
+        void* a;
+        byte[] b;
+        size_t length;
+        va_list va = void;
+        size_t size = ti.next.tsize();
+
+        va_start!(typeof(n))(va, n);
+
+        for (uint i = 0; i < n; i++)
         {
-            if(newlength > p.length)
+            b = va_arg!(typeof(b))(va);
+            length += b.length;
+        }
+        
+        if (!length)
+        {
+            return null;
+        }
+
+        a = _d_malloc(length * size);
+
+        va_start!(typeof(n))(va, n);
+
+        uint j = 0;
+        
+        for (uint i = 0; i < n; i++)
+        {
+            b = va_arg!(typeof(b))(va);
+            
+            if (b.length)
             {
-                size_t size = p.length * ti.next.tsize();
-                
-                if(_d_allocsize(p.data) <= newsize + 1)
+                memcpy(a + j, b.ptr, b.length * size);
+                j += b.length * size;
+            }
+        }
+
+        return (cast(byte*)a)[0..length];
+    }
+
+    /**
+     * Helper function for casting dynamic arrays
+     *
+     * Params:
+     *  tsize = size of elements in the target array
+     *  fsize = size of elements in the source array
+     *  a = array to cast
+     *
+     * Returns: array a with new length set
+     */
+    extern (C) void[] _d_arraycast(size_t tsize, size_t fsize, void[] a)
+    {
+        auto length = a.length;
+
+        auto nbytes = length * fsize;
+        
+        if (nbytes % tsize != 0)
+        {
+            _d_error("array cast misalignment", null, 0);
+        }
+        
+        length = nbytes / tsize;
+        
+        *cast(size_t *)&a = length; // jam new length
+        
+        return a;
+    }
+
+    /**
+     * Resize dynamic arrays with 0 initializers
+     */
+    extern (C) byte[] _d_arraysetlengthT(TypeInfo ti, size_t newlength, Array *p)
+    {
+        byte* newdata;
+        
+        if(newlength)
+        {
+            size_t newsize = ti.next.tsize() * newlength;
+            
+            if(p.data)
+            {
+                if(newlength > p.length)
                 {
-                    newdata = cast(byte*)_d_malloc(newsize + 1);
-                    newdata[0..size] = p.data[0..size];
+                    size_t size = p.length * ti.next.tsize();
                     
-                    delete p.data;
+                    if(_d_allocsize(p.data) <= newsize + 1)
+                    {
+                        newdata = cast(byte*)_d_malloc(newsize + 1);
+                        newdata[0..size] = p.data[0..size];
+                        
+                        delete p.data;
+                    }
+                    
+                    newdata[size..newsize] = 0;
                 }
-                
-                newdata[size..newsize] = 0;
-            }
-            else
-            {
-                newdata = p.data;
-            }
-        }
-        else
-        {
-            newdata = cast(byte*)_d_malloc(newsize+1);
-        }
-    }
-    
-    p.data = newdata;
-    p.length = newlength;
-    
-    return newdata[0..newlength];
-}
-
-/**
- * Resize dynamic arrays with non-zero initializers
- */
-extern (C) byte[] _d_arraysetlengthiT(TypeInfo ti, size_t newlength, Array *p)
-{
-    byte* newdata;
-    void[] initializer = ti.next.init();
-    size_t initsize = initializer.length;
-    size_t size = 0;
-    
-    if(newlength)
-    {
-        size_t newsize = ti.next.tsize() * newlength;
-        
-        if(p.data)
-        {
-            if(newlength > p.length)
-            {
-                size = p.length * ti.next.tsize();
-                
-                if(_d_allocsize(p.data) <= newsize + 1)
+                else
                 {
-                    newdata = cast(byte*)_d_malloc(newsize + 1);
-                    newdata[0..size] = p.data[0..size];
-                    
-                    delete p.data;
+                    newdata = p.data;
                 }
             }
             else
             {
-                size = newsize;
-                newdata = p.data;
+                newdata = cast(byte*)_d_malloc(newsize+1);
             }
         }
-        else
+        
+        p.data = newdata;
+        p.length = newlength;
+        
+        return newdata[0..newlength];
+    }
+
+    /**
+     * Resize dynamic arrays with non-zero initializers
+     */
+    extern (C) byte[] _d_arraysetlengthiT(TypeInfo ti, size_t newlength, Array *p)
+    {
+        byte* newdata;
+        void[] initializer = ti.next.init();
+        size_t initsize = initializer.length;
+        size_t size = 0;
+        
+        if(newlength)
         {
-            newdata = cast(byte*)_d_malloc(newsize+1);
+            size_t newsize = ti.next.tsize() * newlength;
+            
+            if(p.data)
+            {
+                if(newlength > p.length)
+                {
+                    size = p.length * ti.next.tsize();
+                    
+                    if(_d_allocsize(p.data) <= newsize + 1)
+                    {
+                        newdata = cast(byte*)_d_malloc(newsize + 1);
+                        newdata[0..size] = p.data[0..size];
+                        
+                        delete p.data;
+                    }
+                }
+                else
+                {
+                    size = newsize;
+                    newdata = p.data;
+                }
+            }
+            else
+            {
+                newdata = cast(byte*)_d_malloc(newsize+1);
+            }
+            
+            auto q = initializer.ptr;
+                    
+            for(size_t u = size; u < newsize; u += initsize)
+            {
+                memcpy(newdata + u, q, initsize);
+            }
         }
         
-        auto q = initializer.ptr;
-                
-        for(size_t u = size; u < newsize; u += initsize)
-        {
-            memcpy(newdata + u, q, initsize);
-        }
+        p.data = newdata;
+        p.length = newlength;
+        
+        return newdata[0..newlength];
     }
-    
-    p.data = newdata;
-    p.length = newlength;
-    
-    return newdata[0..newlength];
 }

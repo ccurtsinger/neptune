@@ -2,8 +2,8 @@
  * Language support for invariant types
  *
  * Authors: Walter Bright, Sean Kelly, Charlie Curtsinger
- * Date: October 31st, 2007
- * Version: 0.1b
+ * Date: March 1st, 2008
+ * Version: 0.3
  */
 
 /*

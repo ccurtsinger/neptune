@@ -1,9 +1,11 @@
 /**
- * Architecture and implementation specific utilities and constants
+ * Architecture and implementation-specific utilities and constants
  *
  * Authors: Charlie Curtsinger
- * Date: January 15, 2008
- * Version 0.2a
+ * Date: March 1st, 2008
+ * Version: 0.3
+ *
+ * Copyright: 2008 Charlie Curtsinger
  */
 
 module arch.x86_64.arch;
@@ -13,6 +15,9 @@ alias void function() isr_t;
 
 /// Base address for linear-mapped physical memory
 const ulong LINEAR_MEM_BASE = 0xFFFF830000000000;
+
+/// Limit for physical addresses
+const ulong PHYSICAL_MEM_LIMIT = (cast(ulong)1 << 40);
 
 /// Page (frame) size
 const ulong FRAME_SIZE = 0x1000;
@@ -64,9 +69,9 @@ version(x86_64)
 }
 else version(i586)
 {
-    ulong vtop(void* address)
+    size_t vtop(void* address)
     {
-        return cast(ulong)address;
+        return cast(size_t)address;
     }
 }
 else

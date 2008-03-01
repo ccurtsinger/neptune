@@ -43,7 +43,12 @@ def setupEnv(target, **kw_args):
 i586_env = setupEnv('i586-pc-elf',  YASMFLAGS = '-f elf',
 
                                     GDCFLAGS =  ' -fversion=i586' +
+                                                #' -fversion=unwind' +
+                                                #' -fversion=dynamic_array' +
+                                                #' -fversion=associative_array' +
+                                                #' -fversion=object_cast' +
                                                 ' -funittest' +
+                                                #' -frelease' +
                                                 ' -Itriton' +
                                                 ' -mno-red-zone' +
                                                 ' -fno-exceptions' +
@@ -55,7 +60,12 @@ i586_env = setupEnv('i586-pc-elf',  YASMFLAGS = '-f elf',
 x86_64_env = setupEnv('x86_64-pc-elf',  YASMFLAGS = '-f elf64',
 
                                         GDCFLAGS =  ' -fversion=x86_64' +
+                                                    #' -fversion=unwind' +
+                                                    ' -fversion=dynamic_array' +
+                                                    #' -fversion=associative_array' +
+                                                    #' -fversion=object_cast' +
                                                     ' -funittest' +
+                                                    #' -frelease' +
                                                     ' -Itriton' +
                                                     ' -mno-red-zone' +
                                                     ' -fno-exceptions' +
@@ -83,8 +93,10 @@ Depends(loader, triton32)
 
 Depends('neptune.iso', kernel)
 
+servers = SConscript('servers/SConscript', exports={'env': x86_64_env}, build_dir='build/x86_64/servers', duplicate=0)
+
 # Build the CD
 cd_env = Environment(BUILDERS={'CD': CDBuilder})
-AlwaysBuild(cd_env.CD('neptune.iso', [loader, kernel, 'grub/stage2_eltorito', 'grub/iso-menu.lst']))
+AlwaysBuild(cd_env.CD('neptune.iso', [loader, kernel, 'grub/stage2_eltorito', 'grub/iso-menu.lst'] + servers))
 
 Default('neptune.iso')

@@ -1,4 +1,13 @@
-
+/**
+ * Standard I/O operations
+ *
+ * Authors: Charlie Curtsinger
+ * Date: March 1st, 2008
+ * Version: 0.3
+ *
+ * Copyright: 2008 Charlie Curtsinger
+ */
+ 
 module std.stdio;
 
 import std.integer;
@@ -15,6 +24,11 @@ void write(char[] str, size_t len = 0, char padchar = ' ')
     {
         _d_putc(c);
     }
+}
+
+void write(char c)
+{
+    _d_putc(c);
 }
 
 void writeln(char[] str, size_t len = 0, char padchar = ' ')

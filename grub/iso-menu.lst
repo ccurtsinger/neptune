@@ -5,5 +5,7 @@ title  neptune 0.1
 root   (cd)
 kernel /boot/loader
 module /boot/kernel
+module /servers/idle
+module /servers/basic
 boot
 savedefault

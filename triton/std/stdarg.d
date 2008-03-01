@@ -1,3 +1,10 @@
+/**
+ * stdarg support code
+ *
+ * Authors: Charlie Curtsinger
+ * Date: March 1st, 2008
+ * Version: 0.3
+ */
 
 /*
  * Placed in public domain.

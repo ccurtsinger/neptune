@@ -1,9 +1,11 @@
 /**
- * IDT abstraction, utilities, and related constants
+ * IDT Abstraction
  *
  * Authors: Charlie Curtsinger
- * Date: January 15th, 2008
- * Version: 0.2a
+ * Date: March 1st, 2008
+ * Version: 0.3
+ *
+ * Copyright: 2008 Charlie Curtsinger
  */
 
 module arch.x86_64.idt;
@@ -45,7 +47,6 @@ struct IDT
         {
             "cli";
             "lidt (%[idtp])" : : [idtp] "b" &idtp;
-            "sti";
         }
     }
 }

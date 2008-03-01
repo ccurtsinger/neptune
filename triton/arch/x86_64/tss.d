@@ -2,8 +2,10 @@
  * Abstraction for the long-mode TSS
  *
  * Authors: Charlie Curtsinger
- * Date: January 15th, 2008
- * Version: 0.2a
+ * Date: March 1st, 2008
+ * Version: 0.3
+ *
+ * Copyright: 2008 Charlie Curtsinger
  */
 
 module kernel.arch.TSS;
@@ -11,32 +13,47 @@ module kernel.arch.TSS;
 /**
  * TSS abstraction
  */
-class TSS
+struct TSS
 {
-	/**
-	 * Struct representation of the TSS data
-	 */
-    struct TSSData
-    {
-        align(1):
+    align(1):
 
-        uint res1 = 0;
+    uint res1 = 0;
 
-        // Privelege-level switch stacks
-        ulong[3] rsp;
+    // Privelege-level switch stacks
+    ulong[3] rsp;
 
-        // Interrupt stack table (ist[0] is invalid)
-        ulong[8] ist;
+    // Interrupt stack table (ist[0] is invalid)
+    ulong[8] ist;
 
-        ulong res3;
-        ushort res4;
+    ulong res3;
+    ushort res4;
 
-        ushort iomap;
-    }
-    
-    private TSSData data;
+    ushort iomap;
     
     private ushort s;
+    
+    public void init()
+    {
+        res1 = 0;
+
+        res3 = 0;
+        res4 = 0;
+        
+        iomap = 0;
+        
+        rsp[0] = 0;
+        rsp[1] = 0;
+        rsp[2] = 0;
+        
+        ist[0] = 0;
+        ist[1] = 0;
+        ist[2] = 0;
+        ist[3] = 0;
+        ist[4] = 0;
+        ist[5] = 0;
+        ist[6] = 0;
+        ist[7] = 0;
+    }
     
     /**
      * Load the TSS
@@ -62,7 +79,7 @@ class TSS
      */
     public void selector(ushort selector)
     {
-        this.s = s;
+        this.s = selector;
     }
     
     /**
@@ -70,7 +87,7 @@ class TSS
      */
     public ulong address()
     {
-        return cast(ulong)&data;
+        return cast(ulong)this;
     }
     
     /**
@@ -78,7 +95,7 @@ class TSS
      */
     public ulong rsp0()
     {
-        return data.rsp[0];
+        return rsp[0];
     }
     
     /**
@@ -86,7 +103,7 @@ class TSS
      */
     public void rsp0(ulong i)
     {
-        data.rsp[0] = i;
+        rsp[0] = i;
     }
     
     /**
@@ -94,7 +111,7 @@ class TSS
      */
     public ulong rsp1()
     {
-        return data.rsp[1];
+        return rsp[1];
     }
     
     /**
@@ -102,7 +119,7 @@ class TSS
      */
     public void rsp1(ulong i)
     {
-        data.rsp[1] = i;
+        rsp[1] = i;
     }
     
     /**
@@ -110,7 +127,7 @@ class TSS
      */
     public ulong rsp2()
     {
-        return data.rsp[2];
+        return rsp[2];
     }
     
     /**
@@ -118,7 +135,7 @@ class TSS
      */
     public void rsp2(ulong i)
     {
-        data.rsp[2] = i;
+        rsp[2] = i;
     }
     
     /**
@@ -126,7 +143,7 @@ class TSS
      */
     public ulong ist1()
     {
-        return data.ist[1];
+        return ist[1];
     }
     
     /**
@@ -134,7 +151,7 @@ class TSS
      */
     public void ist1(ulong i)
     {
-        data.ist[1] = i;
+        ist[1] = i;
     }
     
     /**
@@ -142,7 +159,7 @@ class TSS
      */
     public ulong ist2()
     {
-        return data.ist[2];
+        return ist[2];
     }
     
     /**
@@ -150,7 +167,7 @@ class TSS
      */
     public void ist2(ulong i)
     {
-        data.ist[2] = i;
+        ist[2] = i;
     }
     
     /**
@@ -158,7 +175,7 @@ class TSS
      */
     public ulong ist3()
     {
-        return data.ist[3];
+        return ist[3];
     }
     
     /**
@@ -166,7 +183,7 @@ class TSS
      */
     public void ist3(ulong i)
     {
-        data.ist[3] = i;
+        ist[3] = i;
     }
     
     /**
@@ -174,7 +191,7 @@ class TSS
      */
     public ulong ist4()
     {
-        return data.ist[4];
+        return ist[4];
     }
     
     /**
@@ -182,7 +199,7 @@ class TSS
      */
     public void ist4(ulong i)
     {
-        data.ist[4] = i;
+        ist[4] = i;
     }
     
     /**
@@ -190,7 +207,7 @@ class TSS
      */
     public ulong ist5()
     {
-        return data.ist[5];
+        return ist[5];
     }
     
     /**
@@ -198,7 +215,7 @@ class TSS
      */
     public void ist5(ulong i)
     {
-        data.ist[5] = i;
+        ist[5] = i;
     }
     
     /**
@@ -206,7 +223,7 @@ class TSS
      */
     public ulong ist6()
     {
-        return data.ist[6];
+        return ist[6];
     }
     
     /**
@@ -214,22 +231,6 @@ class TSS
      */
     public void ist6(ulong i)
     {
-        data.ist[6] = i;
-    }
-    
-    /**
-     * Get the IST index 7 address
-     */
-    public ulong ist7()
-    {
-        return data.ist[7];
-    }
-    
-    /**
-     * Set the IST index 7 address
-     */
-    public void ist7(ulong i)
-    {
-        data.ist[7] = i;
+        ist[6] = i;
     }
 }

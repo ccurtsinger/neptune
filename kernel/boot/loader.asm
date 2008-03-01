@@ -1,6 +1,9 @@
 BITS 64
 
 global _loader           ; making entry point visible to linker
+
+global _usermode, _usermode2
+
 extern _startup;, _exit
 extern start_ctors, end_ctors
 extern _Dmodule_ref
@@ -8,6 +11,7 @@ extern _isrtable
 
 section .text
 _loader:
+    cli
 	; Initialize the stack pointer
     lea rsp, [stack wrt rip]
 	
@@ -38,6 +42,8 @@ _loader:
     call _startup
     
     ;call _exit
+    
+    jmp $
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

@@ -1,0 +1,8 @@
+# Grab the build environment
+Import('env')
+
+obj_list  = [env.Object('basic.o', 'basic.c')]
+
+server = env.Link('basic', obj_list)
+
+Return('server')

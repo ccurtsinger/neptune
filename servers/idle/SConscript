@@ -1,0 +1,8 @@
+# Grab the build environment
+Import('env')
+
+obj_list  = [env.Object('idle.o', 'idle.c')]
+
+server = env.Link('idle', obj_list)
+
+Return('server')

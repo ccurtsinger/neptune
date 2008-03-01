@@ -4,17 +4,14 @@
  * Based on code in Phobos (Walter Bright) and Tango (Sean Kelly)
  *
  * Authors: Walter Bright, Sean Kelly, Charlie Curtsinger
- * Date: October 31st, 2007
- * Version: 0.1b
+ * Date: March 1st, 208
+ * Version: 0.3
  *
- * Copyright: 2004-2007 Digital Mars, www.digitalmars.com
+ * Copyright: 2004-2008 Digital Mars, www.digitalmars.com
  */
 
 /*
- * This module contains all functions related to an object's lifetime:
- * allocation, resizing, deallocation, and finalization.
- *
- * Copyright: Copyright (C) 2004-2007 Digital Mars, www.digitalmars.com.
+ * Copyright: Copyright (C) 2004-2008 Digital Mars, www.digitalmars.com.
  *            All rights reserved.
  * License:
  *  This software is provided 'as-is', without any express or implied
@@ -42,7 +39,6 @@ module lifetime;
 import std.mem;
 
 import array;
-import sync;
 
 private
 {

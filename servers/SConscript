@@ -1,0 +1,7 @@
+# Grab the build environment
+Import('env')
+
+server_list  = SConscript('idle/SConscript', exports='env')
+server_list += SConscript('basic/SConscript', exports='env')
+
+Return('server_list')

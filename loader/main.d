@@ -1,15 +1,15 @@
 /**
- * \file main.cpp
- * \brief
- * C++ code for the stub kernel loader.
+ * 32 bit Loader
  *
- * - loads the kernel from GRUB's module structure
- * - sets up paging
- * - enables long mode
- * - formats memory information to be passed to the kernel
+ * Authors: Charlie Curtsinger
+ * Date: March 1st, 2008
+ * Version: 0.3
+ *
+ * Copyright: 2008 Charlie Curtsinger
  */
 
 import arch.x86_64.arch;
+import arch.x86_64.cpu;
 import arch.x86_64.gdt;
 import arch.x86_64.descriptor;
 import arch.x86_64.paging;
@@ -19,56 +19,83 @@ import spec.elf64;
 
 import std.integer;
 import std.stdio;
+import std.string;
 import std.mem;
 
 import loader.host;
-import loader.util;
 
 extern(C) LoaderData _data;
 
-PageTable* L4;
-MemoryRegion[256] _mem;
+MemoryRegion[20] _mem;
+MemoryRegion[20] _used_mem;
 
-GDT gdt;
+LoaderModule[20] _modules;
+
+CPU cpu;
 
 struct LoaderData
 {
     ulong L4;
-    ulong usedMemBase;
-    ulong usedMemSize;
-    ulong lowerMemBase;
-    ulong lowerMemSize;
-    ulong upperMemBase;
-    ulong upperMemSize;
-    ulong regions;
-    ulong memInfo;
-    ulong tempData;
-    ulong tempDataSize;
+    
+    ulong numMemoryRegions;
+    ulong memoryRegions;
+    
+    ulong numUsedRegions;
+    ulong usedRegions;
+    
+    ulong elfHeader;
+    
+    ulong numModules;
+    ulong modules;
+}
+
+struct LoaderModule
+{
+    ulong name;
+    ulong base;
+    ulong size;
 }
 
 struct MemoryRegion
 {
     ulong base;
-    ulong length;
+    ulong size;
     ulong type;
 }
 
 extern(C) ulong _setup(MultibootInfo* boot, uint magic)
 {
     Elf64Header* elf;
+    
+    _data.numMemoryRegions = 0;
+    _data.memoryRegions = cast(ulong)(&_mem) + LINEAR_MEM_BASE;
+    
+    _data.numUsedRegions = 0;
+    _data.usedRegions = cast(ulong)(&_used_mem) + LINEAR_MEM_BASE;
+    
+    _data.numModules = 0;
+    _data.modules = cast(ulong)&_modules + LINEAR_MEM_BASE;
+    
+    readMemInfo(boot);
 
     clear();
     writeln("Executing 32 bit loader...");
+    
+    nextPage = 0x800000;
+        
+    ulong used_base = nextPage;
 
     writefln("Boot Command: %s", boot.getCommand());
 
     auto modules = boot.getModules();
 
     writefln("Modules Loaded: %u", modules.length);
-
+    
     foreach(mod; modules)
     {
         writefln("  %s", mod.getString());
+        
+        addUsedRegion(mod.getBase(), mod.getSize());
 
         if(mod.getString() == "/boot/kernel")
         {
@@ -76,33 +103,42 @@ extern(C) ulong _setup(MultibootInfo* boot, uint magic)
 
             elf = cast(Elf64Header*)data.ptr;
         }
+        else
+        {
+            _modules[_data.numModules].base = mod.getBase() + LINEAR_MEM_BASE;
+            _modules[_data.numModules].size = mod.getSize();
+            
+            char[] name = mod.getString();
+            char[] copy = new char[name.length];
+            copy[0..length] = name[0..length];
+            
+            _modules[_data.numModules].name = cast(ulong)copy.ptr + LINEAR_MEM_BASE;
+            
+            _data.numModules++;
+        }
     }
+    
+    addUsedRegion(cast(ulong)&_data, _data.sizeof);
+    addUsedRegion(cast(ulong)_mem.ptr, _mem.sizeof);
+    addUsedRegion(cast(ulong)_used_mem.ptr, _used_mem.sizeof);
 
     if(elf !is null)
-    {
-        gdt_setup();
+    {        
+        auto pheaders = elf.getProgramHeaders();
         
-        Elf64ProgramHeader* pheader = cast(Elf64ProgramHeader*)(cast(Elf64_Off)elf+elf.phoff);
+        auto p = pheaders[0];
+    
+        cpu.pagetable = new PageTable();
+        _data.L4 = cast(ulong)cpu.pagetable;
 
-        memcpy(cast(uint*)pheader.pAddr, cast(uint*)(cast(Elf64_Off)elf + pheader.offset), pheader.memSize);
-        nextPage = cast(uint)(pheader.pAddr+pheader.memSize+0x1000) & 0xFFFFF000;
+        elf.load(cpu.pagetable);
+        
+        gdt_setup();
+        startLongMode();
 
-        startLongMode(pheader.pAddr, pheader.vAddr, pheader.memSize);
-
-        _data.usedMemBase = pheader.pAddr;
-
-        _data.upperMemBase = 0x100000;
-        _data.upperMemSize = boot.getUpperMemSize();
-
-        _data.lowerMemBase = 0x500;
-        _data.lowerMemSize = boot.getLowerMemSize();
-
-        _data.regions = 0;
-        _data.memInfo = cast(ulong)(&_mem) + LINEAR_MEM_BASE;
-
-        readMemInfo(boot);
-
-        _data.usedMemSize = nextPage - _data.usedMemBase;
+        _data.elfHeader = LINEAR_MEM_BASE + cast(ulong)elf;
+        
+        addUsedRegion(used_base, nextPage - used_base);
 
         return cast(ulong)elf.entry;
     }
@@ -113,14 +149,35 @@ extern(C) ulong _setup(MultibootInfo* boot, uint magic)
     }
 }
 
+public void mapData(ulong virtual, size_t physical, ubyte[] data)
+{
+    size_t limit = FRAME_SIZE;
+    
+    if(data.length < FRAME_SIZE)
+    {
+        limit = data.length;
+    }
+    
+    (cast(ubyte*)ptov(physical))[0..limit] = data[0..limit];
+    
+    Page* p = (*cpu.pagetable)[virtual];
+    p.address = physical;
+    p.writable = true;
+    p.present = true;
+    p.user = true;
+    
+    if(limit == FRAME_SIZE)
+        mapData(virtual + FRAME_SIZE, physical + FRAME_SIZE, data[FRAME_SIZE..length]);
+}
+
 void gdt_setup()
 {
-    gdt.init();
+    cpu.gdt.init();
     
-    NullDescriptor* n = gdt.getEntry!(NullDescriptor);
+    NullDescriptor* n = cpu.gdt.getEntry!(NullDescriptor);
     *n = NullDescriptor();
     
-    CodeDescriptor* kc64 = gdt.getEntry!(CodeDescriptor);
+    CodeDescriptor* kc64 = cpu.gdt.getEntry!(CodeDescriptor);
     *kc64 = CodeDescriptor();
     kc64.conforming = false;
     kc64.privilege = 0;
@@ -128,13 +185,13 @@ void gdt_setup()
     kc64.longmode = true;
     kc64.operand = false;
     
-    DataDescriptor* kd = gdt.getEntry!(DataDescriptor);
+    DataDescriptor* kd = cpu.gdt.getEntry!(DataDescriptor);
     *kd = DataDescriptor();
     kd.privilege = 0;
     kd.writable = true;
     kd.present = true;
     
-    CodeDescriptor* kc = gdt.getEntry!(CodeDescriptor);
+    CodeDescriptor* kc = cpu.gdt.getEntry!(CodeDescriptor);
     *kc = CodeDescriptor();
     kc.conforming = false;
     kc.privilege = 0;
@@ -142,13 +199,13 @@ void gdt_setup()
     kc.longmode = false;
     kc.operand = true;
     
-    gdt.install();
+    cpu.gdt.install();
 }
 
 void mapDir(ulong base, ulong addr)
 {
-    Page[] dir = (*L4)[base, 1];
-    
+    Page[] dir = (*cpu.pagetable)[base, 1];
+   
     ulong count = 0;
     
     for(size_t i=0; i<512; i++)
@@ -157,19 +214,16 @@ void mapDir(ulong base, ulong addr)
         p.address = addr + count;
         p.writable = true;
         p.present = true;
+        p.user = false;
         
         count += FRAME_SIZE;
     }
 }
 
-void startLongMode(ulong pAddress, ulong kAddress, ulong kLength)
+void startLongMode()
 {
-	L4 = new PageTable;
-
-	_data.L4 = cast(ulong)L4;
-
-    enablePAE();
-    enableWP();
+    cpu.enablePAE();
+    cpu.enableWP();
 
     writeln("Identity mapping low memory");
     mapDir(0x00000000, 0x00000000);
@@ -177,31 +231,34 @@ void startLongMode(ulong pAddress, ulong kAddress, ulong kLength)
     mapDir(0x00400000, 0x00400000);
     mapDir(0x00600000, 0x00600000);
 
-	//Map 16MB to the kernel entry address, up to kernel length+2MB (just to be safe)
-	writeln("Mapping 64 bit kernel memory");
-	ulong c;
-	for(c = 0; c<kLength; c += 0x200000)
-	{
-	    mapDir(kAddress+c, pAddress+c);
-		c += 0x200000;
-	}
-
-	// Map a temporary data region for the kernel to use for setup
-	writeln("Mapping temporary memory region");
-	mapDir(kAddress+c, pAddress+c);
-	
-	_data.tempData = kAddress+c;
-	_data.tempDataSize = 0x200000;
-
 	writefln("Linear mapping physical memory to %08#X%08X", LINEAR_MEM_BASE>>32, LINEAR_MEM_BASE);
-    for(c = 0; c < 0x1FEF0000; c += 0x200000)
+	
+	// Map to twice the upper limit of memory used.  Need to leave enough memory mapped
+	// to set up the paging system in the kernel.  After that point, linear-mapped 
+	// memory can be demand paged.
+    for(ulong c = 0; c < 2*nextPage; c += 0x200000)
     {
 	    mapDir(LINEAR_MEM_BASE + c, c);
 	}
 
-    installPaging(cast(uint)L4);
-    enableLongMode();
-    enablePaging();
+    cpu.loadPageDir();
+    cpu.enableLongMode();
+    cpu.enablePaging();
+}
+
+public void addUsedRegion(size_t base, size_t size)
+{
+    _used_mem[_data.numUsedRegions].base = base;
+    _used_mem[_data.numUsedRegions].size = size;
+    _data.numUsedRegions++;
+}
+
+public void addMemoryRegion(size_t base, size_t size, size_t type)
+{
+    _mem[_data.numMemoryRegions].base = base;
+    _mem[_data.numMemoryRegions].size = size;
+    _mem[_data.numMemoryRegions].type = type;
+    _data.numMemoryRegions++;
 }
 
 ulong readMemInfo(MultibootInfo* boot)
@@ -213,12 +270,8 @@ ulong readMemInfo(MultibootInfo* boot)
     MemoryMap* region = boot.getMemoryMap();
 
     while(cast(uint)region < cast(uint)boot.getMemoryMap() + size)
-    {
-        _mem[_data.regions].base = region.getBase();
-        _mem[_data.regions].length = region.getLength();
-        _mem[_data.regions].type = region.getType();
-
-        _data.regions++;
+    {        
+        addMemoryRegion(region.getBase(), region.getLength(), region.getType());
 
         region = region.next();
     }

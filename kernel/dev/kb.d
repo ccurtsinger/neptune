@@ -1,7 +1,18 @@
+/**
+ * Keyboard device
+ *
+ * Authors: Charlie Curtsinger
+ * Date: March 1st, 2008
+ * Version: 0.3
+ *
+ * Copyright: 2008 Charlie Curtsinger
+ */
+
 module kernel.dev.kb;
 
 import std.stdio;
 import std.port;
+import std.queue;
 
 import kernel.core.env;
 
@@ -48,6 +59,8 @@ struct Keyboard
 	
 	/// Array of Key decoders
 	private Key[256] keymap;
+	
+	private Queue!(char) queue;
     
     public void init(ubyte interrupt)
     {
@@ -153,42 +166,53 @@ struct Keyboard
 		// 93 is right-click menu
 
 		keymap[170] = Key('\0', '\0', true);
+		
+		queue = new Queue!(char);
         
         localscope.setHandler(interrupt, &handler);
+    }
+    
+    public char getc()
+    {
+        volatile while(queue.size() == 0)
+        {
+            cpu.halt();
+        }
+        
+        char c = queue.get();
+        
+        return c;
     }
     
     public bool handler(InterruptStack*)
     {
         ubyte s = inp(0x60);
 
-		Key k = keymap[s];
-		
-		char c = '\0';
+        Key k = keymap[s];
+        
+        char c = '\0';
 
-		if(caps)
-		{
-			c = k.uc;
-		}
-		else
-		{
-			c = k.lc;
-		}
+        if(caps)
+        {
+            c = k.uc;
+        }
+        else
+        {
+            c = k.lc;
+        }
 
-		if(k.shift)
-		{
-			caps = !caps;
-		}
-		
-		if(c != '\0')
-		{
-			//chars.enqueue(c);
-			char[1] str;
-			str[0] = c;
-			write(str);
-		}
+        if(k.shift)
+        {
+            caps = !caps;
+        }
+        
+        if(c != '\0')
+        {
+            queue.add(c);
+        }
 
-		outp(0x20, 0x20);
-		
-		return true;
+        outp(0x20, 0x20);
+            
+        return true;
     }
 }

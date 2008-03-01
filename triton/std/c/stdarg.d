@@ -1,5 +1,5 @@
 /**
- * C's &lt;stdarg.h&gt;
+ * C's <stdarg.h>
  * Authors: Hauke Duden and Walter Bright, Digital Mars, www.digitalmars.com
  * License: Public Domain
  * Macros:
@@ -8,6 +8,29 @@
 
 /* This is for use with extern(C) variable argument lists. */
 
+/*
+ *  Copyright (C) 2004-2007 by Digital Mars, www.digitalmars.com
+ *  Written by Walter Bright
+ *
+ *  This software is provided 'as-is', without any express or implied
+ *  warranty. In no event will the authors be held liable for any damages
+ *  arising from the use of this software.
+ *
+ *  Permission is granted to anyone to use this software for any purpose,
+ *  including commercial applications, and to alter it and redistribute it
+ *  freely, in both source and binary form, subject to the following
+ *  restrictions:
+ *
+ *  o  The origin of this software must not be misrepresented; you must not
+ *     claim that you wrote the original software. If you use this software
+ *     in a product, an acknowledgment in the product documentation would be
+ *     appreciated but is not required.
+ *  o  Altered source versions must be plainly marked as such, and must not
+ *     be misrepresented as being the original software.
+ *  o  This notice may not be removed or altered from any source
+ *     distribution.
+ */
+ 
 /* NOTE: This file has been patched from the original DMD distribution to
    work with the GDC compiler.
 

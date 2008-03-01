@@ -4,8 +4,10 @@
  * Based on std.bitarray (Phobos, Walter Bright) and tango.core.BitArray (Tango, Sean Kelly and Walter Bright)
  *
  * Authors: Charlie Curtsinger
- * Date: October 31st, 2007
- * Version: 0.1b
+ * Date: March 1st, 2008
+ * Version: 0.3
+ *
+ * Copyright: 2008 Charlie Curtsinger
  */
 
 module std.bitarray;
@@ -21,304 +23,83 @@ import std.bit;
  */
 struct BitArray
 {
-    size_t len;
-    size_t off;
-    uint* ptr;
-
-    /**
-     * Create a new bit array from a pointer
-     *
-     * Params:
-     *  p = pointer to the value used in the bit array
-     *  bits = number of bits in the array
-     *  offset = number of bits to offset from the base of p
-     *
-     * Returns: the new bit array object
-     */
-    static BitArray opCall(void* p, size_t bits, size_t offset = 0)
+    static BitArray* opCall(void* p)
     {
-        BitArray b;
-        b.init(p, bits, offset);
-        return b;
-    }
-
-    /**
-     * Initialize to a pointer, bit count, and base offset
-     */
-    void init(void* p, size_t bits, size_t offset = 0)
-    {
-        while(offset >= uint.sizeof * 8)
-        {
-            p += uint.sizeof;
-            offset -= uint.sizeof * 8;
-        }
-
-        ptr = cast(uint*)p;
-        len = bits;
-        off = offset;
-    }
-
-    /**
-     * Get the length of a bit array
-     *
-     * Returns: The number of bits in the array
-     */
-    size_t length()
-    {
-        return len;
-    }
-
-    /**
-     * Resize the array (in-place) leaving existing data intact
-     *
-     * Params:
-     *  newlen = new length of the array
-     */
-    void length(size_t newlen)
-    {
-        len = newlen;
-    }
-
-    /**
-     * Support for array indexing
-     *
-     * Params:
-     *  i = index to access
-     *
-     * Returns: state of the bit at i
-     */
-    bool opIndex(size_t i)
-    in
-    {
-        assert(i < len);
-    }
-    body
-    {
-        return cast(bool)bt(ptr, i+off);
-    }
-
-    /**
-     * Support for index assignment
-     *
-     * Params:
-     *  b = new state for bit i
-     *  i = bit index to set
-     *
-     * Returns: The new state of bit i
-     */
-    bool opIndexAssign(bool b, size_t i)
-    in
-    {
-        assert(i < len);
-    }
-    body
-    {
-        if(b)
-            bts(ptr, i+off);
-        else
-            btr(ptr, i+off);
-
-        return b;
-    }
-
-    /**
-     * Support for foreach loops
-     *
-     * Params:
-     *  dg = operations to apply to each bit
-     *
-     * Returns: result of the last executed operation
-     */
-    int opApply(int delegate(inout bool) dg)
-    {
-        int result;
-
-        for(size_t i=0; i<len; i++)
-        {
-            bool b = opIndex(i);
-            result = dg(b);
-            opIndexAssign(b, i);
-            if(result)
-                break;
-        }
-        
-        return result;
-    }
-
-    /**
-     * Support for foreach loops with test and assignment
-     *
-     * Params:
-     *  dg = operation to apply to each bit
-     *
-     * Returns: result of the last executed operation
-     */
-    int opApply(int delegate(inout size_t, inout bool) dg)
-    {
-        int result;
-
-        for(size_t i=0; i<len; i++)
-        {
-            bool b = opIndex(i);
-            result = dg(i, b);
-            opIndexAssign(b, i);
-            if(result)
-                break;
-        }
-        return result;
-    }
-
-    /**
-     * Support for reverse foreach loops
-     *
-     * Params:
-     *  dg = operation to apply to each bit
-     * 
-     * Returns: result of the last executed operations
-     */
-    int opApplyReverse(int delegate(inout bool) dg)
-    {
-        int result;
-
-        for(size_t i=len; i>0; i--)
-        {
-            bool b = opIndex(i-1);
-            result = dg(b);
-            opIndexAssign(b, i-1);
-            if(result)
-                break;
-        }
-        return result;
+        return cast(BitArray*)p;
     }
     
-    /**
-     * Support for reverse foreach loops with test and assignment
-     *
-     * Params:
-     *  dg = operation to apply to each bit
-     *
-     * Returns: result of the last executed operation
-     */
-    int opApplyReverse(int delegate(inout size_t, inout bool) dg)
-    {
-        int result;
-
-        for(size_t i=len; i>0; i--)
-        {
-            bool b = opIndex(i-1);
-            i--;
-            result = dg(i, b);
-            i++;
-            opIndexAssign(b, i-1);
-            if(result)
-                break;
-        }
-        return result;
-    }
-
-    /**
-     * Array slicing support
-     *
-     * Params:
-     *  x = base index to slice from (inclusive)
-     *  y = limit index to slice to (exclusive)
-     *
-     * Returns: a BitArray of the sliced bit range
-     */
-    BitArray opSlice(size_t x, size_t y)
-    in
-    {
-        assert(y > x);
-    }
-    body
-    {
-        BitArray ret;
-
-        size_t newlen = y - x;
-        ret.init(ptr, newlen, off+x);
-
-        return ret;
-    }
-
-    /**
-     * Array slice assignment to BitArray support
-     *
-     * Sets bits in the sliced section to corresponding bits in v
-     *
-     * Params:
-     *  v = BitArray to assign from
-     *  x = base index to slice from (inclusive)
-     *  y = limit index to slice to (exclusive)
-     */
-    void opSliceAssign(BitArray v, size_t x, size_t y)
-    in
-    {
-        assert(x >= 0);
-        assert(y <= len);
-        assert(y > x);
-        assert(v.length() == y - x);
-    }
-    body
-    {
-        for(size_t i = x; i<y; i++)
-        {
-            opIndexAssign(v[i-x], i);
-        }
-
-    }
-
-    /**
-     * Array slice assignment to value support
-     *
-     * Sets bits in the sliced section to coresponding bits in v
-     *
-     * Params:
-     *  v = value to assign from
-     *  x = base index to slice from (inclusive)
-     *  y = limit index to slice to (exclusive)
-     */
-    void opSliceAssign(ulong v, size_t x, size_t y)
-    in
-    {
-        assert(x >= 0);
-        assert(y <= len);
-        assert(y > x);
-    }
-    body
-    {
-        auto b = BitArray(&v, 8*v.sizeof);
-
-        for(size_t i = x; i<y; i++)
-        {
-            opIndexAssign(b[i-x], i);
-        }
-    }
-}
-
-struct BitArray2(T)
-{
-    T data;
-    
     bool opIndex(size_t i)
-    in
     {
-        assert(i < T.sizeof*8);
-    }
-    body
-    {
-        return cast(bool)bt(cast(uint*)&data, i);
+        return cast(bool)bt(cast(uint*)this, i);
     }
     
     void opIndexAssign(bool b, size_t i)
+    {
+        if(b)
+            bts(cast(uint*)this, i);
+        else
+            btr(cast(uint*)this, i);
+    }
+    
+    ulong opSlice(size_t x, size_t y)
     in
     {
-        assert(i < T.sizeof*8);
+        assert(y-x <= 64, "Cannot slice a BitArray into larger than 64 bit values");
     }
     body
     {
-        if(b)
-            bts(cast(uint*)&data, i);
+        if(x >= 64)
+        {
+            auto b = BitArray(cast(void*)(cast(ulong)this + 8));
+            
+            return (*b)[x-64..y-64];
+        }
+        else if(y > 64)
+        {
+            return opSlice(x, 64) | (opSlice(64, y) << (64 - x));
+        }
         else
-            btr(cast(uint*)&data, i);
+        {
+            ulong value = *(cast(ulong*)this);
+            
+            if(y - x == ulong.sizeof*8)
+                return value;
+            
+            value >>= x;
+            
+            value &= ~(ulong.max << (y-x));
+            
+            return value;
+        }
+    }
+    
+    void opSliceAssign(size_t value, size_t x, size_t y)
+    {
+        if(x >= 64)
+        {
+            auto b = BitArray(cast(void*)(cast(ulong)this + 8));
+            
+            (*b)[x-64..y-64] = value;
+        }
+        else if(y > 64)
+        {
+            opSliceAssign(value, x, 64);
+            opSliceAssign(value >> (64 - x), 64, y);
+        }
+        else
+        {
+            ulong mask = ulong.max >> (ulong.sizeof*8 - (y - x));
+            mask <<= x;
+            mask = ~mask;
+            
+            // Mask now has all bits set, except those in x..y
+            
+            value <<= x;
+            
+            value &= ~mask;
+            
+            *(cast(ulong*)this) &= mask;
+            *(cast(ulong*)this) |= value;
+        }
     }
 }

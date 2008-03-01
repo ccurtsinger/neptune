@@ -1,9 +1,11 @@
 /**
- * Abstraction for pages and a page table
+ * Page table and entry abstractions
  *
  * Authors: Charlie Curtsinger
- * Date: January 15th, 2008
- * Version: 0.2a
+ * Date: March 1st, 2008
+ * Version: 0.3
+ *
+ * Copyright: 2008 Charlie Curtsinger
  */
 
 module arch.x86_64.paging;
@@ -22,7 +24,7 @@ struct Page
     union
     {
         ulong data;
-        BitArray2!(ulong) ba;
+        BitArray bits;
     }
 
     /**
@@ -45,7 +47,7 @@ struct Page
      */
     bool present()
     {
-        return ba[0];
+        return bits[0];
     }
 
     /**
@@ -53,7 +55,7 @@ struct Page
      */
     void present(bool b)
     {
-        ba[0] = b;
+        bits[0] = b;
     }
 
     /**
@@ -61,7 +63,7 @@ struct Page
      */
     bool writable()
     {
-        return ba[1];
+        return bits[1];
     }
 
     /**
@@ -69,23 +71,23 @@ struct Page
      */
     void writable(bool b)
     {
-        ba[1] = b;
+        bits[1] = b;
     }
 
     /**
      * Get the page superuser bit
      */
-    bool superuser()
+    bool user()
     {
-        return ba[2];
+        return bits[2];
     }
 
     /**
      * Set the superuser bit
      */
-    void superuser(bool b)
+    void user(bool b)
     {
-        ba[2] = b;
+        bits[2] = b;
     }
 
     /**
@@ -93,7 +95,7 @@ struct Page
      */
     bool writethrough()
     {
-        return ba[3];
+        return bits[3];
     }
 
     /**
@@ -101,7 +103,7 @@ struct Page
      */
     void writethrough(bool b)
     {
-        ba[3] = b;
+        bits[3] = b;
     }
 
     /**
@@ -109,7 +111,7 @@ struct Page
      */
     bool nocache()
     {
-        return ba[4];
+        return bits[4];
     }
 
     /**
@@ -117,7 +119,7 @@ struct Page
      */
     void nocache(bool b)
     {
-        ba[4] = b;
+        bits[4] = b;
     }
 
     /**
@@ -125,7 +127,7 @@ struct Page
      */
     bool accessed()
     {
-        return ba[5];
+        return bits[5];
     }
 
     /**
@@ -133,7 +135,7 @@ struct Page
      */
     void accessed(bool b)
     {
-        ba[5] = b;
+        bits[5] = b;
     }
 
     /**
@@ -141,7 +143,7 @@ struct Page
      */
     bool dirty()
     {
-        return ba[6];
+        return bits[6];
     }
 
     /**
@@ -149,7 +151,7 @@ struct Page
      */
     void dirty(bool b)
     {
-        ba[6] = b;
+        bits[6] = b;
     }
 
     /**
@@ -157,7 +159,7 @@ struct Page
      */
     bool pat()
     {
-        return ba[7];
+        return bits[7];
     }
 
     /**
@@ -165,7 +167,7 @@ struct Page
      */
     void pat(bool b)
     {
-        ba[7] = b;
+        bits[7] = b;
     }
 
     /**
@@ -173,7 +175,7 @@ struct Page
      */
     bool global()
     {
-        return ba[8];
+        return bits[8];
     }
 
     /**
@@ -181,7 +183,7 @@ struct Page
      */
     void global(bool b)
     {
-        ba[8] = b;
+        bits[8] = b;
     }
 
     /**
@@ -189,7 +191,7 @@ struct Page
      */
     bool noexecute()
     {
-        return ba[63];
+        return bits[63];
     }
 
     /**
@@ -197,7 +199,7 @@ struct Page
      */
     void noexecute(bool b)
     {
-        ba[63] = b;
+        bits[63] = b;
     }
 
     /**
@@ -287,6 +289,7 @@ struct PageTable
                 t[index].address = a;
                 t[index].writable = true;
                 t[index].present = true;
+                t[index].user = true;
             }
             
             t = cast(Page*)ptov(t[index].address);

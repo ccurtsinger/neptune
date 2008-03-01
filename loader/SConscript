@@ -6,7 +6,6 @@ Import('env')
 obj_list  = [env.yasm('loader.o', 'loader.asm')]
 obj_list += [env.gdc('host.o', 'host.d')]
 obj_list += [env.gdc('main.o', 'main.d')]
-obj_list += [env.gdc('util.o', 'util.d')]
 
 # Build the loader
 loader = env.Link('loader', obj_list, LINKSCRIPTS = [env.File('linker.ld')], _LIBDIRFLAGS = '-Lbuild/i586/triton', _LIBFLAGS = '-lgphobos')

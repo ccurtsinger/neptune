@@ -1,3 +1,13 @@
+/**
+ * Physical page-frame allocator
+ *
+ * Authors: Charlie Curtsinger
+ * Date: March 1st, 2008
+ * Version: 0.3
+ *
+ * Copyright: 2008 Charlie Curtsinger
+ */
+
 module kernel.mem.physical;
 
 import arch.x86_64.arch;
@@ -42,13 +52,16 @@ struct PageBlock
         return -1;
     }
     
-    public void setAvailable(size_t num)
+    public void setAvailable(size_t num, bool avl = true)
     {
         size_t bitnum = num % 32;
         
         size_t index = (num - bitnum) / 32;
         
-        bts(&(bitmap[index]), bitnum);
+        if(avl)
+            bts(&(bitmap[index]), bitnum);
+        else
+            btr(&(bitmap[index]), bitnum);
     }
 }
 
@@ -81,6 +94,26 @@ struct PhysicalMemory
             size_t pagenum = blockoffset / FRAME_SIZE;
             
             blocks[blocknum].setAvailable(pagenum);
+        }
+    }
+    
+    public void remove(size_t base, size_t size)
+    {
+        size_t offset = base % FRAME_SIZE;
+        
+        if(offset > 0)
+            base += FRAME_SIZE - offset;
+        
+        size -= size % FRAME_SIZE;
+        
+        for(size_t i=0; i<size; i+= FRAME_SIZE)
+        {
+            size_t addr = i + base;
+            size_t blockoffset = addr % PAGE_BLOCK_SIZE;
+            size_t blocknum = (addr - blockoffset)/PAGE_BLOCK_SIZE;
+            size_t pagenum = blockoffset / FRAME_SIZE;
+            
+            blocks[blocknum].setAvailable(pagenum, false);
         }
     }
     

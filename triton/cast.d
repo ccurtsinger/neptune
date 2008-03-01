@@ -2,14 +2,14 @@
  * Casting support functions for the D language
  *
  * Authors: Walter Bright, Sean Kelly, Charlie Curtsinger
- * Date: October 31st, 2007
- * Version: 0.1b
+ * Date: March 1st, 2008
+ * Version: 0.3
  *
- * Copyright: 2004-2006 Digital Mars, www.digitalmars.com
+ * Copyright: 2004-2008 Digital Mars, www.digitalmars.com
  */
 
 /*
- *  Copyright (C) 2004-2006 by Digital Mars, www.digitalmars.com
+ *  Copyright (C) 2004-2008 by Digital Mars, www.digitalmars.com
  *  Written by Walter Bright
  *
  *  This software is provided 'as-is', without any express or implied
@@ -36,69 +36,6 @@
  */
 
 extern (C):
-
-/**
- * Cast a pointer to an object
- *
- * If p is an object, return the object
- * If p is an interface, return the object implementing the interface
- * if p is null, return null
- * Other behavior is undefined
- *
- * Params;
- *  p = pointer to cast
- *
- * Returns: an object
- */
-Object _d_toObject(void* p)
-{   
-	Object o;
-
-    if(p)
-    {
-        o = cast(Object)p;
-        ClassInfo oc = o.classinfo;
-        Interface *pi = **cast(Interface ***)p;
-
-        /* Interface.offset lines up with ClassInfo.name.ptr,
-         * so we rely on pointers never being less than 64K,
-         * and Objects never being greater.
-         */
-        if (pi.offset < 0x10000)
-        {
-            o = cast(Object)(p - pi.offset);
-        }
-    }
-    
-    return o;
-}
-
-/**
- * Cast an object to a particular class
- *
- * Params:
- *  p = pointer to the object to cast
- *  c = ClassInfo for the cast target
- *
- * Returns: The resulting Class, or null if unsuccessful
- */
-Object _d_interface_cast(void* p, ClassInfo c)
-{   
-	Object o;
-
-    //writefln("_d_interface_cast(p = %016#X, c = '%s')", cast(ulong)p, c.name);
-    
-    if (p)
-    {
-        Interface *pi = **cast(Interface ***)p;
-
-        o = cast(Object)(p - pi.offset);
-        
-        return _d_dynamic_cast(o, c);
-    }
-    
-    return o;
-}
 
 /**
  * Dynamically cast an object to a class type
@@ -145,7 +82,7 @@ Object _d_dynamic_cast(Object o, ClassInfo c)
  */
 int _d_isbaseof2(ClassInfo oc, ClassInfo c, inout size_t offset)
 {   
-	int i;
+    int i;
 
     if (oc is c)
     {
@@ -167,7 +104,7 @@ int _d_isbaseof2(ClassInfo oc, ClassInfo c, inout size_t offset)
             
             if (ic is c)
             {   
-            	offset = oc.interfaces[i].offset;
+                offset = oc.interfaces[i].offset;
                 return 1;
             }
         }
@@ -180,7 +117,7 @@ int _d_isbaseof2(ClassInfo oc, ClassInfo c, inout size_t offset)
             
             if (_d_isbaseof2(ic, c, offset))
             {   
-            	offset = oc.interfaces[i].offset;
+                offset = oc.interfaces[i].offset;
                 return 1;
             }
         }
@@ -192,81 +129,112 @@ int _d_isbaseof2(ClassInfo oc, ClassInfo c, inout size_t offset)
     return 0;
 }
 
-/**
- * Determine if one class is the base of another
- *
- * Params:
- *  oc = Class being tested
- *  c = Potential base class
- *
- * Returns: 1 if c is a base of oc, otherwise 0
- */
-int _d_isbaseof(ClassInfo oc, ClassInfo c)
-{   
-	int i;
+version(object_cast)
+{
+    /**
+     * Cast a pointer to an object
+     *
+     * If p is an object, return the object
+     * If p is an interface, return the object implementing the interface
+     * if p is null, return null
+     * Other behavior is undefined
+     *
+     * Params;
+     *  p = pointer to cast
+     *
+     * Returns: an object
+     */
+    Object _d_toObject(void* p)
+    {   
+        Object o;
 
-    if (oc is c)
-    {
-        return 1;
+        if(p)
+        {
+            o = cast(Object)p;
+            ClassInfo oc = o.classinfo;
+            Interface *pi = **cast(Interface ***)p;
+
+            /* Interface.offset lines up with ClassInfo.name.ptr,
+             * so we rely on pointers never being less than 64K,
+             * and Objects never being greater.
+             */
+            if (pi.offset < 0x10000)
+            {
+                o = cast(Object)(p - pi.offset);
+            }
+        }
+        
+        return o;
     }
-    
-    do
-    {
-        if (oc.base is c)
+
+    /**
+     * Cast an object to a particular class
+     *
+     * Params:
+     *  p = pointer to the object to cast
+     *  c = ClassInfo for the cast target
+     *
+     * Returns: The resulting Class, or null if unsuccessful
+     */
+    Object _d_interface_cast(void* p, ClassInfo c)
+    {   
+        Object o;
+
+        //writefln("_d_interface_cast(p = %016#X, c = '%s')", cast(ulong)p, c.name);
+        
+        if (p)
+        {
+            Interface *pi = **cast(Interface ***)p;
+
+            o = cast(Object)(p - pi.offset);
+            
+            return _d_dynamic_cast(o, c);
+        }
+        
+        return o;
+    }
+
+    /**
+     * Determine if one class is the base of another
+     *
+     * Params:
+     *  oc = Class being tested
+     *  c = Potential base class
+     *
+     * Returns: 1 if c is a base of oc, otherwise 0
+     */
+    int _d_isbaseof(ClassInfo oc, ClassInfo c)
+    {   
+        int i;
+
+        if (oc is c)
         {
             return 1;
         }
         
-        for (i = 0; i < oc.interfaces.length; i++)
+        do
         {
-            ClassInfo ic;
-
-            ic = oc.interfaces[i].classinfo;
-            
-            if (ic is c || _d_isbaseof(ic, c))
+            if (oc.base is c)
             {
                 return 1;
             }
-        }
+            
+            for (i = 0; i < oc.interfaces.length; i++)
+            {
+                ClassInfo ic;
+
+                ic = oc.interfaces[i].classinfo;
+                
+                if (ic is c || _d_isbaseof(ic, c))
+                {
+                    return 1;
+                }
+            }
+            
+            oc = oc.base;
+            
+        } while (oc);
         
-        oc = oc.base;
-        
-    } while (oc);
-    
-    return 0;
-}
-
-/**
- * Locate the virtual function table for an object associated with an interface
- *
- * Params:
- *  ic = the Interface
- *  o = the Object
- *
- * Returns: the base pointer of the vtbl
- */
-void* _d_interface_vtbl(ClassInfo ic, Object o)
-{   
-	int i;
-    ClassInfo oc;
-
-    //writefln("__d_interface_vtbl(o = %016#X, ic = %016#X)", cast(ulong)o, cast(ulong)ic);
-
-    assert(o);
-
-    oc = o.classinfo;
-    
-    for (i = 0; i < oc.interfaces.length; i++)
-    {
-        ClassInfo oic;
-
-        oic = oc.interfaces[i].classinfo;
-        
-        if (oic is ic)
-        {
-            return cast(void *)oc.interfaces[i].vtbl;
-        }
+        return 0;
     }
-    
-    assert(0);
 }

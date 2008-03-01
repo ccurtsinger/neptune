@@ -1,3 +1,12 @@
+/**
+ * Extern(c)s for functions expected to be provided by the host environment
+ *
+ * Authors: Charlie Curtsinger
+ * Date: March 1st, 2008
+ * Version: 0.3
+ *
+ * Copyright: 2008 Charlie Curtsinger
+ */
 
 module host;
 

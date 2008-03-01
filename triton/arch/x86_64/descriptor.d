@@ -1,9 +1,11 @@
 /**
- * Base structs for descriptor table entries.
+ * Structures for creating descriptor table entires
  *
  * Authors: Charlie Curtsinger
- * Date: January 15th, 2008
- * Version: 0.2a
+ * Date: March 1st, 2008
+ * Version: 0.3
+ *
+ * Copyright: 2008 Charlie Curtsinger
  */
 
 module arch.x86_64.descriptor;
@@ -61,7 +63,11 @@ struct NullDescriptor
  */
 struct CodeDescriptor
 {
-    ulong data;
+    union
+    {
+        ulong data;
+        BitArray bits;
+    }
     
     /**
      * False constructor
@@ -71,10 +77,9 @@ struct CodeDescriptor
     public static CodeDescriptor opCall()
     {
         CodeDescriptor c;
-        BitArray bits = BitArray(&(c.data), 64);
         
-        bits[43] = 1;
-        bits[44] = 1;
+        c.bits[43] = 1;
+        c.bits[44] = 1;
         
         return c;
     }
@@ -84,15 +89,7 @@ struct CodeDescriptor
 	 */
     public uint base()
     {
-        uint baseAddress;
-        
-        BitArray ret = BitArray(&baseAddress, 32);
-        BitArray bits = BitArray(&data, 64);
-        
-        ret[0..24] = bits[16..40];
-        ret[24..32] = bits[56..64];
-        
-        return baseAddress;
+        return bits[16..40] | (bits[56..64] << 24);
     }
     
     /**
@@ -100,11 +97,10 @@ struct CodeDescriptor
      */
     public void base(uint baseAddress)
     {
-        BitArray base = BitArray(&baseAddress, 32);
-        BitArray bits = BitArray(&data, 64);
+        auto base = BitArray(&baseAddress);
         
-        bits[16..40] = base[0..24];
-        bits[56..64] = base[24..32];
+        bits[16..40] = (*base)[0..24];
+        bits[56..64] = (*base)[24..32];
     }
     
     /**
@@ -112,15 +108,7 @@ struct CodeDescriptor
      */
     public uint limit()
     {
-        uint limitSize;
-        
-        BitArray ret = BitArray(&limitSize, 32);
-        BitArray bits = BitArray(&data, 64);
-        
-        ret[0..16] = bits[0..16];
-        ret[16..20] = bits[48..52];
-        
-        return limitSize;
+        return bits[0..16] | (bits[48..52] << 16);
     }
     
     /**
@@ -128,11 +116,10 @@ struct CodeDescriptor
      */
     public void limit(uint limitSize)
     {
-        BitArray limit = BitArray(&limitSize, 32);
-        BitArray bits = BitArray(&data, 64);
+        auto limit = BitArray(&limitSize);
         
-        bits[0..16] = limit[0..16];
-        bits[48..52] = limit[16..20];
+        bits[0..16] = (*limit)[0..16];
+        bits[48..52] = (*limit)[16..20];
     }
     
     /**
@@ -140,7 +127,7 @@ struct CodeDescriptor
      */
     public bool accessed()
     {
-        return BitArray(&data, 64)[40];
+        return bits[40];
     }
     
     /**
@@ -148,7 +135,7 @@ struct CodeDescriptor
      */
     public void accessed(bool a)
     {
-        BitArray(&data, 64)[40] = a;
+        bits[40] = a;
     }
     
     /**
@@ -156,7 +143,7 @@ struct CodeDescriptor
      */
     public bool readable()
     {
-        return BitArray(&data, 64)[41];
+        return bits[41];
     }
     
     /**
@@ -164,7 +151,7 @@ struct CodeDescriptor
      */
     public void readable(bool r)
     {
-        BitArray(&data, 64)[41] = r;
+        bits[41] = r;
     }
     
     /**
@@ -172,7 +159,7 @@ struct CodeDescriptor
      */
     public bool conforming()
     {
-        return BitArray(&data, 64)[42];
+        return bits[42];
     }
     
     /**
@@ -180,7 +167,7 @@ struct CodeDescriptor
      */
     public void conforming(bool c)
     {
-        BitArray(&data, 64)[42] = c;
+        bits[42] = c;
     }
     
     /**
@@ -188,14 +175,7 @@ struct CodeDescriptor
      */
     public ubyte privilege()
     {
-        ubyte dpl;
-        
-        BitArray dplbits = BitArray(&dpl, 8);
-        BitArray bits = BitArray(&data, 64);
-        
-        dplbits[0..2] = bits[45..47];
-        
-        return dpl;
+        return cast(ubyte)bits[45..47];
     }
     
     /**
@@ -208,9 +188,6 @@ struct CodeDescriptor
     }
     body
     {
-        BitArray dplbits = BitArray(&dpl, 8);
-        BitArray bits = BitArray(&data, 64);
-        
         bits[45..47] = dpl;
     }
     
@@ -219,7 +196,7 @@ struct CodeDescriptor
      */
     public bool present()
     {
-        return BitArray(&data, 64)[47];
+        return bits[47];
     }
     
     /**
@@ -227,7 +204,7 @@ struct CodeDescriptor
      */
     public void present(bool p)
     {
-        BitArray(&data, 64)[47] = p;
+        bits[47] = p;
     }
     
     /**
@@ -235,7 +212,7 @@ struct CodeDescriptor
      */
     public bool available()
     {
-        return BitArray(&data, 64)[52];
+        return bits[52];
     }
     
     /**
@@ -243,7 +220,7 @@ struct CodeDescriptor
      */
     public void available(bool avl)
     {
-        BitArray(&data, 64)[52] = avl;
+        bits[52] = avl;
     }
     
     /**
@@ -251,7 +228,7 @@ struct CodeDescriptor
      */
     public bool longmode()
     {
-        return BitArray(&data, 64)[53];
+        return bits[53];
     }
     
     /**
@@ -259,7 +236,7 @@ struct CodeDescriptor
      */
     public void longmode(bool l)
     {
-        BitArray(&data, 64)[53] = l;
+        bits[53] = l;
     }
     
     /**
@@ -267,7 +244,7 @@ struct CodeDescriptor
      */
     public bool operand()
     {
-        return BitArray(&data, 64)[54];
+        return bits[54];
     }
     
     /**
@@ -275,7 +252,7 @@ struct CodeDescriptor
      */
     public void operand(bool d)
     {
-        BitArray(&data, 64)[54] = d;
+        bits[54] = d;
     }
     
     /**
@@ -283,7 +260,7 @@ struct CodeDescriptor
      */
     public bool granularity()
     {
-        return BitArray(&data, 64)[55];
+        return bits[55];
     }
     
     /**
@@ -291,7 +268,7 @@ struct CodeDescriptor
      */
     public void granularity(bool g)
     {
-        BitArray(&data, 64)[55] = g;
+        bits[55] = g;
     }
 }
 
@@ -300,7 +277,11 @@ struct CodeDescriptor
  */
 struct DataDescriptor
 {
-    ulong data;
+    union
+    {
+        ulong data;
+        BitArray bits;
+    }
     
     /**
      * Initialize data segment bits
@@ -308,12 +289,10 @@ struct DataDescriptor
     public static DataDescriptor opCall()
     {
         DataDescriptor d;
-        
-        BitArray bits = BitArray(&(d.data), 64);
-        
-        bits[43] = 0;
-        bits[44] = 1;
-        bits[53] = 0;
+
+        d.bits[43] = 0;
+        d.bits[44] = 1;
+        d.bits[53] = 0;
         
         return d;
     }
@@ -323,55 +302,37 @@ struct DataDescriptor
 	 */
     public uint base()
     {
-        uint baseAddress;
-        
-        BitArray ret = BitArray(&baseAddress, 32);
-        BitArray bits = BitArray(&data, 64);
-        
-        ret[0..24] = bits[16..40];
-        ret[24..32] = bits[56..64];
-        
-        return baseAddress;
+        return bits[16..40] | (bits[56..64] << 24);
     }
     
     /**
-     * Set the descriptor base address
+     * Set the base address for the code segment
      */
     public void base(uint baseAddress)
     {
-        BitArray base = BitArray(&baseAddress, 32);
-        BitArray bits = BitArray(&data, 64);
+        auto base = BitArray(&baseAddress);
         
-        bits[16..40] = base[0..24];
-        bits[56..64] = base[24..32];
+        bits[16..40] = (*base)[0..24];
+        bits[56..64] = (*base)[24..32];
     }
     
     /**
-     * Get the descriptor limit size
+     * Get the limit size for the code segment
      */
     public uint limit()
     {
-        uint limitSize;
-        
-        BitArray ret = BitArray(&limitSize, 32);
-        BitArray bits = BitArray(&data, 64);
-        
-        ret[0..16] = bits[0..16];
-        ret[16..20] = bits[48..52];
-        
-        return limitSize;
+        return bits[0..16] | (bits[48..52]<<16);
     }
     
     /**
-     * Set the descriptor limit size
+     * Set the limit size for the code segment
      */
     public void limit(uint limitSize)
     {
-        BitArray limit = BitArray(&limitSize, 32);
-        BitArray bits = BitArray(&data, 64);
+        auto limit = BitArray(&limitSize);
         
-        bits[0..16] = limit[0..16];
-        bits[48..52] = limit[16..20];
+        bits[0..16] = (*limit)[0..16];
+        bits[48..52] = (*limit)[16..20];
     }
     
     /**
@@ -379,7 +340,7 @@ struct DataDescriptor
      */
     public bool accessed()
     {
-        return BitArray(&data, 64)[40];
+        return bits[40];
     }
     
     /**
@@ -387,7 +348,7 @@ struct DataDescriptor
      */
     public void accessed(bool a)
     {
-        BitArray(&data, 64)[40] = a;
+        bits[40] = a;
     }
     
     /**
@@ -395,7 +356,7 @@ struct DataDescriptor
      */
     public bool writable()
     {
-        return BitArray(&data, 64)[41];
+        return bits[41];
     }
     
     /**
@@ -403,7 +364,7 @@ struct DataDescriptor
      */
     public void writable(bool w)
     {
-        BitArray(&data, 64)[41] = w;
+        bits[41] = w;
     }
     
     /**
@@ -411,7 +372,7 @@ struct DataDescriptor
      */
     public bool expand()
     {
-        return BitArray(&data, 64)[42];
+        return bits[42];
     }
     
     /**
@@ -419,22 +380,15 @@ struct DataDescriptor
      */
     public void expand(bool e)
     {
-        BitArray(&data, 64)[42] = e;
+        bits[42] = e;
     }
     
     /**
      * Get the descriptor privelege level
      */
     public ubyte privilege()
-    {
-        ubyte dpl;
-        
-        BitArray dplbits = BitArray(&dpl, 8);
-        BitArray bits = BitArray(&data, 64);
-        
-        dplbits[0..2] = bits[45..47];
-        
-        return dpl;
+    {        
+        return bits[45..47];
     }
     
     /**
@@ -447,9 +401,6 @@ struct DataDescriptor
     }
     body
     {
-        BitArray dplbits = BitArray(&dpl, 8);
-        BitArray bits = BitArray(&data, 64);
-        
         bits[45..47] = dpl;
     }
     
@@ -458,7 +409,7 @@ struct DataDescriptor
      */
     public bool present()
     {
-        return BitArray(&data, 64)[47];
+        return bits[47];
     }
     
     /**
@@ -466,7 +417,7 @@ struct DataDescriptor
      */
     public void present(bool p)
     {
-        BitArray(&data, 64)[47] = p;
+        bits[47] = p;
     }
     
     /**
@@ -474,7 +425,7 @@ struct DataDescriptor
      */
     public bool available()
     {
-        return BitArray(&data, 64)[52];
+        return bits[52];
     }
     
     /**
@@ -482,7 +433,7 @@ struct DataDescriptor
      */
     public void available(bool avl)
     {
-        BitArray(&data, 64)[52] = avl;
+        bits[52] = avl;
     }
     
     /**
@@ -490,7 +441,7 @@ struct DataDescriptor
      */
     public bool operand()
     {
-        return BitArray(&data, 64)[54];
+        return bits[54];
     }
     
     /**
@@ -498,7 +449,7 @@ struct DataDescriptor
      */
     public void operand(bool d)
     {
-        BitArray(&data, 64)[54] = d;
+        bits[54] = d;
     }
     
     /**
@@ -506,7 +457,7 @@ struct DataDescriptor
      */
     public bool granularity()
     {
-        return BitArray(&data, 64)[55];
+        return bits[55];
     }
     
     /**
@@ -514,7 +465,7 @@ struct DataDescriptor
      */
     public void granularity(bool g)
     {
-        BitArray(&data, 64)[55] = g;
+        bits[55] = g;
     }
 }
 
@@ -523,7 +474,11 @@ struct DataDescriptor
  */
 struct SystemDescriptor
 {
-    ulong[2] data;
+    union
+    {
+        ulong[2] data;
+        BitArray bits;
+    }
     
     /**
      * Set the system descriptor type bits
@@ -532,12 +487,10 @@ struct SystemDescriptor
     {
         SystemDescriptor s;
         
-        BitArray bits = BitArray((s.data.ptr), 128);
-        
-        bits[44] = 0;
-        bits[53] = 0;
-        bits[54] = 0;
-        bits[96..128] = 0;
+        s.bits[44] = 0;
+        s.bits[53] = 0;
+        s.bits[54] = 0;
+        s.bits[96..128] = 0;
         
         return s;
     }
@@ -547,26 +500,18 @@ struct SystemDescriptor
      */
     public ulong base()
     {
-        ulong b;
-        BitArray bits = BitArray(data.ptr, 128);
-        BitArray ret = BitArray(&b, 64);
-        
-        ret[0..24] = bits[16..40];
-        ret[24..64] = bits[56..96];
-        
-        return b;
+        return bits[16..40] | (bits[56..96] << 24);
     }
     
     /**
      * Set the descriptor base address
      */
-    public void base(uint baseAddress)
+    public void base(ulong baseAddress)
     {
-        BitArray bits = BitArray(data.ptr, 128);
-        BitArray b = BitArray(&baseAddress, 64);
+        auto base = BitArray(&baseAddress);
         
-        bits[16..40] = b[0..24];
-        bits[56..96] = b[24..64];
+        bits[16..40] = (*base)[0..24];
+        bits[56..96] = (*base)[24..64];
     }
     
     /**
@@ -574,14 +519,7 @@ struct SystemDescriptor
      */
     public ulong limit()
     {
-        ulong l;
-        BitArray bits = BitArray(data.ptr, 128);
-        BitArray ret = BitArray(&l, 64);
-        
-        ret[0..16] = bits[0..16];
-        ret[16..20] = bits[48..52];
-        
-        return l;
+        return bits[0..16] | (bits[48..52] << 15);
     }
     
     /**
@@ -589,11 +527,10 @@ struct SystemDescriptor
      */
     public void limit(uint limitSize)
     {
-        BitArray bits = BitArray(data.ptr, 128);
-        BitArray l = BitArray(&limitSize, 64);
+        auto limit = BitArray(&limitSize);
         
-        bits[0..16] = l[0..16];
-        bits[48..52] = l[16..20];
+        bits[0..16] = (*limit)[0..16];
+        bits[48..52] = (*limit)[16..20];
     }
     
     /**
@@ -601,13 +538,7 @@ struct SystemDescriptor
      */
     public ubyte type()
     {
-        ubyte t;
-        BitArray bits = BitArray(data.ptr, 128);
-        BitArray ret = BitArray(&t, 8);
-        
-        ret[0..4] = bits[40..44];
-        
-        return t;
+        return bits[40..44];
     }
     
     /**
@@ -626,10 +557,7 @@ struct SystemDescriptor
     }
     body
     {
-        BitArray bits = BitArray(data.ptr, 128);
-        BitArray tp = BitArray(&t, 8);
-        
-        bits[40..44] = tp[0..4];
+        bits[40..44] = t;
     }
 	
 	/**
@@ -637,14 +565,7 @@ struct SystemDescriptor
 	 */
     public ubyte privilege()
     {
-        ubyte dpl;
-        
-        BitArray dplbits = BitArray(&dpl, 8);
-        BitArray bits = BitArray(&data, 64);
-        
-        dplbits[0..2] = bits[45..47];
-        
-        return dpl;
+        return bits[45..47];
     }
     
     /**
@@ -657,9 +578,6 @@ struct SystemDescriptor
     }
     body
     {
-        BitArray dplbits = BitArray(&dpl, 8);
-        BitArray bits = BitArray(&data, 64);
-        
         bits[45..47] = dpl;
     }
     
@@ -668,7 +586,7 @@ struct SystemDescriptor
      */
     public bool present()
     {
-        return BitArray(data.ptr, 128)[47];
+        return bits[47];
     }
     
     /**
@@ -676,7 +594,7 @@ struct SystemDescriptor
      */
     public void present(bool p)
     {
-        BitArray(data.ptr, 128)[47] = p;
+        bits[47] = p;
     }
     
     /**
@@ -684,7 +602,7 @@ struct SystemDescriptor
      */
     public bool granularity()
     {
-        return BitArray(data.ptr, 128)[55];
+        return bits[55];
     }
     
     /**
@@ -692,7 +610,7 @@ struct SystemDescriptor
      */
     public void granularity(bool g)
     {
-        BitArray(data.ptr, 128)[55] = g;
+        bits[55] = g;
     }
 }
 
@@ -701,8 +619,11 @@ struct SystemDescriptor
  */
 struct GateDescriptor
 {
-    ulong data1;
-    ulong data2;
+    union
+    {
+        ulong[2] data;
+        BitArray bits;
+    }
     
     /**
      * Set the gate descriptor bits
@@ -711,11 +632,9 @@ struct GateDescriptor
     {
         GateDescriptor g;
         
-        BitArray bits = BitArray(&(g.data1), 128);
-        
-        bits[35..40] = 0;
-        bits[44] = 0;
-        bits[96..128] = 0;
+        g.bits[35..40] = 0;
+        g.bits[44] = 0;
+        g.bits[96..128] = 0;
         
         return g;
     }
@@ -725,15 +644,7 @@ struct GateDescriptor
      */
     public ulong target()
     {
-        ulong t;
-        
-        BitArray bits = BitArray(&data1, 128);
-        BitArray ret = BitArray(&t, 64);
-        
-        ret[0..16] = bits[0..16];
-        ret[16..64] = bits[48..96];
-        
-        return t;
+        return bits[0..16] | (bits[48..96] << 16);
     }
     
     /**
@@ -741,11 +652,10 @@ struct GateDescriptor
      */
     public void target(ulong targetOffset)
     {
-        BitArray bits = BitArray(&data1, 128);
-        BitArray ret = BitArray(&targetOffset, 64);
+        auto target = BitArray(&targetOffset);
         
-        bits[0..16] = ret[0..16];
-        bits[48..96] = ret[16..64];
+        bits[0..16] = (*target)[0..16];
+        bits[48..96] = (*target)[16..64];
     }
     
     /**
@@ -753,14 +663,7 @@ struct GateDescriptor
      */
     public DescriptorType type()
     {
-        DescriptorType t;
-        
-        BitArray bits = BitArray(&data1, 128);
-        BitArray ret = BitArray(&t, 8);
-        
-        ret[0..4] = bits[40..44];
-        
-        return t;
+        return cast(DescriptorType)bits[40..44];
     }
     
     /**
@@ -768,10 +671,7 @@ struct GateDescriptor
 	 */
     public void type(DescriptorType t)
     {
-        BitArray bits = BitArray(&data1, 128);
-        BitArray ret = BitArray(&t, 8);
-        
-        bits[40..44] = ret[0..4];
+        bits[40..44] = t;
     }
     
     /**
@@ -779,14 +679,7 @@ struct GateDescriptor
      */
     public ushort selector()
     {
-        ushort sel;
-        
-        BitArray bits = BitArray(&data1, 128);
-        BitArray ret = BitArray(&sel, 16);
-        
-        ret[0..16] = bits[16..32];
-        
-        return sel;
+        return bits[16..32];
     }
     
     /**
@@ -794,10 +687,7 @@ struct GateDescriptor
      */
     public void selector(ushort targetSelector)
     {
-        BitArray bits = BitArray(&data1, 128);
-        BitArray ret = BitArray(&targetSelector, 16);
-        
-        bits[16..32] = ret[0..16];
+        bits[16..32] = targetSelector;
     }
     
     /**
@@ -805,14 +695,7 @@ struct GateDescriptor
      */
     public ubyte stack()
     {
-        ubyte ist;
-        
-        BitArray bits = BitArray(&data1, 128);
-        BitArray ret = BitArray(&ist, 8);
-        
-        ret[0..3] = bits[32..35];
-        
-        return ist;
+        return bits[32..35];
     }
     
     /**
@@ -825,10 +708,7 @@ struct GateDescriptor
     }
     body
     {
-        BitArray bits = BitArray(&data1, 128);
-        BitArray ret = BitArray(&ist, 8);
-        
-        bits[32..35] = ret[0..3];
+        bits[32..35] = ist;
     }
     
     /**
@@ -836,14 +716,7 @@ struct GateDescriptor
      */
     public ubyte privilege()
     {
-        ubyte dpl;
-        
-        BitArray bits = BitArray(&data1, 128);
-        BitArray ret = BitArray(&dpl, 8);
-        
-        ret[0..2] = bits[45..47];
-        
-        return dpl;
+        return bits[45..47];
     }
     
     /**
@@ -856,10 +729,7 @@ struct GateDescriptor
     }
     body
     {
-        BitArray bits = BitArray(&data1, 128);
-        BitArray ret = BitArray(&dpl, 8);
-        
-        bits[45..47] = ret[0..2];
+        bits[45..47] = dpl;
     }
     
     /**
@@ -867,7 +737,7 @@ struct GateDescriptor
      */
     public bool present()
     {
-        return BitArray(&data1, 128)[47];
+        return bits[47];
     }
     
     /**
@@ -875,7 +745,6 @@ struct GateDescriptor
      */
     public void present(bool p)
     {
-        BitArray(&data1, 128)[47] = p;
+        bits[47] = p;
     }
 }
-

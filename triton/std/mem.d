@@ -2,8 +2,10 @@
  * Memory utility functions
  *
  * Authors: Charlie Curtsinger
- * Date: October 31st, 2007
- * Version: 0.1b
+ * Date: March 1st, 2008
+ * Version: 0.3
+ *
+ * Copyright: 2008 Charlie Curtsinger
  */
 
 module std.mem;
@@ -86,28 +88,3 @@ extern(C) void* memmove(void* dest, void* src, size_t size)
     return dest;
 }
 
-/**
- * Compare two memory regions
- *
- * Params:
- *  p1 = base of region 1
- *  p2 = base of region 2
- *  size = size in bytes to compare
- *
- * Returns: the result of comparing the sum of the two memory locations
- *  The sum is computed by casting both to an array of unsigned integers
- */
-extern(C) int memcmp(void* p1, void* p2, size_t size)
-{
-    int sum = 0;
-
-    uint* i1 = cast(uint*)p1;
-    uint* i2 = cast(uint*)p2;
-
-    for(int i=0; i<size/uint.sizeof; i++)
-    {
-        sum += i1[i];
-        sum -= i2[i];
-    }
-    return sum;
-}

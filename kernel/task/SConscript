@@ -1,0 +1,9 @@
+# Grab the build environment
+Import('env')
+
+obj_list  = [env.gdc('process.o', 'process.d')]
+obj_list += [env.gdc('scheduler.o', 'scheduler.d')]
+obj_list += [env.gdc('thread.o', 'thread.d')]
+obj_list += [env.gdc('waitqueue.o', 'waitqueue.d')]
+
+Return('obj_list')

@@ -1,3 +1,14 @@
+/**
+ * Required support functions for the triton
+ * runtime library
+ *
+ * Authors: Charlie Curtsinger
+ * Date: March 1st, 2008
+ * Version: 0.3
+ *
+ * Copyright: 2008 Charlie Curtsinger
+ */
+
 module kernel.core.host;
 
 import std.stdio;
@@ -8,7 +19,7 @@ import kernel.core.env;
 
 extern(C) void* _d_malloc(size_t size)
 {
-    return heap.get(size);
+    return heap.allocate(size);
 }
 
 extern(C) size_t _d_palloc()
@@ -18,12 +29,12 @@ extern(C) size_t _d_palloc()
 
 extern(C) size_t _d_allocsize(void* p)
 {
-    assert(false, "_d_allocsize() is not yet implemented");
+    return 0;
 }
 
 extern(C) void _d_free(void* p)
 {
-    // Do nothing for now
+    heap.free(p);
 }
 
 extern(C) void _d_pfree(size_t p)
@@ -43,11 +54,18 @@ extern(C) char _d_getc()
 
 extern(C) void _d_error(char[] msg, char[] file, size_t line)
 {
-    write(msg);
+    cpu.disableInterrupts();
+    
+    writeln(msg);
 	
 	if(file !is null && line > 0)
 	{
-	    writef(" (%s, line %u)", file, line);
+	    writefln(" (%s, line %u)", file, line);
+	}
+	
+	version(unwind)
+	{
+	    stackUnwind(cpu.rsp, cpu.rbp);
 	}
 	
 	for(;;){}

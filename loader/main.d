@@ -8,14 +8,14 @@
  * Copyright: 2008 Charlie Curtsinger
  */
 
-import arch.x86_64.arch;
-import arch.x86_64.cpu;
-import arch.x86_64.gdt;
-import arch.x86_64.descriptor;
-import arch.x86_64.paging;
+import util.arch.arch;
+import util.arch.cpu;
+import util.arch.gdt;
+import util.arch.descriptor;
+import util.arch.paging;
 
-import spec.multiboot;
-import spec.elf64;
+import util.spec.multiboot;
+import util.spec.elf64;
 
 import std.integer;
 import std.stdio;
@@ -32,6 +32,8 @@ MemoryRegion[20] _used_mem;
 LoaderModule[20] _modules;
 
 CPU cpu;
+
+ulong[256] gdt_data;
 
 struct LoaderData
 {
@@ -77,6 +79,8 @@ extern(C) ulong _setup(MultibootInfo* boot, uint magic)
     _data.modules = cast(ulong)&_modules + LINEAR_MEM_BASE;
     
     readMemInfo(boot);
+
+    stdout = new Screen();
 
     clear();
     writeln("Executing 32 bit loader...");
@@ -172,27 +176,28 @@ public void mapData(ulong virtual, size_t physical, ubyte[] data)
 
 void gdt_setup()
 {
-    cpu.gdt.init();
+    //cpu.gdt = GDT(ptov(loader.host._d_palloc()));
+    cpu.gdt.init(gdt_data.ptr);
     
     NullDescriptor* n = cpu.gdt.getEntry!(NullDescriptor);
     *n = NullDescriptor();
     
-    CodeDescriptor* kc64 = cpu.gdt.getEntry!(CodeDescriptor);
-    *kc64 = CodeDescriptor();
+    Descriptor* kc64 = cpu.gdt.getEntry!(Descriptor);
+    *kc64 = Descriptor(true);
     kc64.conforming = false;
     kc64.privilege = 0;
     kc64.present = true;
     kc64.longmode = true;
     kc64.operand = false;
     
-    DataDescriptor* kd = cpu.gdt.getEntry!(DataDescriptor);
-    *kd = DataDescriptor();
+    Descriptor* kd = cpu.gdt.getEntry!(Descriptor);
+    *kd = Descriptor(false);
     kd.privilege = 0;
     kd.writable = true;
     kd.present = true;
     
-    CodeDescriptor* kc = cpu.gdt.getEntry!(CodeDescriptor);
-    *kc = CodeDescriptor();
+    Descriptor* kc = cpu.gdt.getEntry!(Descriptor);
+    *kc = Descriptor(true);
     kc.conforming = false;
     kc.privilege = 0;
     kc.present = true;
@@ -231,7 +236,7 @@ void startLongMode()
     mapDir(0x00400000, 0x00400000);
     mapDir(0x00600000, 0x00600000);
 
-	writefln("Linear mapping physical memory to %08#X%08X", LINEAR_MEM_BASE>>32, LINEAR_MEM_BASE);
+	writefln("Linear mapping physical memory to %#X00000000", LINEAR_MEM_BASE>>32);
 	
 	// Map to twice the upper limit of memory used.  Need to leave enough memory mapped
 	// to set up the paging system in the kernel.  After that point, linear-mapped 

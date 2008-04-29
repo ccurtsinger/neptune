@@ -14,27 +14,27 @@ import modinit;
 
 import std.stdio;
 import std.string;
+import std.context;
 
-import arch.x86_64.arch;
-import arch.x86_64.cpu;
-import arch.x86_64.apic;
-import arch.x86_64.descriptor;
-import arch.x86_64.gdt;
-import arch.x86_64.idt;
-import arch.x86_64.tss;
-import arch.x86_64.paging;
+import util.arch.arch;
+import util.arch.cpu;
+import util.arch.apic;
+import util.arch.descriptor;
+import util.arch.gdt;
+import util.arch.idt;
+import util.arch.tss;
+import util.arch.paging;
 
-import spec.elf64;
+import util.spec.elf64;
 
 import kernel.core.env;
 import kernel.core.interrupt;
 import kernel.dev.screen;
 import kernel.dev.kb;
 import kernel.dev.timer;
-import kernel.task.scheduler;
+import kernel.task.procallocator;
 import kernel.task.process;
-import kernel.task.thread;
-import kernel.mem.tree;
+import kernel.mem.watermark;
 
 extern(C) void _startup(ulong loader, ulong* isrtable)
 {
@@ -42,19 +42,26 @@ extern(C) void _startup(ulong loader, ulong* isrtable)
     loaderData = cast(LoaderData*)ptov(loader);
     
     // Set up basic runtime and hardware structures
-    gdt_setup();
-    interrupt_setup(isrtable);
     memory_setup();
+    interrupt_setup(isrtable);
+    
+    // Set a page fault handler
+    localscope.setHandler(14, &pagefault_handler);
+    
+    // Initialize the GDT
+    gdt_setup();
     
     // Initialize the CPU Local APIC
     cpu.apic = APIC();
     
-    // Initialize the screen
-    screen = cast(Screen*)0xFFFF8300000B8000;
-    screen.clear();
+    // Turn on interrupts to catch page faults, GP faults, etc...
+    cpu.enableInterrupts();
     
-    // Set a page fault handler
-    localscope.setHandler(14, &pagefault_handler);
+    // Initialize the screen
+    screen = new Screen(0xFFFF8300000B8000);
+    
+    screen.clear();
+    stdout = screen;
     
     // Run module constructors and unit tests
     _moduleCtor();
@@ -63,43 +70,46 @@ extern(C) void _startup(ulong loader, ulong* isrtable)
     // Initialize the keyboard device
     kb.init(33);
     
-    // Set up a system call handler
-    localscope.setHandler(128, &syscall_handler);
+    // Set the current processor with ID 0
+    local = new Processor(0);
     
-    // Initialize the scheduler
-    scheduler = new Scheduler();
+    // Initialize the processor allocator and add the current processor to its pool
+    procalloc = new ProcessorAllocator();
+    procalloc.add(local);
     
     // Initialize the timer device
     timer = new Timer(127);
     
+    Elf64Header* elf;
+    Elf64Header* exec;
+    Elf64Header* lib;
+    
     // Load modules passed from the loader as processes
-    foreach(mod; loaderData.modules[0..loaderData.numModules])
+    foreach(i, mod; loaderData.modules[0..loaderData.numModules])
     {
         writefln("module: %s", ctodstr(mod.name));
         
-        Elf64Header* elf = cast(Elf64Header*)mod.base;
-        Process p = new Process(elf);
-        p.start();
+        elf = cast(Elf64Header*)mod.base;
+        
+        Process p = new Process(i, elf);
     }
-    
+ 
     // Start the APIC timer on the same interrupt as the previously initialized timer device
     cpu.apic.setTimer(127, true, 10);
-
-    // Enable interrupts and idle until a task switch is performed
-    cpu.enableInterrupts();
     
+    // Idle until a task switch is performed
     for(;;){}
 }
 
 public void gdt_setup()
 {
-    cpu.gdt.init();
+    cpu.gdt.init(_d_malloc(ulong.sizeof*256));
     
     NullDescriptor* n = cpu.gdt.getEntry!(NullDescriptor);
     *n = NullDescriptor();
     
-    CodeDescriptor* kc = cpu.gdt.getEntry!(CodeDescriptor);
-    *kc = CodeDescriptor();
+    Descriptor* kc = cpu.gdt.getEntry!(Descriptor);
+    *kc = Descriptor(true);
     kc.base = 0;
     kc.limit = 0xFFFFFF;
     kc.conforming = false;
@@ -108,14 +118,14 @@ public void gdt_setup()
     kc.longmode = true;
     kc.operand = false;
     
-    DataDescriptor* kd = cpu.gdt.getEntry!(DataDescriptor);
-    *kd = DataDescriptor();
+    Descriptor* kd = cpu.gdt.getEntry!(Descriptor);
+    *kd = Descriptor(false);
     kd.privilege = 0;
     kd.writable = true;
     kd.present = true;
     
-    CodeDescriptor* uc = cpu.gdt.getEntry!(CodeDescriptor);
-    *uc = CodeDescriptor();
+    Descriptor* uc = cpu.gdt.getEntry!(Descriptor);
+    *uc = Descriptor(true);
     uc.base = 0;
     uc.limit = 0xFFFFFF;
     uc.conforming = false;
@@ -124,8 +134,8 @@ public void gdt_setup()
     uc.longmode = true;
     uc.operand = false;
     
-    DataDescriptor* ud = cpu.gdt.getEntry!(DataDescriptor);
-    *ud = DataDescriptor();
+    Descriptor* ud = cpu.gdt.getEntry!(Descriptor);
+    *ud = Descriptor(false);
     ud.privilege = 3;
     ud.writable = true;
     ud.present = true;
@@ -144,10 +154,6 @@ public void gdt_setup()
     t.granularity = false;
    
     cpu.tss.rsp0 = 0xFFFF81FFFFFFFFF0;
-    cpu.tss.rsp1 = 0xFFFF81FFFFFFFFF0;
-    cpu.tss.rsp2 = 0xFFFF81FFFFFFFFF0;
-   
-    cpu.tss.ist1 = 0xFFFF81FFFFFFEFF0;
     
     cpu.gdt.install();
     
@@ -156,7 +162,7 @@ public void gdt_setup()
 
 public void interrupt_setup(ulong* isrtable)
 {
-    cpu.idt.init(0xFFFF);
+    cpu.idt.init(0xFFFD);
     localscope.init();
     
     for(size_t i=0; i<256; i++)
@@ -172,10 +178,10 @@ public void interrupt_setup(ulong* isrtable)
         d.privilege = 0;
         d.present = true;
         
-        if(i == 32 || i == 128)
+        /*if(i == 127)
         {
             d.privilege = 3;
-        }
+        }*/
     }
     
     cpu.idt.install();
@@ -214,11 +220,11 @@ public void memory_setup()
     p.user = true;
     p.invalidate();
     
-    //heap.init(cpu.pagetable, 0xFFFF820000000000);
-    heap = TreeAllocator(0xFFFF820000000000);
+    heap.init(cpu.pagetable, 0xFFFF820000000000);
+    //heap = TreeAllocator(0xFFFF820000000000);
 }
 
-public bool pagefault_handler(InterruptStack* context)
+public bool pagefault_handler(Context* context)
 {
     ulong addr = cpu.cr2;
     
@@ -246,13 +252,63 @@ public bool pagefault_handler(InterruptStack* context)
     }
     else
     {
-        writefln("Unhandled page fault at address %016#X", addr);
+        // If the fault occurred on a page read violation
+        if(context.error == 0x5)
+        {
+            // Emulate a function call across privilege levels
+            if(addr == cast(ulong)&test_syscall)
+            {
+                context.rax = test_syscall(context.rdi);
+                
+                // Pop off the return address from the caller's stack
+                context.rip = *(cast(ulong*)context.rsp);
+                context.rsp += ulong.sizeof;
+                
+                return true;
+            }
+            else if(addr == cast(ulong)&syscall_1)
+            {
+                context.rax = syscall_1();
+                
+                // Pop off the return address from the caller's stack
+                context.rip = *(cast(ulong*)context.rsp);
+                context.rsp += ulong.sizeof;
+                
+                return true;
+            }
+            if(addr == cast(ulong)&syscall_2)
+            {
+                context.rax = syscall_2();
+                
+                // Pop off the return address from the caller's stack
+                context.rip = *(cast(ulong*)context.rsp);
+                context.rsp += ulong.sizeof;
+                
+                return true;
+            }
+            else if(addr == cast(ulong)&Elf64Header.runtimeLink)
+            {
+                Elf64Header* elf = (cast(Elf64Header**)context.rsp)[0];
+                size_t plt_index = (cast(ulong*)context.rsp)[1];
+                
+                // remove GOT[1] and PLT index from stack
+                context.rsp += ulong.sizeof * 2;
+                
+                context.rip = elf.runtimeLink(plt_index);
+                
+                return true;
+            }
+        }
         
-        heap.debugDump();
+        writefln("Unhandled page fault at address %p", addr);
+        writefln("Error code %#x", context.error);
+        writefln("%%rip: %p", context.rip);
+        
+        //heap.debugDump();
         
         version(unwind)
         {
-            writefln("%016#X: %s", context.rip, getSymbol(context.rip));
+            writefln("%p: %s", context.rip, getSymbol(context.rip));
             stackUnwind(cast(ulong*)context.rsp, cast(ulong*)context.rbp);
         }
         
@@ -260,20 +316,4 @@ public bool pagefault_handler(InterruptStack* context)
     }
     
     return false;
-}
-
-public bool syscall_handler(InterruptStack* context)
-{
-    // Show heap information periodically
-    if(context.rax % 20 == 0)
-    {
-        heap.debugDump();
-        for(size_t i=0; i<10000000; i++){}
-    }
-    
-    writefln("Process %u", context.rax);
-    
-    timer.wait(context.rax, context);
-        
-    return true;
 }

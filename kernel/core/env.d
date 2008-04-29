@@ -10,10 +10,10 @@
 
 module kernel.core.env;
 
-import arch.x86_64.arch;
-import arch.x86_64.cpu;
+import util.arch.arch;
+import util.arch.cpu;
 
-import spec.elf64;
+import util.spec.elf64;
 
 import std.stdio;
 import std.string;
@@ -25,15 +25,15 @@ import kernel.dev.timer;
 import kernel.core.interrupt;
 import kernel.mem.physical;
 import kernel.mem.watermark;
-import kernel.mem.tree;
-import kernel.task.scheduler;
+//import kernel.mem.tree;
+import kernel.task.procallocator;
 
-Screen* screen;
+Screen screen;
 Keyboard kb;
 
 PhysicalMemory physical;
-//WatermarkAllocator heap;
-TreeAllocator heap;
+WatermarkAllocator heap;
+//TreeAllocator heap;
 
 CPU cpu;
 
@@ -41,9 +41,16 @@ InterruptScope localscope;
 
 LoaderData* loaderData;
 
-Scheduler scheduler;
+ProcessorAllocator procalloc;
+Processor local;
 
 Timer timer;
+
+ulong test_syscall(ulong x)
+{
+    writefln("%#X", x);
+    return x+1;
+}
 
 /**
  * Data passed from the 32 bit loader
@@ -78,32 +85,6 @@ struct LoaderModule
     ulong size;
 }
 
-struct InterruptStack
-{
-	ulong rax;
-	ulong rbx;
-	ulong rcx;
-	ulong rdx;
-	ulong rsi;
-	ulong rdi;
-	ulong r8;
-	ulong r9;
-	ulong r10;
-	ulong r11;
-	ulong r12;
-	ulong r13;
-	ulong r14;
-	ulong r15;
-	ulong rbp;
-	ulong error;
-	ulong rip;
-	ulong cs;
-	ulong rflags;
-	ulong rsp;
-	ulong ss;
-}
-
-
 version(unwind)
 {
     void stackUnwind(ulong* rsp, ulong* rbp)
@@ -115,7 +96,7 @@ version(unwind)
             rsp = rbp;
             rbp = cast(ulong*)rsp[0];
             
-            writefln("%016#X: %s", rsp[1], getSymbol(rsp[1]));
+            writefln("%p: %s", rsp[1], getSymbol(rsp[1]));
             
             for(size_t j=0; j<10000000; j++){}
             

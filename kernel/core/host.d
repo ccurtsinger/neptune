@@ -13,7 +13,7 @@ module kernel.core.host;
 
 import std.stdio;
 
-import arch.x86_64.arch;
+import util.arch.arch;
 
 import kernel.core.env;
 
@@ -42,11 +42,6 @@ extern(C) void _d_pfree(size_t p)
     physical.add(p, FRAME_SIZE);
 }
 
-extern(C) void _d_putc(char c)
-{
-    screen.putc(c);
-}
-
 extern(C) char _d_getc()
 {
     assert(false, "_d_getc() is not yet implemented");
@@ -65,7 +60,7 @@ extern(C) void _d_error(char[] msg, char[] file, size_t line)
 	
 	version(unwind)
 	{
-	    stackUnwind(cpu.rsp, cpu.rbp);
+	    stackUnwind(cast(ulong*)cpu.rsp, cast(ulong*)cpu.rbp);
 	}
 	
 	for(;;){}

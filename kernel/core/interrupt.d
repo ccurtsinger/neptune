@@ -10,11 +10,12 @@
 
 module kernel.core.interrupt;
 
-import arch.x86_64.idt;
-import arch.x86_64.apic;
+import util.arch.idt;
+import util.arch.apic;
 
 import std.port;
 import std.stdio;
+import std.context;
 
 import kernel.core.env;
 
@@ -26,13 +27,13 @@ struct InterruptHandler
     bool set = false;
     bool func;
    
-    bool function(InterruptStack*) f;
-    bool delegate(InterruptStack*) d;
+    bool function(Context*) f;
+    bool delegate(Context*) d;
    
     /**
      * Call the interrupt handler
      */
-    bool call(InterruptStack* s)
+    bool call(Context* s)
     {
         assert(set, "Attempted to call null InterruptHandler");
        
@@ -58,7 +59,7 @@ struct InterruptScope
     /**
  	 * Set a function as an interrupt handler
  	 */
- 	void setHandler(ulong interrupt, bool function(InterruptStack*) handler)
+ 	void setHandler(ulong interrupt, bool function(Context*) handler)
  	{
  	    if(handler !is null)
  	    {
@@ -75,7 +76,7 @@ struct InterruptScope
  	/**
  	 * Set a delegate as an interrupt handler
  	 */
- 	void setHandler(ulong interrupt, bool delegate(InterruptStack*) handler)
+ 	void setHandler(ulong interrupt, bool delegate(Context*) handler)
  	{
  	    if(handler !is null)
  	    {
@@ -90,7 +91,7 @@ struct InterruptScope
  	}
 }
 
-extern(C) void _common_interrupt(ulong interrupt, InterruptStack* stack)
+extern(C) void _common_interrupt(ulong interrupt, Context* stack)
 {
     if(localscope.handlers[interrupt].set)
     {
@@ -105,17 +106,18 @@ extern(C) void _common_interrupt(ulong interrupt, InterruptStack* stack)
         
         writefln("Interrupt %u", interrupt);
         writefln("  error: %#X", stack.error);
-        writefln("  %%rip: %016#X", stack.rip);
+        writefln("  %%rip: %p", stack.rip);
         writefln("  %%cs: %#X", stack.cs);
         writefln("  %%ss: %#X", stack.ss);
-        writefln("  %%rsp: %016#X", stack.rsp);
-        writefln("  %%rbp: %016#X", stack.rbp);
-        writefln("  %%rax: %016#X", stack.rax);
-        writefln("  %%rbx: %016#X", stack.rbx);
-        writefln("  %%rcx: %016#X", stack.rcx);
-        writefln("  %%rdx: %016#X", stack.rdx);
-        writefln("  %%rdi: %016#X", stack.rdi);
-        writefln("  %%rsi: %016#X", stack.rsi);
+        writefln("  %%rsp: %p", stack.rsp);
+        writefln("  %%rbp: %p", stack.rbp);
+        writefln("  %%rax: %p", stack.rax);
+        writefln("  %%rbx: %p", stack.rbx);
+        writefln("  %%rcx: %p", stack.rcx);
+        writefln("  %%rdx: %p", stack.rdx);
+        writefln("  %%rdi: %p", stack.rdi);
+        writefln("  %%rsi: %p", stack.rsi);
+        writefln("  %%rflags: %p", stack.rflags);
         
         version(unwind)
         {

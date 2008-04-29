@@ -1,0 +1,10 @@
+# Grab the build environment
+Import('env')
+
+util = env.StaticLibrary('util', SConscript('util/SConscript', exports='env'))
+
+triton = env.StaticLibrary('triton', SConscript('triton/SConscript', exports='env'))
+
+lib = {'util' : util, 'triton' : triton}
+
+Return('lib')

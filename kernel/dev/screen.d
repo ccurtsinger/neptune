@@ -12,12 +12,18 @@ module kernel.dev.screen;
 
 import std.mem;
 import std.port;
+import std.stdio;
 
-struct Screen
+class Screen : Output
 {
-    private byte[80*25*2] mem;
+    private byte* mem;
     private size_t cursor_x = 0;
     private size_t cursor_y = 0;
+    
+    public this(ulong screen_address)
+    {
+        mem = cast(byte*)screen_address;
+    }
     
     public void putc(char c)
     {
@@ -27,7 +33,7 @@ struct Screen
             
             if(cursor_y >= 24)
             {
-                memcpy(mem.ptr, mem.ptr + 80 * 2, 2 * 80 * 25);
+                memcpy(mem, mem + 80 * 2, 2 * 80 * 25);
             }
             else
             {
@@ -74,7 +80,7 @@ struct Screen
             
             if(cursor_y >= 24)
             {
-                memcpy(mem.ptr, mem.ptr + 80 * 2, 2 * 80 * 25);
+                memcpy(mem, mem + 80 * 2, 2 * 80 * 25);
             }
             else
             {
@@ -92,7 +98,7 @@ struct Screen
         u = u<<8;
 
         // Clear one line beyond the screen, so we can just copy it up to get a clean line
-        memsets(mem.ptr, u + ' ', 2 * 80 * (25 + 1));
+        memsets(mem, u + ' ', 2 * 80 * (25 + 1));
 
         cursor_x = 0;
         cursor_y = 0;

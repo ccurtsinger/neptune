@@ -10,27 +10,35 @@
 
 module kernel.task.process;
 
-import arch.x86_64.arch;
-import arch.x86_64.paging;
+import std.context;
+import std.activation;
 
-import spec.elf64;
+import util.arch.arch;
+import util.arch.paging;
+import util.spec.elf64;
 
 import kernel.core.env;
 
-import kernel.task.scheduler;
-import kernel.task.thread;
+import kernel.task.procallocator;
 import kernel.mem.watermark;
 
 class Process
 {
+    size_t id;
     PageTable* pagetable;
     WatermarkAllocator heap;
-    Thread[] threads;
     
-    public this(Elf64Header* elf)
+    Activation* sa;
+    
+    ulong entry;
+    
+    public this(size_t id, Elf64Header* elf)
     {
-        pagetable = cast(PageTable*)ptov(_d_palloc());
+        this.id = id;
+        sa = null;
         
+        pagetable = cast(PageTable*)ptov(_d_palloc());
+
         pagetable.table[128..512] = cpu.pagetable.table[128..512];
         
         for(size_t i=0; i<128; i++)
@@ -39,21 +47,40 @@ class Process
         }
         
         heap.init(pagetable, 0x10000000);
-        
-        ulong threadStack = cast(ulong)heap.get(4*FRAME_SIZE) + 4*FRAME_SIZE - 2*ulong.sizeof;
-        ulong kernelStack = cast(ulong)heap.get(4*FRAME_SIZE) + 4*FRAME_SIZE - 2*ulong.sizeof;
-        
-        threads ~= new Thread(this, elf.entry, 0x18 | 3, 0x20 | 3, threadStack, kernelStack);
-        
+
         elf.load(pagetable, true);
+        
+        entry = elf.entry;
+        
+        sa = procalloc.getActivation();
+        
+        procalloc.request(this);
     }
     
-    public void start()
+    public void upcall(Processor p, Context* dest)
     {
-        foreach(t; threads)
-        {
-            if(!t.active)
-                scheduler.addThread(t);
-        }
+        assert(sa !is null, "Attempted to upcall to process on null activation");
+        
+        sa.processor_id = p.id;
+        
+        Context context;
+        context.rip = entry;
+        context.rbp = cast(ulong)heap.allocate(2*FRAME_SIZE) + 2*FRAME_SIZE - 2 * ulong.sizeof;
+        context.rsp = context.rbp - Activation.sizeof;
+        context.rdi = context.rsp;
+        context.rsi = cast(ulong)&test_syscall;
+        context.rflags = 0x000000000000202;
+        context.cs = 0x18 | 3;
+        context.ss = 0x20 | 3;
+        
+        cpu.pagetable = pagetable;
+        cpu.loadPageDir();
+        
+        *(cast(Activation*)context.rsp) = *sa;
+        
+        p.loadContext(sa.activation_id, dest, &context, this);
+        
+        delete sa;
+        sa = null;
     }
 }

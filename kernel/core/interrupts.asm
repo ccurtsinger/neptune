@@ -110,7 +110,7 @@ INTR i
 dq _isr%1
 %endmacro
 
-section .rodata
+section .data
 
 _isrtable:
 %assign i 0

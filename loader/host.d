@@ -11,7 +11,7 @@
 
 module loader.host;
 
-import arch.x86_64.arch;
+import util.arch.arch;
 import std.port;
 import std.mem;
 import std.stdio;
@@ -29,7 +29,7 @@ extern(C) void* _d_malloc(size_t size)
 	return cast(void*)nextPage;
 }
 
-extern(C) size_t _d_palloc(size_t size)
+extern(C) size_t _d_palloc()
 {
     nextPage += FRAME_SIZE;
 	return nextPage;
@@ -62,61 +62,64 @@ extern(C) void _d_abort()
     _d_error("Aborted", null, 0);
 }
 
-extern(C) void _d_putc(char c)
+class Screen : Output
 {
-    if(c == '\n')
+    public void putc(char c)
     {
-        cursor_x = 0;
-        cursor_y++;
-    }
-    else if(c == '\b')
-    {
-        if(cursor_x > 0)
+        if(c == '\n')
         {
-            cursor_x--;
+            cursor_x = 0;
+            cursor_y++;
         }
-        else
+        else if(c == '\b')
         {
-            cursor_x = 80-1;
+            if(cursor_x > 0)
+            {
+                cursor_x--;
+            }
+            else
+            {
+                cursor_x = 80-1;
+                cursor_y--;
+            }
+
+            uint pos = cursor_y*80 + cursor_x;
+            mem[2*pos] = ' ';
+        }
+        else if(c == '\t')
+        {
+            uint t = 4 - cursor_x%4;
+
+            if(t == 0)
+            {
+                t = 4;
+            }
+
+            cursor_x += t;
+        }
+        else if(c != '\0')
+        {
+            uint pos = cursor_y * 80 + cursor_x;
+            mem[2*pos] = c;
+            mem[2*pos + 1] = 0xF;
+            cursor_x++;
+        }
+
+        if(cursor_x >= 80)
+        {
+            cursor_x = 0;
+            cursor_y++;
+        }
+
+        if(cursor_y >= 25)
+        {
+            // Copy a screen up, but offset by one line.  Move the line after the console up one (we cleared it in clear_screen())
+            memcpy(mem, mem + 80 * 2, 2 * 80 * 25);
             cursor_y--;
         }
 
-        uint pos = cursor_y*80 + cursor_x;
-        mem[2*pos] = ' ';
+        updateCursor();
     }
-    else if(c == '\t')
-    {
-        uint t = 4 - cursor_x%4;
-
-        if(t == 0)
-        {
-            t = 4;
-        }
-
-        cursor_x += t;
-    }
-    else if(c != '\0')
-    {
-        uint pos = cursor_y * 80 + cursor_x;
-        mem[2*pos] = c;
-        mem[2*pos + 1] = 0xF;
-        cursor_x++;
-    }
-
-    if(cursor_x >= 80)
-    {
-        cursor_x = 0;
-        cursor_y++;
-    }
-
-    if(cursor_y >= 25)
-    {
-        // Copy a screen up, but offset by one line.  Move the line after the console up one (we cleared it in clear_screen())
-        memcpy(mem, mem + 80 * 2, 2 * 80 * 25);
-        cursor_y--;
-    }
-
-    updateCursor();
 }
 
 

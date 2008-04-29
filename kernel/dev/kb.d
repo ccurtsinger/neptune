@@ -10,9 +10,8 @@
 
 module kernel.dev.kb;
 
-import std.stdio;
 import std.port;
-import std.queue;
+import std.context;
 
 import kernel.core.env;
 
@@ -58,137 +57,209 @@ struct Keyboard
 	private bool caps;
 	
 	/// Array of Key decoders
-	private Key[256] keymap;
-	
-	private Queue!(char) queue;
+	private Key[] keymap = [Key(),
+                            Key(), //escape
+                            Key('1', '!'),
+                            Key('2', '@'),
+                            Key('3', '#'),
+                            Key('4', '$'),
+                            Key('5', '%'),
+                            Key('6', '^'),
+                            Key('7', '&'),
+                            Key('8', '*'),
+                            Key('9', '('),
+                            Key('0', ')'),
+                            Key('-', '_'),
+                            Key('=', '+'),
+                            Key('\b', '\b'),
+                            Key('\t', '\t'),
+                            Key('q', 'Q'),
+                            Key('w', 'W'),
+                            Key('e', 'E'),
+                            Key('r', 'R'),
+                            Key('t', 'T'),
+                            Key('y', 'Y'),
+                            Key('u', 'U'),
+                            Key('i', 'I'),
+                            Key('o', 'O'),
+                            Key('p', 'P'),
+                            Key('[', '{'),
+                            Key(']', '}'),
+                            Key('\n', '\n'),
+                            Key(), //control
+                            Key('a', 'A'),
+                            Key('s', 'S'),
+                            Key('d', 'D'),
+                            Key('f', 'F'),
+                            Key('g', 'G'),
+                            Key('h', 'H'),
+                            Key('j', 'J'),
+                            Key('k', 'K'),
+                            Key('l', 'L'),
+                            Key(';', ':'),
+                            Key('\'', '"'),
+                            Key('`', '~'),
+                            Key('\0', '\0', true), // left shift down
+                            Key('\\', '|'),
+                            Key('z', 'Z'),
+                            Key('x', 'X'),
+                            Key('c', 'C'),
+                            Key('v', 'V'),
+                            Key('b', 'B'),
+                            Key('n', 'N'),
+                            Key('m', 'M'),
+                            Key(',', '<'),
+                            Key('.', '>'),
+                            Key('/', '?'),
+                            Key('\0', '\0', true), // right shift down
+                            Key(), //print screen
+                            Key(), //alt
+                            Key(' ', ' '),
+                            Key('\0', '\0', true), // caps lock
+                            Key(), //F1
+                            Key(), //F2
+                            Key(), //F3
+                            Key(), //F4
+                            Key(), //F5
+                            Key(), //F6
+                            Key(), //F7
+                            Key(), //F8
+                            Key(), //F9
+                            Key(), //F10
+                            Key(), //numlock
+                            Key(),
+                            Key(), //home
+                            Key(), //up
+                            Key(), //page up
+                            Key(),
+                            Key(), //left
+                            Key(),
+                            Key(), //right
+                            Key(),
+                            Key(), //end
+                            Key(), //down
+                            Key(), //page down
+                            Key(), //insert
+                            Key(), //delete
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(), //F11
+                            Key(), //F12
+                            Key(),
+                            Key(),
+                            Key(), //windows
+                            Key(),
+                            Key(), //right click key
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(), //unknown (99)
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key(),
+                            Key('\0', '\0', true) ];
+                            
+	private char[] queue;
     
     public void init(ubyte interrupt)
     {
         caps = false;
-
-		for(int i=0; i<256; i++)
-		{
-			keymap[i] = Key();
-		}
-
-		// 1 is escape
-		keymap[2]  = Key('1', '!');
-		keymap[3]  = Key('2', '@');
-		keymap[4]  = Key('3', '#');
-		keymap[5]  = Key('4', '$');
-		keymap[6]  = Key('5', '%');
-		keymap[7]  = Key('6', '^');
-		keymap[8]  = Key('7', '&');
-		keymap[9]  = Key('8', '*');
-		keymap[10] = Key('9', '(');
-		keymap[11] = Key('0', ')');
-		keymap[12] = Key('-', '_');
-		keymap[13] = Key('=', '+');
-		keymap[14] = Key('\b', '\b');
-		keymap[15] = Key('\t', '\t');
-		keymap[16] = Key('q', 'Q');
-		keymap[17] = Key('w', 'W');
-		keymap[18] = Key('e', 'E');
-		keymap[19] = Key('r', 'R');
-		keymap[20] = Key('t', 'T');
-		keymap[21] = Key('y', 'Y');
-		keymap[22] = Key('u', 'U');
-		keymap[23] = Key('i', 'I');
-		keymap[24] = Key('o', 'O');
-		keymap[25] = Key('p', 'P');
-		keymap[26] = Key('[', '{');
-		keymap[27] = Key(']', '}');
-		keymap[28] = Key('\n', '\n');
-		// 29 is ctrl
-		keymap[30] = Key('a', 'A');
-		keymap[31] = Key('s', 'S');
-		keymap[32] = Key('d', 'D');
-		keymap[33] = Key('f', 'F');
-		keymap[34] = Key('g', 'G');
-		keymap[35] = Key('h', 'H');
-		keymap[36] = Key('j', 'J');
-		keymap[37] = Key('k', 'K');
-		keymap[38] = Key('l', 'L');
-		keymap[39] = Key(';', ':');
-        keymap[40] = Key('\'', '"');
-		keymap[41] = Key('`', '~');
-		// Left shift down
-		keymap[42] = Key('\0', '\0', true);
-
-		keymap[44] = Key('\\', '|');
-		keymap[44] = Key('z', 'Z');
-		keymap[45] = Key('x', 'X');
-		keymap[46] = Key('c', 'C');
-		keymap[47] = Key('v', 'V');
-		keymap[48] = Key('b', 'B');
-		keymap[49] = Key('n', 'N');
-		keymap[50] = Key('m', 'M');
-		keymap[51] = Key(',', '<');
-		keymap[52] = Key('.', '>');
-		keymap[53] = Key('/', '?');
-		
-		// Right shift down
-        keymap[54] = Key('\0', '\0', true);
-        
-		// 55 is print screen
-		// 56 is alt
-		keymap[57] = Key(' ', ' ');
-
-		// Caps Lock
-		keymap[58] = Key('\0', '\0', true);
-		// 59 is F1
-		// 60 is F2
-		// 61 is F3
-		// 62 is F4
-		// 63 is F5
-		// 64 is F6
-		// 65 is F7
-		// 66 is F8
-		// 67 is F9
-		// 68 is F10
-		// 69 is numlock
-		// 71 is home
-		// 72 is up
-		// 73 is pg up
-
-		// 75 is left
-		// 77 is right
-		// 79 is end
-		// 80 is down
-		// 81 is pg down
-		// 82 is insert
-		// 83 is del
-
-		// 87 is F11
-		// 88 is F12
-
-		// 91 is windows key
-		// 93 is right-click menu
-
-		keymap[170] = Key('\0', '\0', true);
-		
-		queue = new Queue!(char);
         
         localscope.setHandler(interrupt, &handler);
     }
     
     public char getc()
     {
-        volatile while(queue.size() == 0)
+        volatile while(queue.length == 0)
         {
             cpu.halt();
         }
         
-        char c = queue.get();
+        char c = queue[0];
+        queue[0..length-1] = queue[1..length];
+        queue.length = queue.length - 1;
         
         return c;
     }
     
-    public bool handler(InterruptStack*)
+    public bool handler(Context*)
     {
         ubyte s = inp(0x60);
 
-        Key k = keymap[s];
+        Key k = Key();
+
+        if(s < keymap.length)
+            k = keymap[s];
         
         char c = '\0';
 
@@ -208,7 +279,7 @@ struct Keyboard
         
         if(c != '\0')
         {
-            queue.add(c);
+            queue ~= c;
         }
 
         outp(0x20, 0x20);

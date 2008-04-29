@@ -175,7 +175,7 @@ struct TreeAllocator
             char *addr = cast(char*)(cur_block);
             size_t size = cur_block.size;
 
-            writefln("%016#X, %s, %06#X, %016#X", cast(ulong)addr, free, cast(ulong)size, cast(ulong)cur_block.previous);
+            writefln("%p, %s, %06#X, %p", cast(ulong)addr, free, cast(ulong)size, cast(ulong)cur_block.previous);
 
             cur_block = cur_block.next;
         }

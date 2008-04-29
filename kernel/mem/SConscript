@@ -2,7 +2,7 @@
 Import('env')
 
 obj_list  = [env.gdc('physical.o', 'physical.d')]
-obj_list += [env.gdc('tree.o', 'tree.d')]
+#obj_list += [env.gdc('tree.o', 'tree.d')]
 obj_list += [env.gdc('watermark.o', 'watermark.d')]
 
 Return('obj_list')

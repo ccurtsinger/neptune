@@ -2,8 +2,6 @@ BITS 64
 
 global _loader           ; making entry point visible to linker
 
-global _usermode, _usermode2
-
 extern _startup;, _exit
 extern start_ctors, end_ctors
 extern _Dmodule_ref
@@ -41,8 +39,6 @@ _loader:
 	; Jump to D code
     call _startup
     
-    ;call _exit
-    
     jmp $
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -53,6 +49,6 @@ _loader_data:
 	dq 0
 
 section .bss
-    ; Reserve a 16K kernel stack
-    resb 0x4000
+    ; Reserve an 8K kernel stack
+    resb 0x2000
     stack:

@@ -10,7 +10,7 @@
 
 module kernel.mem.physical;
 
-import arch.x86_64.arch;
+import util.arch.arch;
 
 import std.bit;
 import std.stdio;

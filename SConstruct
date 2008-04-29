@@ -18,11 +18,11 @@ obj = Builder(action = '')
 link = Linker()
 partial_link = PartialLinker()
 
-def setupEnv(target, **kw_args):
+def setupEnv(target, version, **kw_args):
     """ Creates a custom environment for the target """
 
     # Start with a standard cross compile environment
-    env = Environment(  ENV = {'PATH': ['/usr/cross/%s/bin' % (target), '/usr/bin']})
+    env = Environment(  ENV = {'PATH': ['/usr/cross/%s-pc-elf/bin' % (target), '/bin', '/usr/bin', '/usr/local/bin']})
 
     # Our custom builders
     env['BUILDERS']['yasm']        = yasm
@@ -31,69 +31,75 @@ def setupEnv(target, **kw_args):
     env['BUILDERS']['Link']        = link
     env['BUILDERS']['PartialLink'] = partial_link
     env['BUILDERS']['info']        = InfoBuilder
+    
+    # Set global GDC flags
+    env['GDCFLAGS']  = ' -fversion=' + target
+    env['GDCFLAGS'] += ' -Ilib/triton'
+    env['GDCFLAGS'] += ' -Ilib'
+    env['GDCFLAGS'] += ' -mno-red-zone'
+    env['GDCFLAGS'] += ' -fno-exceptions'
+    
+    # Set target-specific YASM and GDC flags
+    if(target == 'i586'):
+        env['YASMFLAGS'] = '-f elf'
+    elif(target == 'x86_64'):
+        env['YASMFLAGS'] = '-f elf64'
+        env['GDCFLAGS'] += ' -mcmodel=kernel'
+    else:
+        print 'Invalid target: ' + target
+        raise
+    
+    # Set version-specific flags
+    if(version == 'debug'):
+        env['GDCFLAGS'] += ' -O0'
+        env['GDCFLAGS'] += ' -funittest'
+        env['GDCFLAGS'] += ' -fversion=unwind'
+    elif(version == 'release'):
+        env['GDCFLAGS'] += ' -Os'
+        env['GDCFLAGS'] += ' -frelease'
+    else:
+        print 'Invalid version: ' + version
+        raise
+    
+    # Set global linker flags
+    env['LINKFLAGS']  = ' -nostdlib'
+    env['LINKFLAGS'] += ' -nostartfiles'
+    env['LINKFLAGS'] += ' -nodefaultlibs'
 
-    # Set to the maximum warning level
-    env['CXXFLAGS'] += ['-Wall']
-
+    # push any additional arguments into the environment
     for key in kw_args:
         env[key] = kw_args[key]
 
     return env
 
-i586_env = setupEnv('i586-pc-elf',  YASMFLAGS = '-f elf',
-
-                                    GDCFLAGS =  ' -fversion=i586' +
-                                                #' -fversion=unwind' +
-                                                #' -fversion=dynamic_array' +
-                                                #' -fversion=associative_array' +
-                                                #' -fversion=object_cast' +
-                                                ' -funittest' +
-                                                #' -frelease' +
-                                                ' -Itriton' +
-                                                ' -mno-red-zone' +
-                                                ' -fno-exceptions' +
-                                                ' -O0',
-
-                                    LINKFLAGS = ' -nostdlib')
+# Set up the i586 environment
+i586_env = setupEnv('i586', 'release')
 
 # Set up the x86_64 environment
-x86_64_env = setupEnv('x86_64-pc-elf',  YASMFLAGS = '-f elf64',
+x86_64_env = setupEnv('x86_64', 'release')
 
-                                        GDCFLAGS =  ' -fversion=x86_64' +
-                                                    #' -fversion=unwind' +
-                                                    ' -fversion=dynamic_array' +
-                                                    #' -fversion=associative_array' +
-                                                    #' -fversion=object_cast' +
-                                                    ' -funittest' +
-                                                    #' -frelease' +
-                                                    ' -Itriton' +
-                                                    ' -mno-red-zone' +
-                                                    ' -fno-exceptions' +
-                                                    ' -O0' +
-                                                    ' -mcmodel=kernel',
+# Build libraries for x86_64-pc-elf
+lib64 = SConscript('lib/SConscript', exports={'env': x86_64_env}, build_dir='build/x86_64/lib', duplicate=0)
 
-                                        LINKFLAGS = ' -nostdlib')
+# Build libraries for i586-pc-elf
+lib32 = SConscript('lib/SConscript', exports={'env': i586_env}, build_dir='build/i586/lib', duplicate=0)
 
 # Build the Loader
-loader = SConscript('loader/SConscript', exports={'env': i586_env}, build_dir='build/i586/loader', duplicate=0)
-
-# Build Triton for x86_64-pc-elf
-triton = SConscript('triton/SConscript', exports={'env': x86_64_env}, build_dir='build/x86_64/triton', duplicate=0)
-
-# Build Triton for i586-pc-elf
-triton32 = SConscript('triton/SConscript', exports={'env': i586_env}, build_dir='build/i586/triton', duplicate=0)
+loader = SConscript('loader/SConscript', exports={'env': i586_env, 'lib' : lib32}, build_dir='build/i586/loader', duplicate=0)
 
 # Build the Kernel
-kernel = AlwaysBuild(SConscript('kernel/SConscript', exports={'env': x86_64_env}, build_dir='build/x86_64/kernel', duplicate=0))
+kernel = SConscript('kernel/SConscript', exports={'env': x86_64_env, 'lib' : lib64}, build_dir='build/x86_64/kernel', duplicate=0)
+
+# Build servers
+servers = SConscript('servers/SConscript', exports={'env': x86_64_env, 'lib' : lib64}, build_dir='build/x86_64/servers', duplicate=0)
 
 # Set library and linker script dependencies
-Depends(kernel, triton)
+Depends(kernel, lib64['triton'])
 Depends(kernel, 'kernel/link/linker.ld')
-Depends(loader, triton32)
+Depends(loader, lib32['triton'])
 
 Depends('neptune.iso', kernel)
-
-servers = SConscript('servers/SConscript', exports={'env': x86_64_env}, build_dir='build/x86_64/servers', duplicate=0)
+Depends('neptune.iso', servers)
 
 # Build the CD
 cd_env = Environment(BUILDERS={'CD': CDBuilder})

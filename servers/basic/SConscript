@@ -1,8 +1,8 @@
 # Grab the build environment
-Import('env')
+Import('env', 'triton')
 
-obj_list  = [env.Object('basic.o', 'basic.c')]
+obj_list  = [env.gdc('basic.o', 'basic.d')]
 
-server = env.Link('basic', obj_list)
+server = env.Link('basic', obj_list + triton)
 
 Return('server')

@@ -10,23 +10,31 @@
 
 module kernel.mem.kernel;
 
-import arch.x86_64.arch;
-import arch.x86_64.paging;
+import util.arch.arch;
+import util.arch.paging;
 
 struct WatermarkAllocator
 {
+    ulong start;
     private PageTable* pagetable;
     private void* watermark;
     private void* limit;
  
     public void init(PageTable* pagetable, ulong watermark)
     {
+        start = watermark;
+        
         this.pagetable = pagetable;
         this.watermark = cast(void*)watermark;
         this.limit = this.watermark;
     }
     
-    public void* get(size_t size)
+    public ulong end()
+    {
+        return cast(ulong)limit;
+    }
+    
+    public void* allocate(size_t size)
     {
         // Word-align all allocations
         size_t offset = size % size_t.sizeof;
@@ -46,5 +54,10 @@ struct WatermarkAllocator
         void* p = watermark;
         watermark += size;
         return p;
+    }
+    
+    public void free(void* p)
+    {
+        
     }
 }

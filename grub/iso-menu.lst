@@ -1,0 +1,8 @@
+default saved
+timeout 1
+
+title  neptune2
+root   (cd)
+kernel /boot/kernel
+boot
+savedefault

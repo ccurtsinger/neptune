@@ -1,0 +1,9 @@
+# Grab the build environment
+Import('env')
+
+obj_list  = [env.gdc('invariant.o', 'invariant.d')]
+obj_list += [env.gdc('object.o',    'object.d')]
+
+obj_list += SConscript('std/SConscript', exports='env')
+
+Return('obj_list')

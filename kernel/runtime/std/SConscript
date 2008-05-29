@@ -1,0 +1,7 @@
+# Grab the build environment
+Import('env')
+
+obj_list  = [env.gdc('bit.o',       'bit.d')]
+obj_list += [env.gdc('bitarray.o',  'bitarray.d')]
+
+Return('obj_list')

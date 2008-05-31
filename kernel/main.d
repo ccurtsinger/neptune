@@ -11,6 +11,7 @@ extern(C) void _main()
     while(true)
     {
         b[0]++;
+        asm{"int $80";}
     }
 }
 

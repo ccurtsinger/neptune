@@ -12,6 +12,7 @@ template pusha()
         \"push %%ecx\";
         \"push %%ebx\";
         \"push %%eax\";
+        \"pushf\";
     }";
 }
 
@@ -20,6 +21,7 @@ template popa()
     const char[] popa = "
     asm
     {
+        \"popf\";
         \"pop %%eax\";
         \"pop %%ebx\";
         \"pop %%ecx\";

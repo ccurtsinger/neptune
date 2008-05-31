@@ -5,8 +5,9 @@ import kernel.arch.i586.registers;
 import kernel.arch.i586.structures;
 import kernel.arch.i586.interrupts;
 import kernel.arch.i586.pic;
+import kernel.arch.i586.screen;
 
-public import kernel.arch.i586.screen;
+import std.stdio;
 
 version(arch_i586)
 {
@@ -129,67 +130,67 @@ extern(C) void common_interrupt(int interrupt, int ec)
     switch(interrupt)
     {
         case 0:
-            println("divide by zero exception");
+            writeln("divide by zero exception");
             break;
         case 1:
-            println("debug exception");
+            writeln("debug exception");
             break;
         case 2:
-            println("non-maskable interrupt");
+            writeln("non-maskable interrupt");
             break;
         case 3:
-            println("breakpoint exception");
+            writeln("breakpoint exception");
             break;
         case 4:
-            println("overflow exception");
+            writeln("overflow exception");
             break;
         case 5:
-            println("bound-range exception");
+            writeln("bound-range exception");
             break;
         case 6:
-            println("invalid opcode");
+            writeln("invalid opcode");
             break;
         case 7:
-            println("device not available");
+            writeln("device not available");
             break;
         case 8:
-            println("double fault");
+            writeln("double fault");
             break;
         case 9:
-            println("coprocessor segment overrun");
+            writeln("coprocessor segment overrun");
             break;
         case 10:
-            println("invalid TSS");
+            writeln("invalid TSS");
             break;
         case 11:
-            println("segment not present");
+            writeln("segment not present");
             break;
         case 12:
-            println("stack exception");
+            writeln("stack exception");
             break;
         case 13:
-            println("general protection fault");
+            writeln("general protection fault");
             break;
         case 14:
-            println("page fault");
+            writeln("page fault");
             break;
         case 15:
-            println("reserved exception");
+            writeln("reserved exception");
             break;
         case 16:
-            println("x87 floating point exception");
+            writeln("x87 floating point exception");
             break;
         case 17:
-            println("alignment check exception");
+            writeln("alignment check exception");
             break;
         case 18:
-            println("machine check exception");
+            writeln("machine check exception");
             break;
         case 19:
-            println("SIMD floating point exception");
+            writeln("SIMD floating point exception");
             break;
         case 30:
-            println("security exception");
+            writeln("security exception");
             break;
     }
     

@@ -4,17 +4,11 @@ import kernel.arch.native;
 
 import std.port;
 import std.mem;
+import std.stdio;
 
 extern(C) void _main()
 {
     startup();
-    
-    println("Hello World!");
-    
-    asm
-    {
-        "int $13";
-    }
     
     for(;;){}
 }
@@ -31,9 +25,7 @@ extern (C) void _d_array_bounds(char[] file, uint line)
 
 extern(C) void _d_assert_msg(char[] msg, char[] file, uint line)
 {
-    println(msg);
-    print("   ");
-    println(file);
+    writefln("%s\n    %s (%u)", msg, file, line);
     
     for(;;){}
 }
@@ -41,4 +33,9 @@ extern(C) void _d_assert_msg(char[] msg, char[] file, uint line)
 extern(C) void _d_assert(char[] file, uint line)
 {
     _d_assert_msg("assert failed", file, line);
+}
+
+extern (C) void _d_switch_error(char[] file, uint line)
+{
+    _d_assert_msg("switch error", file, line);
 }

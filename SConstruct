@@ -74,7 +74,7 @@ def setupEnv(target, version, **kw_args):
     return env
 
 # Set up the i586 environment
-env = setupEnv('i586', 'release')
+env = setupEnv('i586', 'debug')
 
 # Build the Kernel
 kernel = SConscript('kernel/SConscript', exports='env', build_dir='build/kernel', duplicate=0)

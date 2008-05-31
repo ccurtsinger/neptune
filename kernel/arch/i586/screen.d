@@ -9,20 +9,6 @@ byte* screen_mem;
 size_t cursor_x;
 size_t cursor_y;
 
-void print(char[] str)
-{
-    foreach(c; str)
-    {
-        putc(c);
-    }
-}
-
-void println(char[] str)
-{
-    print(str);
-    putc('\n');
-}
-
 extern(C) void putc(char c)
 {
     if(c == '\n')

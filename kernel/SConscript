@@ -1,10 +1,10 @@
 # Grab the build environment
 Import('env')
 
-obj_list  = [env.yasm('loader.o', 'loader.asm')]
-obj_list += [env.gdc('main.o', 'main.d')]
+# Build the arch directory first so the multiboot header ends up at the top
+obj_list  = SConscript('arch/SConscript', exports='env')
 
-obj_list += SConscript('arch/SConscript', exports='env')
+obj_list += [env.gdc('main.o', 'main.d')]
 obj_list += SConscript('runtime/SConscript', exports='env')
 
 kernel = env.Link('kernel', obj_list, LINKSCRIPTS = ['kernel/link/linker.ld'])

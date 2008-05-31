@@ -1,5 +1,7 @@
 module kernel.arch.i586.interrupts;
 
+version(arch_i586):
+
 template isr_ref(int n = 0)
 {
     static if(n < 256)

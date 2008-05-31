@@ -2,37 +2,40 @@ module kernel.main;
 
 import kernel.arch.native;
 
+import std.port;
+import std.mem;
+
 extern(C) void _main()
 {
     startup();
-
-    byte* b = cast(byte*)0xD00B8000;
-
-    while(true)
+    
+    println("Hello World!");
+    
+    asm
     {
-        b[0]++;
-        asm{"int $80";}
+        "int $13";
     }
+    
+    for(;;){}
 }
 
 extern(C) void abort()
 {
-    for(;;){}
+    assert(false, "abort");
 }
 
 extern (C) void _d_array_bounds(char[] file, uint line)
 {
-
+    _d_assert_msg("array bounds exceeded", file, line);
 }
 
 extern(C) void _d_assert_msg(char[] msg, char[] file, uint line)
 {
-    byte* b = cast(byte*)0xD00B8000;
-
-    while(true)
-    {
-        b[2]++;
-    }
+    println(msg);
+    print("   ");
+    println(file);
+    
+    for(;;){}
 }
 
 extern(C) void _d_assert(char[] file, uint line)

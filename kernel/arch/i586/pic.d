@@ -1,5 +1,7 @@
 module kernel.arch.i586.pic;
 
+version(arch_i586):
+
 import std.port;
 
 /// Master PIC port

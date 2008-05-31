@@ -24,6 +24,9 @@ def setupEnv(target, version, **kw_args):
     # Start with a standard cross compile environment
     env = Environment(  ENV = {'PATH': ['/usr/cross/%s-pc-elf/bin' % (target), '/bin', '/usr/bin', '/usr/local/bin']})
 
+    env['target'] = target
+    env['version'] = version
+
     # Our custom builders
     env['BUILDERS']['yasm']        = yasm
     env['BUILDERS']['gdc']         = gdc
@@ -71,7 +74,7 @@ def setupEnv(target, version, **kw_args):
     return env
 
 # Set up the i586 environment
-env = setupEnv('i586', 'debug')
+env = setupEnv('i586', 'release')
 
 # Build the Kernel
 kernel = SConscript('kernel/SConscript', exports='env', build_dir='build/kernel', duplicate=0)

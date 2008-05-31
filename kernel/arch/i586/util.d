@@ -1,5 +1,7 @@
 module kernel.arch.i586.util;
 
+version(arch_i586):
+
 template pusha()
 {
     const char[] pusha = "
@@ -30,14 +32,4 @@ template popa()
         \"pop %%edi\";
         \"pop %%ebp\";
     }";
-}
-
-void cli()
-{
-    asm{"cli";}
-}
-
-void sti()
-{
-    asm{"sti";}
 }

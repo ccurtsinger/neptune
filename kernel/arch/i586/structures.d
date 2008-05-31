@@ -2,9 +2,6 @@ module kernel.arch.i586.structures;
 
 import std.bitarray;
 
-Descriptor[16] gdt;
-Descriptor[256] idt;
-
 template property(char[] name, char[] type, char[] reference, char[] get = "", char[] set = "")
 {
     const char[] property = type ~ " " ~ name ~ "()
@@ -25,15 +22,17 @@ template property(char[] name, char[] type, char[] reference, char[] get = "", c
  */
 struct DTPtr
 {
-    align(1):
-    ushort limit;
-    ulong address;
+    union
+    {
+        byte[6] data;
+        BitArray bits;
+    }
     
-    public static DTPtr opCall(ushort limit, ulong address)
+    public static DTPtr opCall(ushort limit, uint address)
     {
         DTPtr t;
-        t.limit = limit;
-        t.address = address;
+        t.bits[0..16] = limit;
+        t.bits[16..48] = address;
         return t;
     }
 }
@@ -175,10 +174,12 @@ struct PageTable
     }
 }
 
-void lgdt()
-{
-    DTPtr gdtp = DTPtr(gdt.length * 8 - 1, cast(size_t)gdt.ptr);
+version(arch_i586):
 
+void lgdt(Descriptor[] gdt)
+{
+    DTPtr gdtp = DTPtr(gdt.length * 8 - 1, cast(uint)gdt.ptr);
+    
     asm
     {
         "lgdt (%[gdtp])" : : [gdtp] "b" &gdtp;
@@ -195,7 +196,7 @@ void lgdt()
     }
 }
 
-void lidt()
+void lidt(Descriptor[] idt)
 {
     DTPtr idtp = DTPtr(idt.length * 8 - 1, cast(ulong)idt.ptr);
 

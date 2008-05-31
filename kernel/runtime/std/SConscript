@@ -3,6 +3,7 @@ Import('env')
 
 obj_list  = [env.gdc('bit.o',       'bit.d')]
 obj_list += [env.gdc('bitarray.o',  'bitarray.d')]
+obj_list += [env.gdc('mem.o',       'mem.d')]
 obj_list += [env.gdc('port.o',      'port.d')]
 
 Return('obj_list')

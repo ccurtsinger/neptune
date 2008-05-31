@@ -1,5 +1,7 @@
 module kernel.arch.i586.registers;
 
+version(arch_i586):
+
 template registerProperty(char[] name)
 {
     const char[] registerProperty = "static size_t " ~ name ~ "() {

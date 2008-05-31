@@ -17,7 +17,7 @@ const ubyte ICW4 = 0x01;
 /// PIC interrupt acknowledgement data
 const ubyte PIC_EOI = 0x20;
 
-void remapPic(ubyte base, ushort mask)
+void remap_pic(ubyte base, ushort mask)
 {
 	//Sent ICW1
 	outp(PIC1, ICW1);

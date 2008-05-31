@@ -123,76 +123,67 @@ version(arch_i586)
     {
         asm{"sti";}
     }
+    
+    struct Context
+    {
+        uint eax;
+        uint ebx;
+        uint ecx;
+        uint edx;
+        uint esi;
+        uint edi;
+        uint ebp;
+        uint eip;
+        uint cs;
+        uint flags;
+        uint esp;
+        uint ss;
+    }
 }
 
-extern(C) void common_interrupt(int interrupt, int ec)
+const char[][] named_exceptions = [ "divide by zero exception",
+                                    "debug exception",
+                                    "non-maskable interrupt",
+                                    "breakpoint exception",
+                                    "overflow exception",
+                                    "bound-range exception",
+                                    "invalid opcode",
+                                    "device not available",
+                                    "double fault",
+                                    "coprocessor segment overrun",
+                                    "invalid TSS",
+                                    "segment not present",
+                                    "stack exception",
+                                    "general protection fault",
+                                    "page fault",
+                                    "reserved exception",
+                                    "x87 floating point exception",
+                                    "alignment check exception",
+                                    "machine check exception",
+                                    "SIMD floating point exception"];
+
+extern(C) void common_interrupt(int interrupt, int error, Context* context)
 {
-    switch(interrupt)
+    if(interrupt < named_exceptions.length)
     {
-        case 0:
-            writeln("divide by zero exception");
-            break;
-        case 1:
-            writeln("debug exception");
-            break;
-        case 2:
-            writeln("non-maskable interrupt");
-            break;
-        case 3:
-            writeln("breakpoint exception");
-            break;
-        case 4:
-            writeln("overflow exception");
-            break;
-        case 5:
-            writeln("bound-range exception");
-            break;
-        case 6:
-            writeln("invalid opcode");
-            break;
-        case 7:
-            writeln("device not available");
-            break;
-        case 8:
-            writeln("double fault");
-            break;
-        case 9:
-            writeln("coprocessor segment overrun");
-            break;
-        case 10:
-            writeln("invalid TSS");
-            break;
-        case 11:
-            writeln("segment not present");
-            break;
-        case 12:
-            writeln("stack exception");
-            break;
-        case 13:
-            writeln("general protection fault");
-            break;
-        case 14:
-            writeln("page fault");
-            break;
-        case 15:
-            writeln("reserved exception");
-            break;
-        case 16:
-            writeln("x87 floating point exception");
-            break;
-        case 17:
-            writeln("alignment check exception");
-            break;
-        case 18:
-            writeln("machine check exception");
-            break;
-        case 19:
-            writeln("SIMD floating point exception");
-            break;
-        case 30:
-            writeln("security exception");
-            break;
+        writeln(named_exceptions[interrupt]);
     }
+    else
+    {
+        writefln("interrupt %u", interrupt);
+    }
+    
+    writefln("  error: %02#x", error);
+    writefln("  %%eip: %08#x", context.eip);
+    writefln("  %%esp: %08#x", context.esp);
+    writefln("  %%ebp: %08#x", context.ebp);
+    writefln("  %%eax: %08#x", context.eax);
+    writefln("  %%ebx: %08#x", context.ebx);
+    writefln("  %%ecx: %08#x", context.ecx);
+    writefln("  %%edx: %08#x", context.edx);
+    writefln("  %%esi: %08#x", context.esi);
+    writefln("  %%edi: %08#x", context.edi);
+    writefln("  flags: %08#x", context.flags);
     
     for(;;){}
 }

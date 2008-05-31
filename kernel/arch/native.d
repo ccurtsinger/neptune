@@ -1,3 +1,9 @@
+/**
+ * Wrapper to import the native architecture's required support code
+ *
+ * Copyright: 2008 The Neptune Project
+ */
+
 module kernel.arch.native;
 
 version(arch_i586)

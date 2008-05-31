@@ -1,3 +1,9 @@
+/**
+ * Display output support
+ *
+ * Copyright: 2008 The Neptune Project
+ */
+
 module kernel.arch.i586.screen;
 
 version(arch_i586):

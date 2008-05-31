@@ -1,3 +1,9 @@
+/**
+ * Kernel Entry Point
+ *
+ * Copyright: 2008 The Neptune Project
+ */
+
 module kernel.main;
 
 import kernel.arch.native;

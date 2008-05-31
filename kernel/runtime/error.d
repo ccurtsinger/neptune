@@ -1,3 +1,9 @@
+/**
+ * Support for compiler-generated error handling calls
+ *
+ * Copyright: 2008 The Neptune Project
+ */
+
 module error;
 
 import std.stdio;

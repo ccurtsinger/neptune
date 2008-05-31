@@ -1,14 +1,9 @@
 /**
- * Bit testing and setting operations (non-atomic)
+ * Bit testing and setting operations
+ * 
+ * Derived from copyrighted work by Walter Bright (www.digitalmars.com)
  *
- * Based on the implemented bit operations in std.intrinsic
- * written by Walter Bright.
- *
- * Authors: Walter Bright, Charlie Curtsinger
- * Date: March 1st, 2008
- * Version: 0.3
- *
- * Copyright: 2004-2008 Digital Mars, www.digitalmars.com
+ * Copyright: 2008 The Neptune Project
  */
 
 /*

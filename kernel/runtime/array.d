@@ -1,13 +1,10 @@
 /**
  * Array support functions for the D language
+ * 
+ * Derived from copyrighted work by Walter Bright (www.digitalmars.com)
+ * and Sean Kelly (www.dsource.org/projects/tango)
  *
- * Based on code in Phobos (Walter Bright) and Tango (Sean Kelly)
- *
- * Authors: Walter Bright, Sean Kelly, Charlie Curtsinger
- * Date: March 1st, 2008
- * Version: 0.3
- *
- * Copyright: 2004-2008 Digital Mars, www.digitalmars.com
+ * Copyright: 2008 The Neptune Project
  */
 
 /*

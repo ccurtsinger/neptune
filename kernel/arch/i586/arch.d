@@ -1,6 +1,11 @@
+/**
+ * i586 (x86) Architecture Support
+ *
+ * Copyright: 2008 The Neptune Project
+ */
+
 module kernel.arch.i586.arch;
 
-import kernel.arch.i586.util;
 import kernel.arch.i586.registers;
 import kernel.arch.i586.structures;
 import kernel.arch.i586.interrupts;
@@ -174,15 +179,17 @@ extern(C) void common_interrupt(int interrupt, int error, Context* context)
     }
     
     writefln("  error: %02#x", error);
-    writefln("  %%eip: %08#x", context.eip);
-    writefln("  %%esp: %08#x", context.esp);
-    writefln("  %%ebp: %08#x", context.ebp);
-    writefln("  %%eax: %08#x", context.eax);
-    writefln("  %%ebx: %08#x", context.ebx);
-    writefln("  %%ecx: %08#x", context.ecx);
-    writefln("  %%edx: %08#x", context.edx);
-    writefln("  %%esi: %08#x", context.esi);
-    writefln("  %%edi: %08#x", context.edi);
+    writefln("   %%eip: %08#x", context.eip);
+    writefln("   %%esp: %08#x", context.esp);
+    writefln("   %%ebp: %08#x", context.ebp);
+    writefln("    %%cs: %02#x", context.cs);
+    writefln("    %%ss: %02#x", context.ss);
+    writefln("   %%eax: %08#x", context.eax);
+    writefln("   %%ebx: %08#x", context.ebx);
+    writefln("   %%ecx: %08#x", context.ecx);
+    writefln("   %%edx: %08#x", context.edx);
+    writefln("   %%esi: %08#x", context.esi);
+    writefln("   %%edi: %08#x", context.edi);
     writefln("  flags: %08#x", context.flags);
     
     for(;;){}

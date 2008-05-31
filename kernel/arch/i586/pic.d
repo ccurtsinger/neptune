@@ -1,3 +1,9 @@
+/**
+ * PIC control code
+ *
+ * Copyright: 2008 The Neptune Project
+ */
+
 module kernel.arch.i586.pic;
 
 version(arch_i586):

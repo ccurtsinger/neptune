@@ -10,6 +10,5 @@ obj_list += [env.gdc('pic.o',           'pic.d')]
 obj_list += [env.gdc('registers.o',     'registers.d')]
 obj_list += [env.gdc('screen.o',        'screen.d')]
 obj_list += [env.gdc('structures.o',    'structures.d')]
-obj_list += [env.gdc('util.o',          'util.d')]
 
 Return('obj_list')

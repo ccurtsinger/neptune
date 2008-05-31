@@ -1,3 +1,9 @@
+/**
+ * Interrupt handler (ISR) generation and definition
+ *
+ * Copyright: 2008 The Neptune Project
+ */
+
 module kernel.arch.i586.interrupts;
 
 version(arch_i586):

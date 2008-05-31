@@ -1,9 +1,10 @@
 /**
- * C's <stdarg.h>
- * Authors: Hauke Duden and Walter Bright, Digital Mars, www.digitalmars.com
- * License: Public Domain
- * Macros:
- *	WIKI=Phobos/StdCStdarg
+ * C's stdarg.h
+ * 
+ * Derived from copyrighted work by Walter Bright (www.digitalmars.com),
+ * Hauke Duden, and David Friedman
+ *
+ * Copyright: 2008 The Neptune Project
  */
 
 /* This is for use with extern(C) variable argument lists. */

@@ -1,23 +1,11 @@
 /**
- * stdarg support code
+ * Variable argument support code
+ * 
+ * Derived from work by Walter Bright (www.digitalmars.com),
+ * Hauke Duden, and David Friedman
  *
- * Authors: Charlie Curtsinger
- * Date: March 1st, 2008
- * Version: 0.3
+ * Copyright: 2008 The Neptune Project
  */
-
-/*
- * Placed in public domain.
- * Written by Hauke Duden and Walter Bright
- */
-
-/* This is for use with variable argument lists with extern(D) linkage. */
-
-/* NOTE: This file has been patched from the original DMD distribution to
-   work with the GDC compiler.
-
-   Modified by David Friedman, September 2004
-*/
 
 module std.stdarg;
 

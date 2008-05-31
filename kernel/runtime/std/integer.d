@@ -1,11 +1,7 @@
 /**
- * Integer &lt;-&gt; String conversions
+ * Integer conversions
  *
- * Authors: Charlie Curtsinger
- * Date: March 1st, 2008
- * Version: 0.3
- *
- * Copyright: 2008 Charlie Curtsinger
+ * Copyright: 2008 The Neptune Project
  */
 
 module std.integer;
@@ -50,7 +46,7 @@ char[] itoa(size_t value, char[] buf, size_t base = 10)
         value -= digit;
         value /= base;
         
-        buf[i] = digit < 10 ? '0'+digit : 'A'+digit-10;
+        buf[i] = digit < 10 ? '0'+digit : 'a'+digit-10;
         i--;
     }
     

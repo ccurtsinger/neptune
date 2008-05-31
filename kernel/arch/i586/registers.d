@@ -1,3 +1,9 @@
+/**
+ * Register access functions
+ *
+ * Copyright: 2008 The Neptune Project
+ */
+
 module kernel.arch.i586.registers;
 
 version(arch_i586):

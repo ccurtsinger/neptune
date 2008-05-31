@@ -1,3 +1,9 @@
+/**
+ * Base structures for the i586 architecture (GDT, IDT, Page tables, etc...)
+ *
+ * Copyright: 2008 The Neptune Project
+ */
+
 module kernel.arch.i586.structures;
 
 import std.bitarray;

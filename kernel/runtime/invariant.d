@@ -1,15 +1,9 @@
 /**
  * Language support for invariant types
+ * 
+ * Derived from work by Walter Bright (www.digitalmars.com)
  *
- * Authors: Walter Bright, Sean Kelly, Charlie Curtsinger
- * Date: March 11th, 2008
- * Version: 0.4
- */
-
-/*
- * Placed into the Public Domain
- * written by Walter Bright
- * www.digitalmars.com
+ * Copyright: 2008 The Neptune Project
  */
 
 /**

@@ -162,40 +162,6 @@ struct Page
     mixin(property!("base", "size_t", "bits[22..32]", "<<22", ">>22"));
 }
 
-struct PageTable
-{
-    private Page[1024] pages;
-
-    Page* lookup(size_t address)
-    {
-        return &(pages[address>>22]);
-    }
-    
-    size_t reverseLookup(size_t address, bool writable = false, bool user = false)
-    {
-        size_t offset = address & ~0x400000;
-        size_t base = address - offset;
-        
-        foreach(size_t i, p; pages)
-        {
-            if(p.present() && base == p.base() && (!writable || p.writable()) && (!user || p.user()))
-            {
-                return (i<<22) | offset;
-            }
-        }
-        
-        return 0;
-    }
-
-    void clear()
-    {
-        foreach(p; pages)
-        {
-            p.clear();
-        }
-    }
-}
-
 version(arch_i586):
 
 void lgdt(Descriptor[] gdt)

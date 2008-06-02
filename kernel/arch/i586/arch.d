@@ -6,6 +6,8 @@
 
 module kernel.arch.i586.arch;
 
+version(arch_i586):
+
 import kernel.arch.i586.registers;
 import kernel.arch.i586.structures;
 import kernel.arch.i586.interrupts;
@@ -14,148 +16,225 @@ import kernel.arch.i586.screen;
 
 import std.stdio;
 
-version(arch_i586)
+const size_t FRAME_SIZE = 0x400000;
+const size_t FRAME_BITS = 22;
+const size_t HZ = 4;
+
+const size_t INT_KEYBOARD = 33;
+const size_t INT_MOUSE = 44;
+
+Descriptor[16] gdt;
+Descriptor[256] idt;
+
+PageTable* startup()
 {
-    const size_t FRAME_SIZE = 0x400000;
-    const size_t FRAME_BITS = 22;
-    const size_t HZ = 4;
+    disable_interrupts();
+
+    PageTable* pagetable = cast(PageTable*)(cr3 + 0xC0000000);
+
+    // null descriptor
+    gdt[0].clear();
+
+    // kernel code descriptor
+    gdt[1].clear();
+    gdt[1].user = true;
+    gdt[1].code = true;
+    gdt[1].present = true;
+    gdt[1].readable = true;
+    gdt[1].scaled = true;
+    gdt[1].conforming = false;
+    gdt[1].base = 0;
+    gdt[1].limit = 0xFFFFF;
+    gdt[1].dpl = 0;
+    gdt[1].pmode = true;
+
+    // kernel data descriptor
+    gdt[2].clear();
+    gdt[2].user = true;
+    gdt[2].code = false;
+    gdt[2].present = true;
+    gdt[2].writable = true;
+    gdt[2].scaled = true;
+    gdt[2].base = 0;
+    gdt[2].limit = 0xFFFFF;
+    gdt[2].dpl = 0;
+    gdt[2].pmode = true;
+
+    // user code descriptor
+    gdt[3].clear();
+    gdt[3].user = true;
+    gdt[3].code = true;
+    gdt[3].present = true;
+    gdt[3].readable = true;
+    gdt[3].scaled = true;
+    gdt[3].conforming = false;
+    gdt[3].base = 0;
+    gdt[3].limit = 0xFFFFF;
+    gdt[3].dpl = 3;
+    gdt[3].pmode = true;
+
+    // user data descriptor
+    gdt[4].clear();
+    gdt[4].user = true;
+    gdt[4].code = false;
+    gdt[4].present = true;
+    gdt[4].writable = true;
+    gdt[4].scaled = true;
+    gdt[4].base = 0;
+    gdt[4].limit = 0xFFFFF;
+    gdt[4].dpl = 3;
+    gdt[4].pmode = true;
+
+    lgdt(gdt);
+
+    // Set up the IDT
     
-    const size_t INT_KEYBOARD = 33;
-    const size_t INT_MOUSE = 44;
-
-    Descriptor[16] gdt;
-    Descriptor[256] idt;
-
-    void startup()
+    for(int i=0; i<idt.length; i++)
     {
-        disable_interrupts();
+        idt[i].clear();
+        idt[i].present = true;
+        idt[i].dpl = 0;
+        idt[i].user = false;
+        idt[i].type = 0xE;
+        idt[i].selector = 0x8;
+    }
+    
+    mixin(isr_ref!());
 
-        PageTable* pagetable = cast(PageTable*)(cr3 + 0xC0000000);
+    lidt(idt);
+    
+    remap_pic(32, 0xFFFF);
 
-        // Map 0xD0000000 to the first 4MB of memory
-        Page* p = pagetable.lookup(0xD0000000);
+    enable_interrupts();
+    
+    screen_mem = cast(byte*)pagetable.reverseLookup(cast(void*)0xB8000);
+    
+    clear_screen();
+    
+    return pagetable;
+}
 
-        p.clear();
-        p.base = 0;
-        p.writable = true;
-        p.present = true;
+size_t ptov(size_t p_addr)
+{
+    PageTable* pagetable = cast(PageTable*)(cr3 + 0xC0000000);
+    
+    size_t v = pagetable.reverseLookup(p_addr);
+    
+    assert(v != 0, "Physical page unavailable");
+    
+    return v;
+}
 
-        // null descriptor
-        gdt[0].clear();
+void disable_interrupts()
+{
+    asm{"cli";}
+}
 
-        // kernel code descriptor
-        gdt[1].clear();
-        gdt[1].user = true;
-        gdt[1].code = true;
-        gdt[1].present = true;
-        gdt[1].readable = true;
-        gdt[1].scaled = true;
-        gdt[1].conforming = false;
-        gdt[1].base = 0;
-        gdt[1].limit = 0xFFFFF;
-        gdt[1].dpl = 0;
-        gdt[1].pmode = true;
+void enable_interrupts()
+{
+    asm{"sti";}
+}
 
-        // kernel data descriptor
-        gdt[2].clear();
-        gdt[2].user = true;
-        gdt[2].code = false;
-        gdt[2].present = true;
-        gdt[2].writable = true;
-        gdt[2].scaled = true;
-        gdt[2].base = 0;
-        gdt[2].limit = 0xFFFFF;
-        gdt[2].dpl = 0;
-        gdt[2].pmode = true;
+void load_page_table(size_t pagetable)
+{
+    cr3 = pagetable;
+}
 
-        // user code descriptor
-        gdt[3].clear();
-        gdt[3].user = true;
-        gdt[3].code = true;
-        gdt[3].present = true;
-        gdt[3].readable = true;
-        gdt[3].scaled = true;
-        gdt[3].conforming = false;
-        gdt[3].base = 0;
-        gdt[3].limit = 0xFFFFF;
-        gdt[3].dpl = 3;
-        gdt[3].pmode = true;
+struct PageTable
+{
+    private Page[1024] pages;
+    
+    public ulong getData(size_t address)
+    {
+        return findPage(address).data;
+    }
 
-        // user data descriptor
-        gdt[4].clear();
-        gdt[4].user = true;
-        gdt[4].code = false;
-        gdt[4].present = true;
-        gdt[4].writable = true;
-        gdt[4].scaled = true;
-        gdt[4].base = 0;
-        gdt[4].limit = 0xFFFFF;
-        gdt[4].dpl = 3;
-        gdt[4].pmode = true;
-
-        lgdt(gdt);
-
-        // Set up the IDT
+    private Page* findPage(size_t address)
+    {
+        return &(pages[address>>22]);
+    }
+    
+    public size_t lookup(void* address)
+    {
+        Page* p = findPage(cast(size_t)address);
         
-        for(int i=0; i<idt.length; i++)
+        if(p.present)
+            return p.base + cast(size_t)address % FRAME_SIZE;
+        
+        return 0;
+    }
+    
+    public size_t reverseLookup(size_t address, bool writable = false, bool user = false)
+    {
+        size_t offset = address & ~0x400000;
+        size_t base = address - offset;
+        
+        foreach(size_t i, p; pages)
         {
-            idt[i].clear();
-            idt[i].present = true;
-            idt[i].dpl = 0;
-            idt[i].user = false;
-            idt[i].type = 0xE;
-            idt[i].selector = 0x8;
+            if(p.present() && base == p.base() && (!writable || p.writable()) && (!user || p.user()))
+            {
+                return (i<<22) | offset;
+            }
         }
         
-        mixin(isr_ref!());
+        return 0;
+    }
 
-        lidt(idt);
-        
-        remap_pic(32, 0xFFFF);
-
-        enable_interrupts();
-        
-        screen_mem = cast(byte*)pagetable.reverseLookup(0xB8000);
-        
-        clear_screen();
+    public void clear()
+    {
+        foreach(p; pages)
+        {
+            p.clear();
+        }
     }
     
-    size_t ptov(size_t p_addr)
+    public bool map(size_t v_addr, size_t p_addr, bool writable = true, bool user = false, bool executable = true)
     {
-        PageTable* pagetable = cast(PageTable*)(cr3 + 0xC0000000);
+        Page* p = findPage(v_addr);
         
-        size_t v = pagetable.reverseLookup(p_addr);
-        
-        assert(v != 0, "Physical page unavailable");
-        
-        return v;
-    }
+        if(p.present)
+            return false;
 
-    void disable_interrupts()
-    {
-        asm{"cli";}
-    }
-
-    void enable_interrupts()
-    {
-        asm{"sti";}
+        p.clear();
+        p.base = p_addr;
+        p.writable = writable;
+        p.user = user;
+        p.present = true;
+        
+        p.invalidate();
+        
+        return true;
     }
     
-    struct Context
+    public bool unmap(size_t v_addr)
     {
-        uint eax;
-        uint ebx;
-        uint ecx;
-        uint edx;
-        uint esi;
-        uint edi;
-        uint ebp;
-        uint eip;
-        uint cs;
-        uint flags;
-        uint esp;
-        uint ss;
+        Page* p = findPage(v_addr);
+        
+        if(!p.present)
+            return false;
+        
+        p.present = false;
+        
+        p.invalidate();
+        
+        return true;
     }
+}
+
+struct Context
+{
+    uint eax;
+    uint ebx;
+    uint ecx;
+    uint edx;
+    uint esi;
+    uint edi;
+    uint ebp;
+    uint eip;
+    uint cs;
+    uint flags;
+    uint esp;
+    uint ss;
 }
 
 const char[][] named_exceptions = [ "divide by zero exception",

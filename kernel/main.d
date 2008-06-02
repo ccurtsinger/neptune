@@ -8,17 +8,18 @@ module kernel.main;
 
 import kernel.arch.native;
 import kernel.spec.multiboot;
+import kernel.mem.physical;
 
-import std.port;
-import std.mem;
 import std.stdio;
-import std.bit;
 
 PhysicalAllocator phys;
+PageTable* pagetable;
+
+PageTable* test;
 
 extern(C) void _main(MultibootInfo* multiboot, uint magic)
 {
-    startup();
+    pagetable = startup();
     
     // Initialize the physical memory allocator
     phys.init();
@@ -29,6 +30,8 @@ extern(C) void _main(MultibootInfo* multiboot, uint magic)
         // If memory region is available
         if(mem.type == 1)
         {
+            // TODO: Determine if the page is occupied by the kernel binary, and if so, don't free it
+            
             // Determine the offset into a page frame of the base
             size_t offset = mem.base % FRAME_SIZE;
             
@@ -44,72 +47,17 @@ extern(C) void _main(MultibootInfo* multiboot, uint magic)
         }
     }
     
+    size_t p_test = phys.allocate();
+    
+    pagetable.map(0x10000000, p_test);
+    
+    test = cast(PageTable*)0x10000000;
+    test.clear();
+    test.map(0xC0000000, 0);
+    
+    load_page_table(p_test);
+    
+    writefln("Hello World!");
+    
     for(;;){}
-}
-
-struct PhysicalAllocator
-{
-    // Allocate enough bits for the entire address space
-    uint[size_t.max / (32 * FRAME_SIZE) + 1] available;
-    
-    /**
-     * Mark all pages as unavailable
-     */
-    void init()
-    {
-        for(size_t index = 0; index < available.length; index++)
-        {
-            available[index] = uint.max;
-        }
-    }
-    
-    /**
-     * Check if a page is available
-     */
-    bool check(size_t paddr)
-    {
-        paddr >>= FRAME_BITS;
-        
-        size_t bit = paddr % 32;
-        size_t index = (paddr - bit) / 32;
-        
-        return !bt(&(available[index]), bit);
-    }
-    
-    /**
-     * Mark a page as available
-     */
-    void free(size_t paddr)
-    {
-        paddr >>= FRAME_BITS;
-        
-        size_t bit = paddr % 32;
-        size_t index = (paddr - bit) / 32;
-        
-        btr(&(available[index]), bit);
-    }
-    
-    /**
-     * Mark and return the corresponding physical address
-     * for the next available page
-     */
-    size_t allocate()
-    {
-        for(size_t index = 0; index < available.length; index++)
-        {
-            uint b = available[index];
-            
-            if(b < uint.max)
-            {
-                // TODO: Synchronize or make atomic
-                size_t bit = bsf(~b);
-                bts(&(available[index]), bit);
-                
-                return (32 * index + bit) << FRAME_BITS;
-            }
-        }
-        
-        // TODO: raise event to invoke swapping to disk or page collection
-        assert(false, "Out of physical memory");
-    }
 }

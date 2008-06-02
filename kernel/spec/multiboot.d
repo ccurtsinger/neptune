@@ -42,11 +42,11 @@ struct MultibootInfo
 	private uint boot_device;
 	
 	/// Pointer to the command used to launch the executable
-	private size_t cmdline;
+	private uint cmdline;
 	
 	/// Module information
 	private uint mods_count;
-	private size_t mods_addr;
+	private uint mods_addr;
 	
 	/// Information about the executable
 	union
@@ -64,7 +64,7 @@ struct MultibootInfo
 	private uint drives_addr;
 	
 	/// Pointer to the boot loader name
-	private size_t boot_loader_name;
+	private uint boot_loader_name;
 	
 	/// Pointer to the APM table
 	private uint apm_table;
@@ -109,14 +109,9 @@ struct MultibootInfo
         return m[0..mods_count];
 	}
 	
-	public MemoryMap* getMemoryMap()
+	public MemoryMap getMemoryMap()
 	{
-	    return cast(MemoryMap*)ptov(mmap_addr);
-	}
-	
-	public size_t getMemoryMapSize()
-	{
-	    return mmap_length;
+	    return MemoryMap(cast(MemoryMapEntry*)ptov(mmap_addr), mmap_length);
 	}
 }
 
@@ -171,36 +166,103 @@ struct MultibootModule
 	}
 }
 
-/* The memory map. Be careful that the offset 0 is base_addr_low
-but no size. */
 struct MemoryMap
 {
-	private uint size;
+    private MemoryMapEntry* first;
+    private MemoryMapEntry* current;
+    private size_t size;
+    
+    public static MemoryMap opCall(MemoryMapEntry* first, size_t size)
+    {
+        MemoryMap m;
+        m.first = first;
+        m.size = size;
+        return m;
+    }
+    
+    private bool next()
+    {
+        current = cast(MemoryMapEntry*)(cast(size_t)current + current.entry_size + uint.sizeof);
+        
+        if(cast(size_t)current < cast(size_t)first + size)
+            return true;
+        
+        return false;
+    }
+    
+    int opApply(int delegate(ref MemoryMapEntry* p) dg)
+    {
+        int result = 0;
+        current = first;
+        
+        do
+        {
+            result = dg(current);
+            
+            if(result)
+                break;
+                
+        } while(next());
+        
+        return result;
+    }
+    
+    MemoryMapEntry* opIndex(size_t index)
+    {
+        size_t i = 0;
+        
+        current = first;
+        
+        do
+        {
+            if(i == index)
+                return current;
+                
+            i++;
+            
+        } while(next());
+        
+        assert(false, "memory map index out of bounds");
+    }
+    
+    size_t length()
+    {
+        size_t l = 0;
+        
+        current = first;
+        
+        do
+        {
+            l++;
+        } while(next());
+        
+        return l;
+    }
+}
+
+struct MemoryMapEntry
+{
+	private uint entry_size;
 	private uint baseLow;
 	private uint baseHigh;
 	private uint lengthLow;
 	private uint lengthHigh;
-	private uint type;
+	private uint entry_type;
 	
-	public ulong getBase()
+	public ulong base()
 	{
 	    //return (cast(ulong)baseHigh)*0xFFFFFFFF + baseLow;
 	    return baseLow;
 	}
 	
-	public ulong getLength()
+	public ulong size()
 	{
 	    //return (cast(ulong)lengthHigh)*0xFFFFFFFF + lengthLow;
 	    return lengthLow;
 	}
 	
-	public uint getType()
+	public uint type()
 	{
-	    return type;
-	}
-	
-	public MemoryMap* next()
-	{
-	    return cast(MemoryMap*)(cast(uint)&size + size + uint.sizeof);
+	    return entry_type;
 	}
 }

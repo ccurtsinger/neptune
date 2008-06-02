@@ -17,6 +17,7 @@ import std.stdio;
 version(arch_i586)
 {
     const size_t FRAME_SIZE = 0x400000;
+    const size_t FRAME_BITS = 22;
     const size_t HZ = 4;
     
     const size_t INT_KEYBOARD = 33;

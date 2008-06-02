@@ -76,6 +76,7 @@ StartInHigherHalf:
 
     ; pass Multiboot info structure -- WARNING: This is a physical address and may not be
     ; in the first 4MB!
+    add ebx, KERNEL_VIRTUAL_BASE
     push ebx
 
     call  _main                  ; call kernel proper

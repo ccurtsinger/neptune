@@ -5,7 +5,9 @@ Import('env')
 obj_list  = SConscript('arch/SConscript', exports='env')
 
 obj_list += [env.gdc('main.o', 'main.d')]
+
 obj_list += SConscript('runtime/SConscript', exports='env')
+obj_list += SConscript('spec/SConscript', exports='env')
 
 kernel = env.Link('kernel', obj_list, LINKSCRIPTS = ['kernel/link/linker.ld'])
 

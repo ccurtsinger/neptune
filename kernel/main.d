@@ -7,19 +7,17 @@
 module kernel.main;
 
 import kernel.arch.native;
+import kernel.spec.multiboot;
 
 import std.port;
 import std.mem;
 import std.stdio;
 
-extern(C) void _main()
+extern(C) void _main(MultibootInfo* multiboot, uint magic)
 {
     startup();
     
-    asm
-    {
-        "int $0" : : "a" 0x12345;
-    }
+    writeln(multiboot.getCommand());
     
     for(;;){}
 }

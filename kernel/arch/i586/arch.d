@@ -114,9 +114,20 @@ version(arch_i586)
 
         enable_interrupts();
         
-        screen_mem = cast(byte*)0xC00B8000;
+        screen_mem = cast(byte*)pagetable.reverseLookup(0xB8000);
         
         clear_screen();
+    }
+    
+    size_t ptov(size_t p_addr)
+    {
+        PageTable* pagetable = cast(PageTable*)(cr3 + 0xC0000000);
+        
+        size_t v = pagetable.reverseLookup(p_addr);
+        
+        assert(v != 0, "Physical page unavailable");
+        
+        return v;
     }
 
     void disable_interrupts()

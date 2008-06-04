@@ -1,6 +1,7 @@
 # Grab the build environment
 Import('env')
 
-obj_list  = [env.gdc('physical.o', 'physical.d')]
+obj_list  = [env.gdc('addrspace.o', 'addrspace.d')]
+obj_list += [env.gdc('physical.o',  'physical.d')]
 
 Return('obj_list')

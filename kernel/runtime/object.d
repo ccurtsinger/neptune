@@ -377,3 +377,22 @@ void setMonitor(Object h, Monitor* m)
 {
 	(cast(void**)h)[1] = m;
 }
+
+/**
+ * Tuple for file/memory permission passing
+ */
+struct Permission
+{
+    bool r;
+    bool w;
+    bool x;
+    
+    static Permission opCall(char[3] s)
+    {
+        Permission p;
+        p.r = s[0] == 'r';
+        p.w = s[1] == 'w';
+        p.x = s[2] == 'x';
+        return p;
+    }
+}

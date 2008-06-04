@@ -9,20 +9,21 @@ module kernel.main;
 import kernel.arch.native;
 import kernel.spec.multiboot;
 import kernel.mem.physical;
+import kernel.mem.addrspace;
 
 import std.stdio;
 
 PhysicalAllocator phys;
-PageTable* pagetable;
-
-PageTable* test;
+AddressSpace addr;
 
 extern(C) void _main(MultibootInfo* multiboot, uint magic)
 {
-    pagetable = startup();
+    PageTable* pagetable = startup();
     
     // Initialize the physical memory allocator
     phys.init();
+    
+    size_t lost = 0;
     
     // Free memory from the multiboot memory map
     foreach(mem; multiboot.getMemoryMap())
@@ -47,17 +48,13 @@ extern(C) void _main(MultibootInfo* multiboot, uint magic)
         }
     }
     
-    size_t p_test = phys.allocate();
+    addr = AddressSpace(pagetable, 0, FRAME_SIZE);
     
-    pagetable.map(0x10000000, p_test);
-    
-    test = cast(PageTable*)0x10000000;
-    test.clear();
-    test.map(0xC0000000, 0);
-    
-    load_page_table(p_test);
-    
-    writefln("Hello World!");
+    for(int i=0; i<10; i++)
+    {
+        auto r = addr.allocate(ZoneType.STACK, 2*FRAME_SIZE);
+        writefln("%p (%p)", r.base, r.size);
+    }
     
     for(;;){}
 }

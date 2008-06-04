@@ -24,15 +24,25 @@ struct BitArray
     
     bool opIndex(size_t i)
     {
-        return cast(bool)bt(cast(uint*)this, i);
+        size_t bit = i % 32;
+        size_t index = (i - bit) / 32;
+        
+        uint* a = cast(uint*)this;
+        
+        return bt(&(a[index]), bit);
     }
     
-    void opIndexAssign(bool b, size_t i)
+    bool opIndexAssign(bool b, size_t i)
     {
+        size_t bit = i % 32;
+        size_t index = (i - bit) / 32;
+        
+        uint* a = cast(uint*)this;
+        
         if(b)
-            bts(cast(uint*)this, i);
+            return bts(&(a[index]), bit);
         else
-            btr(cast(uint*)this, i);
+            return btr(&(a[index]), bit);
     }
     
     ulong opSlice(size_t x, size_t y)
@@ -95,5 +105,25 @@ struct BitArray
             *(cast(ulong*)this) &= mask;
             *(cast(ulong*)this) |= value;
         }
+    }
+    
+    size_t setFirstCleared(size_t limit)
+    {
+        uint* a = cast(uint*)this;
+        
+        for(size_t index = 0; index < limit; index++)
+        {
+            uint b = a[index];
+            
+            if(b < uint.max)
+            {
+                size_t bit = bsf(~b);
+                bts(&(a[index]), bit);
+                
+                return 32 * index + bit;
+            }
+        }
+        
+        return limit;
     }
 }

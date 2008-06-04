@@ -8,12 +8,16 @@ module kernel.mem.physical;
 
 import kernel.arch.native;
 
-import std.bit;
+import std.bitarray;
 
 struct PhysicalAllocator
 {
     // Allocate enough bits for the entire address space
-    uint[size_t.max / (32 * FRAME_SIZE) + 1] available;
+    union
+    {
+        uint[PHYSICAL_MEMORY_MAX / (32 * FRAME_SIZE) + 1] available;
+        BitArray bits;
+    }
     
     /**
      * Mark all pages as unavailable
@@ -32,11 +36,8 @@ struct PhysicalAllocator
     bool check(size_t paddr)
     {
         paddr >>= FRAME_BITS;
-        
-        size_t bit = paddr % 32;
-        size_t index = (paddr - bit) / 32;
-        
-        return !bt(&(available[index]), bit);
+
+        return !bits[paddr];
     }
     
     /**
@@ -46,10 +47,7 @@ struct PhysicalAllocator
     {
         paddr >>= FRAME_BITS;
         
-        size_t bit = paddr % 32;
-        size_t index = (paddr - bit) / 32;
-        
-        btr(&(available[index]), bit);
+        bits[paddr] = false;
     }
     
     /**
@@ -58,19 +56,11 @@ struct PhysicalAllocator
      */
     size_t allocate()
     {
-        for(size_t index = 0; index < available.length; index++)
-        {
-            uint b = available[index];
-            
-            if(b < uint.max)
-            {
-                // TODO: Synchronize or make atomic
-                size_t bit = bsf(~b);
-                bts(&(available[index]), bit);
-                
-                return (32 * index + bit) << FRAME_BITS;
-            }
-        }
+        // TODO: Synchronize or make atomic
+        size_t p = bits.setFirstCleared(available.sizeof * 8);
+        
+        if(p < available.sizeof * 8)
+            return p<<FRAME_BITS;
         
         // TODO: raise event to invoke swapping to disk or page collection
         assert(false, "Out of physical memory");

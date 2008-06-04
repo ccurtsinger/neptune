@@ -157,6 +157,10 @@ struct Page
     mixin(property!("accessed", "bool", "bits[5]"));
     mixin(property!("dirty", "bool", "bits[6]"));
     mixin(property!("global", "bool", "bits[8]"));
+    
+    // Define OS-used properties
+    mixin(property!("used", "bool", "bits[9]"));
+    mixin(property!("locked", "bool", "bits[10]"));
 
     // Define the base address property (shift left 22 bits when getting, right 22 when setting)
     mixin(property!("base", "size_t", "bits[22..32]", "<<22", ">>22"));

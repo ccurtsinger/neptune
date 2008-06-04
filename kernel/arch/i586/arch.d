@@ -16,6 +16,15 @@ import kernel.arch.i586.screen;
 
 import std.stdio;
 
+const size_t KERNEL_VIRTUAL_BASE = 0xC0000000;
+const size_t USER_VIRTUAL_TOP = KERNEL_VIRTUAL_BASE;
+
+const size_t STACK_TOP = 0xA0000000;
+const size_t KERNEL_STACK_TOP = 0xE0000000;
+
+const size_t PHYSICAL_MEMORY_MAX = 0xFFFFFFFF;
+const size_t VIRTUAL_MEMORY_MAX = 0xFFFFFFFF;
+
 const size_t FRAME_SIZE = 0x400000;
 const size_t FRAME_BITS = 22;
 const size_t HZ = 4;
@@ -140,15 +149,38 @@ void load_page_table(size_t pagetable)
     cr3 = pagetable;
 }
 
+struct MemoryRange
+{
+    public size_t base;
+    public size_t size;
+    
+    public static MemoryRange opCall(size_t base, size_t size)
+    {
+        MemoryRange m;
+        
+        m.base = base;
+        m.size = size;
+        
+        return m;
+    }
+    
+    public size_t top()
+    {
+        return base + size;
+    }
+    
+    public void top(size_t t)
+    {
+        assert(t >= base, "cannot define range with negative size");
+        
+        size = t - base;
+    }
+}
+
 struct PageTable
 {
     private Page[1024] pages;
     
-    public ulong getData(size_t address)
-    {
-        return findPage(address).data;
-    }
-
     private Page* findPage(size_t address)
     {
         return &(pages[address>>22]);
@@ -188,18 +220,33 @@ struct PageTable
         }
     }
     
-    public bool map(size_t v_addr, size_t p_addr, bool writable = true, bool user = false, bool executable = true)
+    public bool map(size_t v_addr, size_t p_addr, Permission user, Permission superuser, bool global, bool locked)
     {
         Page* p = findPage(v_addr);
         
-        if(p.present)
+        bool writable = false;
+        bool user_flag = false;
+        
+        if(user.r || user.w || user.x)
+            user_flag = true;
+            
+        if(user.w)
+            writable = true;
+        
+        // Check if the page is already mapped.  If the requested mapping is already present, return true
+        if(p.present && p.base == p_addr && p.writable == writable && p.user == user_flag && p.global == global)
+            return true;
+            
+        else if(p.present)
             return false;
 
         p.clear();
         p.base = p_addr;
         p.writable = writable;
-        p.user = user;
+        p.user = user_flag;
+        p.global = global;
         p.present = true;
+        p.locked = locked;
         
         p.invalidate();
         
@@ -218,6 +265,87 @@ struct PageTable
         p.invalidate();
         
         return true;
+    }
+    
+    /**
+     * Allocate consecutive virtual pages of size 'size' or larger.
+     *
+     * Allocation will only be made in the given range.
+     */
+    public MemoryRange allocate(size_t size, MemoryRange bound, bool increasing = true)
+    in
+    {
+        assert(bound.base % FRAME_SIZE == 0, "lower bound for virtual page allocation must be a multiple of FRAME_SIZE");
+        assert(bound.size % FRAME_SIZE == 0, "size for virtual page allocation must be a multiple of FRAME_SIZE");
+    }
+    body
+    {
+        size_t found_base = 0;
+        size_t found_count = 0;
+        
+        size_t offset = 0;
+        
+        while(found_count * FRAME_SIZE < size && offset <= bound.size - FRAME_SIZE)
+        {
+            Page* p;
+            
+            if(increasing)
+                p = findPage(bound.base + offset);
+            else
+                p = findPage(bound.top - offset - FRAME_SIZE);
+            
+            if(!p.used)
+            {
+                if(found_count == 0 || !increasing)
+                    found_base = offset;
+                
+                found_count++;
+            }
+            else
+            {
+                found_count = 0;
+            }
+         
+            offset += FRAME_SIZE;
+        }
+        
+        if(found_count * FRAME_SIZE >= size)
+        {
+            for(size_t i=0; i<found_count; i++)
+            {
+                Page* p;
+                
+                if(increasing)
+                    p = findPage(bound.base + found_base + i*FRAME_SIZE);
+                else
+                    p = findPage(bound.top - found_base - FRAME_SIZE + i*FRAME_SIZE);
+                
+                p.used = true;
+            }
+            
+            if(increasing)
+                return MemoryRange(bound.base + found_base, found_count * FRAME_SIZE);
+                
+            else
+                return MemoryRange(bound.top - found_base - FRAME_SIZE, found_count * FRAME_SIZE);
+        }
+        
+        return MemoryRange(0, 0);
+    }
+    
+    public void free(MemoryRange range)
+    in
+    {
+        assert(range.base % FRAME_SIZE == 0, "lower bound for virtual page freeing must be a multiple of FRAME_SIZE");
+        assert(range.size % FRAME_SIZE == 0, "size for virtual page freeing must be a multiple of FRAME_SIZE");
+    }
+    body
+    {
+        for(size_t c = 0; c <= range.size - FRAME_SIZE; c += FRAME_SIZE)
+        {
+            Page* p = findPage(c + range.base);
+            p.used = false;
+        }
     }
 }
 

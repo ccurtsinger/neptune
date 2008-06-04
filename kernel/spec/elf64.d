@@ -6,6 +6,17 @@
  
 module spec.elf64;
 
+version(arch_x86_64)
+{
+    version = elf64;
+}
+else version(arch_i586_pc_elf_loader)
+{
+    version = elf64;
+}
+
+version(elf64):
+
 import std.string;
 
 enum ElfIdent : size_t

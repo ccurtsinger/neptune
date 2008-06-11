@@ -95,4 +95,9 @@ struct AddressSpace
         
         return r;
     }
+    
+    public bool map(size_t v_addr, size_t p_addr, Permission user, Permission superuser, bool global, bool locked)
+    {
+        return pagetable.map(v_addr, p_addr, user, superuser, global, locked);
+    }
 }

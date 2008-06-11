@@ -224,6 +224,9 @@ struct PageTable
     {
         Page* p = findPage(v_addr);
         
+        assert(p !is null, "Page not found");
+        assert(p.used, "Cannot map unallocated page");
+        
         bool writable = false;
         bool user_flag = false;
         
@@ -247,6 +250,7 @@ struct PageTable
         p.global = global;
         p.present = true;
         p.locked = locked;
+        p.used = true;
         
         p.invalidate();
         
@@ -409,6 +413,7 @@ extern(C) void common_interrupt(int interrupt, int error, Context* context)
     writefln("   %%edx: %08#x", context.edx);
     writefln("   %%esi: %08#x", context.esi);
     writefln("   %%edi: %08#x", context.edi);
+    writefln("   %%cr2: %08#x", cr2);
     writefln("  flags: %08#x", context.flags);
     
     for(;;){}

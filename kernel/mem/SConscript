@@ -2,6 +2,8 @@
 Import('env')
 
 obj_list  = [env.gdc('addrspace.o', 'addrspace.d')]
+obj_list += [env.gdc('heap.o',      'heap.d')]
 obj_list += [env.gdc('physical.o',  'physical.d')]
+obj_list += [env.gdc('range.o',     'range.d')]
 
 Return('obj_list')

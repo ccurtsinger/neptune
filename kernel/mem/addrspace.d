@@ -7,6 +7,7 @@
 module kernel.mem.addrspace;
 
 import kernel.arch.native;
+import kernel.mem.range;
 
 import std.bitarray;
 

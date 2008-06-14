@@ -14,6 +14,8 @@ import kernel.arch.i586.interrupts;
 import kernel.arch.i586.pic;
 import kernel.arch.i586.screen;
 
+import kernel.mem.range;
+
 import std.stdio;
 
 const size_t KERNEL_VIRTUAL_BASE = 0xC0000000;
@@ -147,34 +149,6 @@ void enable_interrupts()
 void load_page_table(size_t pagetable)
 {
     cr3 = pagetable;
-}
-
-struct MemoryRange
-{
-    public size_t base;
-    public size_t size;
-    
-    public static MemoryRange opCall(size_t base, size_t size)
-    {
-        MemoryRange m;
-        
-        m.base = base;
-        m.size = size;
-        
-        return m;
-    }
-    
-    public size_t top()
-    {
-        return base + size;
-    }
-    
-    public void top(size_t t)
-    {
-        assert(t >= base, "cannot define range with negative size");
-        
-        size = t - base;
-    }
 }
 
 struct PageTable

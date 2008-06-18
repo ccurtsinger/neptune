@@ -1,8 +1,12 @@
-all:
-	bash ./scons.sh neptune.iso
+all: neptune
+
+neptune:
+	scons
+
+clean: cleanall
 
 cleanall:
-	bash ./scons.sh -c neptune.iso
+	scons -c
 
 run:
-	bash ./run.sh
+	qemu -m 512 -cdrom neptune.iso -boot d -net nic,vlan=0 -net user,vlan=0  -localtime

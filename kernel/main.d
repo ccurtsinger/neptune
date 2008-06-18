@@ -48,18 +48,11 @@ extern(C) void _main(MultibootInfo* multiboot, uint magic)
         }
     }
     
+    // Initialize the base address space
     addr = AddressSpace(pagetable, 0, FRAME_SIZE);
     
-    heap = HeapAllocator(&phys, &addr, ZoneType.HEAP);
-    
-    void* a = heap.allocate(0x28);
-    void* b = heap.allocate(0x28);
-    void* c = heap.allocate(FRAME_SIZE);
-    
-    heap.free(b);
-    heap.free(a);
-    
-    heap.show();
+    // Initialize the kernel heap
+    heap = HeapAllocator(&phys, &addr, ZoneType.KERNEL_HEAP);
     
     for(;;){}
 }

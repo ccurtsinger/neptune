@@ -2,6 +2,9 @@ all: neptune
 
 neptune:
 	scons
+	
+info: build/kernel
+	analysis/sizes.py --tree build/kernel
 
 clean: cleanall
 

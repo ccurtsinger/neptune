@@ -31,11 +31,38 @@ const size_t FRAME_SIZE = 0x400000;
 const size_t FRAME_BITS = 22;
 const size_t HZ = 4;
 
+const size_t INT_DIVIDE_BY_ZERO = 0;
+const size_t INT_DEBUG = 1;
+const size_t INT_NMI = 2;
+const size_t INT_BREAKPOINT = 3;
+const size_t INT_OVERFLOW = 4;
+
+const size_t INT_INVALID_OPCODE = 6;
+const size_t INT_PAGE_FAULT = 14;
+
+const size_t INT_ALIGNMENT_CHECK = 17;
+
 const size_t INT_KEYBOARD = 33;
+const size_t INT_COM2 = 35;
+const size_t INT_COM1 = 36;
+const size_t INT_LPT2 = 37;
+const size_t INT_FLOPPY = 38;
+const size_t INT_LPT1 = 39;
+const size_t INT_RTC = 40;
 const size_t INT_MOUSE = 44;
+const size_t INT_IDE1 = 46;
+const size_t INT_IDE2 = 47;
+
+const size_t INT_TIMER = 80;
+
+const size_t INT_SYSCALL_A = 128;
+const size_t INT_SYSCALL_B = 129;
+const size_t INT_SYSCALL_C = 130;
 
 Descriptor[16] gdt;
 Descriptor[256] idt;
+
+InterruptHandler[256] int_handlers;
 
 PageTable* startup()
 {
@@ -97,9 +124,8 @@ PageTable* startup()
     gdt[4].pmode = true;
 
     lgdt(gdt);
-
-    // Set up the IDT
     
+    // Set up interrupts
     for(int i=0; i<idt.length; i++)
     {
         idt[i].clear();
@@ -111,7 +137,26 @@ PageTable* startup()
     }
     
     mixin(isr_ref!());
-
+    
+    int_handlers[0] = InterruptHandler("divide by zero exception");
+    int_handlers[1] = InterruptHandler("debug exception");
+    int_handlers[2] = InterruptHandler("non-maskable interrupt");
+    int_handlers[3] = InterruptHandler("breakpoint exception");
+    int_handlers[4] = InterruptHandler("overflow exception");
+    int_handlers[5] = InterruptHandler("bound-range exception");
+    int_handlers[6] = InterruptHandler("invalid opcode");
+    int_handlers[7] = InterruptHandler("device not available");
+    int_handlers[8] = InterruptHandler("double fault");
+    int_handlers[10] = InterruptHandler("invalid TSS");
+    int_handlers[11] = InterruptHandler("segment not present");
+    int_handlers[12] = InterruptHandler("stack exception");
+    int_handlers[13] = InterruptHandler("general protection fault");
+    int_handlers[14] = InterruptHandler("page fault");
+    int_handlers[16] = InterruptHandler("x87 floating point exception");
+    int_handlers[17] = InterruptHandler("alignment check exception");
+    int_handlers[18] = InterruptHandler("machine check exception");
+    int_handlers[19] = InterruptHandler("SIMD floating point exception");
+    
     lidt(idt);
     
     remap_pic(32, 0xFFFF);
@@ -327,6 +372,16 @@ struct PageTable
     }
 }
 
+void set_interrupt_handler(int interrupt, bool function(Context*) handler)
+{
+    int_handlers[interrupt] = InterruptHandler(handler, "interrupt handler failed");
+}
+
+void clear_interrupt_handler(int interrupt)
+{
+    int_handlers[interrupt] = InterruptHandler("unhandled interrupt");
+}
+
 struct Context
 {
     uint eax;
@@ -343,52 +398,56 @@ struct Context
     uint ss;
 }
 
-const char[][] named_exceptions = [ "divide by zero exception",
-                                    "debug exception",
-                                    "non-maskable interrupt",
-                                    "breakpoint exception",
-                                    "overflow exception",
-                                    "bound-range exception",
-                                    "invalid opcode",
-                                    "device not available",
-                                    "double fault",
-                                    "coprocessor segment overrun",
-                                    "invalid TSS",
-                                    "segment not present",
-                                    "stack exception",
-                                    "general protection fault",
-                                    "page fault",
-                                    "reserved exception",
-                                    "x87 floating point exception",
-                                    "alignment check exception",
-                                    "machine check exception",
-                                    "SIMD floating point exception"];
+struct InterruptHandler
+{
+    bool set = false;
+    char[] error = "unhandled interrupt";
+    bool function(Context*) handler = null;
+    
+    public static InterruptHandler opCall(char[] error)
+    {
+        InterruptHandler i;
+        i.error = error;
+        return i;
+    }
+    
+    public static InterruptHandler opCall(bool function(Context*) handler, char[] error)
+    {
+        InterruptHandler i;
+        i.handler = handler;
+        i.error = error;
+        i.set = true;
+        return i;
+    }
+    
+    public bool opCall(Context* c)
+    {
+        assert(handler !is null, "Invoked null interrupt handler");
+        
+        return handler(c);
+    }
+}
 
 extern(C) void common_interrupt(int interrupt, int error, Context* context)
 {
-    if(interrupt < named_exceptions.length)
+    if(!int_handlers[interrupt].set || !int_handlers[interrupt](context))
     {
-        writeln(named_exceptions[interrupt]);
-    }
-    else
-    {
-        writefln("interrupt %u", interrupt);
-    }
+        writefln("interrupt %u: %s", interrupt, int_handlers[interrupt].error);
+        writefln("  error: %02#x", error);
+        writefln("   %%eip: %08#x", context.eip);
+        writefln("   %%esp: %08#x", context.esp);
+        writefln("   %%ebp: %08#x", context.ebp);
+        writefln("    %%cs: %02#x", context.cs);
+        writefln("    %%ss: %02#x", context.ss);
+        writefln("   %%eax: %08#x", context.eax);
+        writefln("   %%ebx: %08#x", context.ebx);
+        writefln("   %%ecx: %08#x", context.ecx);
+        writefln("   %%edx: %08#x", context.edx);
+        writefln("   %%esi: %08#x", context.esi);
+        writefln("   %%edi: %08#x", context.edi);
+        writefln("   %%cr2: %08#x", cr2);
+        writefln("  flags: %08#x", context.flags);
     
-    writefln("  error: %02#x", error);
-    writefln("   %%eip: %08#x", context.eip);
-    writefln("   %%esp: %08#x", context.esp);
-    writefln("   %%ebp: %08#x", context.ebp);
-    writefln("    %%cs: %02#x", context.cs);
-    writefln("    %%ss: %02#x", context.ss);
-    writefln("   %%eax: %08#x", context.eax);
-    writefln("   %%ebx: %08#x", context.ebx);
-    writefln("   %%ecx: %08#x", context.ecx);
-    writefln("   %%edx: %08#x", context.edx);
-    writefln("   %%esi: %08#x", context.esi);
-    writefln("   %%edi: %08#x", context.edi);
-    writefln("   %%cr2: %08#x", cr2);
-    writefln("  flags: %08#x", context.flags);
-    
-    for(;;){}
+        for(;;){}
+    }
 }

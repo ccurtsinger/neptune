@@ -11,6 +11,8 @@ import kernel.arch.i586.descriptors;
 import kernel.arch.i586.pic;
 import kernel.arch.i586.registers;
 
+import kernel.syscall;
+
 import std.stdio;
 
 version(arch_i586):
@@ -301,19 +303,4 @@ extern(C) void isr_130()
         "jmp syscall_c";
         "iret";
     }
-}
-
-extern(C) void syscall_a()
-{
-    
-}
-
-extern(C) void syscall_b()
-{
-    
-}
-
-extern(C) void syscall_c()
-{
-    
 }

@@ -4,8 +4,9 @@ Import('env')
 # Build the arch directory first so the multiboot header ends up at the top
 obj_list  = SConscript('arch/SConscript', exports='env')
 
-obj_list += [env.gdc('main.o', 'main.d')]
-obj_list += [env.gdc('core.o', 'core.d')]
+obj_list += [env.gdc('core.o',      'core.d')]
+obj_list += [env.gdc('main.o',      'main.d')]
+obj_list += [env.gdc('syscall.o',   'syscall.d')]
 
 obj_list += SConscript('mem/SConscript', exports='env')
 obj_list += SConscript('runtime/SConscript', exports='env')

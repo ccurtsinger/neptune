@@ -1,4 +1,9 @@
-
+/**
+ * x86 architecture utilities
+ *
+ * Copyright: 2008 The Neptune Project
+ */
+ 
 module kernel.arch.i586.util;
 
 template property(char[] name, char[] type, char[] reference, char[] get = "", char[] set = "")

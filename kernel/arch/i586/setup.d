@@ -1,10 +1,10 @@
 /**
- * i586 (x86) Architecture Support
+ * x86 architecture setup code
  *
  * Copyright: 2008 The Neptune Project
  */
 
-module kernel.arch.i586.arch;
+module kernel.arch.i586.setup;
 
 import kernel.arch.i586.constants;
 import kernel.arch.i586.paging;
@@ -12,8 +12,6 @@ import kernel.arch.i586.registers;
 import kernel.arch.i586.descriptors;
 import kernel.arch.i586.interrupts;
 import kernel.arch.i586.screen;
-
-import std.stdio;
 
 version(arch_i586):
 

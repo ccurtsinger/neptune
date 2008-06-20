@@ -5,10 +5,13 @@ if(env['target'] == 'i586'):
     obj_list  = [env.yasm('loader.o', 'loader.asm')]
 
 obj_list += [env.gdc('arch.o',          'arch.d')]
+obj_list += [env.gdc('constants.o',     'constants.d')]
 obj_list += [env.gdc('interrupts.o',    'interrupts.d')]
+obj_list += [env.gdc('paging.o',        'paging.d')]
 obj_list += [env.gdc('pic.o',           'pic.d')]
 obj_list += [env.gdc('registers.o',     'registers.d')]
 obj_list += [env.gdc('screen.o',        'screen.d')]
-obj_list += [env.gdc('structures.o',    'structures.d')]
+obj_list += [env.gdc('descriptors.o',   'descriptors.d')]
+obj_list += [env.gdc('util.o',          'util.d')]
 
 Return('obj_list')

@@ -43,6 +43,15 @@ struct DTPtr
     }
 }
 
+enum DescriptorType
+{
+    TSS = 0x9,
+    TSS_BUSY = 0xB,
+    CALL_GATE = 0xC,
+    INTERRUPT_GATE = 0xE,
+    TRAP_GATE = 0xF
+}
+
 struct Descriptor
 {
     union
@@ -166,6 +175,43 @@ struct Page
     mixin(property!("base", "size_t", "bits[22..32]", "<<22", ">>22"));
 }
 
+struct TSS
+{
+    uint link;
+    
+    uint esp0;
+    uint ss0;
+    
+    uint esp1;
+    uint ss1;
+
+    uint esp2;
+    uint ss2;
+
+    uint cr3;
+    uint eip;
+    uint eflags;
+    uint eax;
+    uint ecx;
+    uint edx;
+    uint ebx;
+    uint esp;
+    uint ebp;
+    uint esi;
+    uint edi;
+
+    uint es;
+    uint cs;
+    uint ss;
+    uint ds;
+    uint fs;
+    uint gs;
+    uint ldt;
+    
+    ushort res;
+    ushort iopm_offset;
+}
+
 version(arch_i586):
 
 void lgdt(Descriptor[] gdt)
@@ -195,5 +241,13 @@ void lidt(Descriptor[] idt)
     asm
     {
         "lidt (%[idtp])" : : [idtp] "b" &idtp;
+    }
+}
+
+void ltr(ushort selector)
+{
+    asm
+    {
+        "ltr %[tss_selector]" : : [tss_selector] "b" selector;
     }
 }

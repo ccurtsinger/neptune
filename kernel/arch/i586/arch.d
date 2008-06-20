@@ -59,8 +59,15 @@ const size_t INT_SYSCALL_A = 128;
 const size_t INT_SYSCALL_B = 129;
 const size_t INT_SYSCALL_C = 130;
 
+const size_t SEL_KERNEL_CODE = 0x8;
+const size_t SEL_KERNEL_DATA = 0x10;
+const size_t SEL_USER_CODE = 0x18;
+const size_t SEL_USER_DATA = 0x20;
+const size_t SEL_TSS = 0x28;
+
 Descriptor[16] gdt;
 Descriptor[256] idt;
+TSS tss;
 
 InterruptHandler[256] int_handlers;
 
@@ -74,54 +81,62 @@ PageTable* startup()
     gdt[0].clear();
 
     // kernel code descriptor
-    gdt[1].clear();
-    gdt[1].user = true;
-    gdt[1].code = true;
-    gdt[1].present = true;
-    gdt[1].readable = true;
-    gdt[1].scaled = true;
-    gdt[1].conforming = false;
-    gdt[1].base = 0;
-    gdt[1].limit = 0xFFFFF;
-    gdt[1].dpl = 0;
-    gdt[1].pmode = true;
+    gdt[SEL_KERNEL_CODE/8].clear();
+    gdt[SEL_KERNEL_CODE/8].user = true;
+    gdt[SEL_KERNEL_CODE/8].code = true;
+    gdt[SEL_KERNEL_CODE/8].present = true;
+    gdt[SEL_KERNEL_CODE/8].readable = true;
+    gdt[SEL_KERNEL_CODE/8].scaled = true;
+    gdt[SEL_KERNEL_CODE/8].conforming = false;
+    gdt[SEL_KERNEL_CODE/8].base = 0;
+    gdt[SEL_KERNEL_CODE/8].limit = 0xFFFFF;
+    gdt[SEL_KERNEL_CODE/8].dpl = 0;
+    gdt[SEL_KERNEL_CODE/8].pmode = true;
 
     // kernel data descriptor
-    gdt[2].clear();
-    gdt[2].user = true;
-    gdt[2].code = false;
-    gdt[2].present = true;
-    gdt[2].writable = true;
-    gdt[2].scaled = true;
-    gdt[2].base = 0;
-    gdt[2].limit = 0xFFFFF;
-    gdt[2].dpl = 0;
-    gdt[2].pmode = true;
+    gdt[SEL_KERNEL_DATA/8].clear();
+    gdt[SEL_KERNEL_DATA/8].user = true;
+    gdt[SEL_KERNEL_DATA/8].code = false;
+    gdt[SEL_KERNEL_DATA/8].present = true;
+    gdt[SEL_KERNEL_DATA/8].writable = true;
+    gdt[SEL_KERNEL_DATA/8].scaled = true;
+    gdt[SEL_KERNEL_DATA/8].base = 0;
+    gdt[SEL_KERNEL_DATA/8].limit = 0xFFFFF;
+    gdt[SEL_KERNEL_DATA/8].dpl = 0;
+    gdt[SEL_KERNEL_DATA/8].pmode = true;
 
     // user code descriptor
-    gdt[3].clear();
-    gdt[3].user = true;
-    gdt[3].code = true;
-    gdt[3].present = true;
-    gdt[3].readable = true;
-    gdt[3].scaled = true;
-    gdt[3].conforming = false;
-    gdt[3].base = 0;
-    gdt[3].limit = 0xFFFFF;
-    gdt[3].dpl = 3;
-    gdt[3].pmode = true;
+    gdt[SEL_USER_CODE/8].clear();
+    gdt[SEL_USER_CODE/8].user = true;
+    gdt[SEL_USER_CODE/8].code = true;
+    gdt[SEL_USER_CODE/8].present = true;
+    gdt[SEL_USER_CODE/8].readable = true;
+    gdt[SEL_USER_CODE/8].scaled = true;
+    gdt[SEL_USER_CODE/8].conforming = false;
+    gdt[SEL_USER_CODE/8].base = 0;
+    gdt[SEL_USER_CODE/8].limit = 0xFFFFF;
+    gdt[SEL_USER_CODE/8].dpl = 3;
+    gdt[SEL_USER_CODE/8].pmode = true;
 
     // user data descriptor
-    gdt[4].clear();
-    gdt[4].user = true;
-    gdt[4].code = false;
-    gdt[4].present = true;
-    gdt[4].writable = true;
-    gdt[4].scaled = true;
-    gdt[4].base = 0;
-    gdt[4].limit = 0xFFFFF;
-    gdt[4].dpl = 3;
-    gdt[4].pmode = true;
+    gdt[SEL_USER_DATA/8].clear();
+    gdt[SEL_USER_DATA/8].user = true;
+    gdt[SEL_USER_DATA/8].code = false;
+    gdt[SEL_USER_DATA/8].present = true;
+    gdt[SEL_USER_DATA/8].writable = true;
+    gdt[SEL_USER_DATA/8].scaled = true;
+    gdt[SEL_USER_DATA/8].base = 0;
+    gdt[SEL_USER_DATA/8].limit = 0xFFFFF;
+    gdt[SEL_USER_DATA/8].dpl = 3;
+    gdt[SEL_USER_DATA/8].pmode = true;
+    
+    // TSS descriptor
+    gdt[SEL_TSS/8].clear();
+    gdt[SEL_TSS/8].base = cast(size_t)&tss;
+    gdt[SEL_TSS/8].limit = TSS.sizeof;
+    gdt[SEL_TSS/8].type = DescriptorType.TSS;
+    gdt[SEL_TSS/8].present = true;
+    gdt[SEL_TSS/8].dpl = 0;
 
     lgdt(gdt);
     
@@ -130,10 +145,10 @@ PageTable* startup()
     {
         idt[i].clear();
         idt[i].present = true;
-        idt[i].dpl = 0;
+        idt[i].dpl = 3;
         idt[i].user = false;
-        idt[i].type = 0xE;
-        idt[i].selector = 0x8;
+        idt[i].type = DescriptorType.INTERRUPT_GATE;
+        idt[i].selector = SEL_KERNEL_CODE;
     }
     
     mixin(isr_ref!());
@@ -158,6 +173,8 @@ PageTable* startup()
     int_handlers[19] = InterruptHandler("SIMD floating point exception");
     
     lidt(idt);
+    
+    ltr(SEL_TSS);
     
     remap_pic(32, 0xFFFF);
 
@@ -189,6 +206,17 @@ void disable_interrupts()
 void enable_interrupts()
 {
     asm{"sti";}
+}
+
+void set_kernel_entry_stack(size_t p)
+{
+    tss.ss0 = SEL_KERNEL_DATA;
+    tss.esp0 = p;
+}
+
+size_t get_kernel_entry_stack()
+{
+    return tss.esp0;
 }
 
 void load_page_table(size_t pagetable)

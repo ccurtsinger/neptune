@@ -32,6 +32,8 @@
 
 module array;
 
+import kernel.core;
+
 import std.mem;
 
 struct Array
@@ -86,4 +88,41 @@ extern (C) void[] _d_arraycast(size_t tsize, size_t fsize, void[] a)
     *cast(size_t *)&a = length; // jam new length
     
     return a;
+}
+
+import std.stdio;
+
+/**
+ * Append an element to an array
+ *
+ * Params:
+ *  ti = TypeInfo for the array elements
+ *  x = base array
+ *  argp = pointer to the element to append
+ *
+ * Returns: the newly appended-to array
+ */
+extern (C) byte[] _d_arrayappendcTp(TypeInfo ti, inout byte[] x, void *argp)
+{
+    auto sizeelem = ti.next.tsize();            // array element size
+    auto length = x.length;
+    auto newlength = length + 1;
+    auto newsize = newlength * sizeelem;
+
+    if(x.ptr is null || heap.size(x.ptr) < newsize)
+    {
+        byte* newdata = cast(byte *)heap.allocate(newsize);
+        
+        memcpy(newdata, x.ptr, length * sizeelem);
+        
+        (cast(void**)(&x))[1] = newdata;
+    }
+
+    *cast(size_t *)&x = newlength;
+    
+    byte* b = cast(byte*)x.ptr;
+    
+    memcpy(&(b[length*sizeelem]), argp, sizeelem);
+
+    return x;
 }

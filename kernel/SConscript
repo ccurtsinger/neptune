@@ -5,6 +5,7 @@ Import('env')
 obj_list  = SConscript('arch/SConscript', exports='env')
 
 obj_list += [env.gdc('core.o',      'core.d')]
+obj_list += [env.gdc('event.o',     'event.d')]
 obj_list += [env.gdc('main.o',      'main.d')]
 obj_list += [env.gdc('syscall.o',   'syscall.d')]
 

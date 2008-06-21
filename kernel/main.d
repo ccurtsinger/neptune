@@ -7,6 +7,7 @@
 module kernel.main;
 
 import kernel.core;
+import kernel.event;
 import kernel.spec.multiboot;
 import kernel.arch.native;
 
@@ -55,15 +56,32 @@ extern(C) void _main(MultibootInfo* multiboot, uint magic)
     // Initialize the kernel heap
     heap = HeapAllocator(&phys, &addr, ZoneType.KERNEL_HEAP);
     
-    size_t[char[]] test;
-    
-    test["pants"] = 1;
-    test["shirt"] = 3;
-    
-    foreach(key, data; test)
-    {
-        writefln("%s: %u", key, data);
-    }
+    root.addHandler("test", EventHandler(0, &handler1));
+    root.addHandler("test.a", EventHandler(0, &handler2));
+    root.addHandler("test.b", EventHandler(0, &handler3));
+    root.addHandler("test.a.1", EventHandler(0, &handler4));
+
+    root.raiseEvent("test.a.1");
     
     for(;;){}
+}
+
+void handler1(char[] domain)
+{
+    writefln("handler1: %s", domain);
+}
+
+void handler2(char[] domain)
+{
+    writefln("handler2: %s", domain);
+}
+
+void handler3(char[] domain)
+{
+    writefln("handler3: %s", domain);
+}
+
+void handler4(char[] domain)
+{
+    writefln("handler4: %s", domain);
 }

@@ -10,6 +10,10 @@ import kernel.mem.physical;
 import kernel.mem.addrspace;
 import kernel.mem.heap;
 
+import kernel.event;
+
 PhysicalAllocator phys;
 AddressSpace addr;
 HeapAllocator heap;
+
+EventDomain root;

@@ -15,7 +15,7 @@ byte* screen_mem;
 size_t cursor_x;
 size_t cursor_y;
 
-extern(C) void putc(char c)
+void putc(char c)
 {
     if(c == '\n')
     {

@@ -32,6 +32,16 @@ size_t digits(size_t i, size_t base = 10)
     return d;
 }
 
+/**
+ * Convert an unsigned integer to a string in a given base
+ *
+ * Params:
+ *  value = integer to convert
+ *  buf = character array to store digits in
+ *  base = base to convert integer to
+ *
+ * Returns: reference to the converted integer (buf) sliced to the final length
+ */
 char[] itoa(size_t value, char[] buf, size_t base = 10)
 {
     int i = buf.length-1;

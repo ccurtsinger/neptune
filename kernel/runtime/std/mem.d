@@ -84,6 +84,16 @@ extern(C) void* memmove(void* dest, void* src, size_t size)
     return dest;
 }
 
+/**
+ * Compare the contents of two memory locations
+ *
+ * Params:
+ *  p1 = first memory location
+ *  p2 = second memory location
+ *  size = size of the memory region to compare
+ *
+ * Returns: 1 if p1 > p2, -1 if p1 < p2, 0 if p1 == p2
+ */
 extern(C) int memcmp(void* p1, void* p2, size_t size)
 {
     ubyte* a = cast(ubyte*)p1;
@@ -99,4 +109,3 @@ extern(C) int memcmp(void* p1, void* p2, size_t size)
     
     return 0;
 }
-

@@ -10,23 +10,20 @@ import kernel.core;
 
 import std.mem;
 
+/// Struct representation of an array
 struct Array
 {
     size_t length;
     void* ptr;
 }
 
-/**
- * The associative array data passed to handling functions
- */
+/// The associative array data passed to handling functions
 struct AssociativeArray
 {
     AssociativeArrayNode** head = null;
 }
 
-/**
- * Associative array node
- */
+/// Associative array node
 struct AssociativeArrayNode
 {
     AssociativeArrayNode* next;
@@ -36,6 +33,11 @@ struct AssociativeArrayNode
 
 /**
  * Determine number of entries in associative array.
+ *
+ * Params:
+ *  aa = the associative array
+ *
+ * Returns: the number of nodes in the associative array
  */
 extern (C) size_t _aaLen(AssociativeArray aa)
 {
@@ -55,8 +57,16 @@ extern (C) size_t _aaLen(AssociativeArray aa)
 }
 
 /**
- * Get pointer to value in associative array indexed by key.
- * Add entry for key if it is not already there.
+ * Get a pointer to an element in an associative array.
+ * If element isn't present, allocate space for it
+ *
+ * Params:
+ *  aa = pointer to the associative array object
+ *  keyti = typeinfo for the associative array's key type
+ *  valuesize = type size for the associative array's data type
+ *  pkey = pointer to the key data for this lookup/insertion
+ *
+ * Returns: pointer to the data element for the given key in aa
  */
 extern (C) void *_aaGetp(AssociativeArray* aa, TypeInfo keyti, size_t valuesize, void *pkey)
 {
@@ -92,8 +102,15 @@ extern (C) void *_aaGetp(AssociativeArray* aa, TypeInfo keyti, size_t valuesize,
 }
 
 /**
- * Get pointer to value in associative array indexed by key.
- * Returns null if it is not already there.
+ * Get a pointer to an element in an associative array
+ *
+ * Params:
+ *  aa = associative array
+ *  keyti = typeinfo for the associative arrays key type
+ *  valuesize = type size for the associative array's data type
+ *  pkey = pointer to the key data for this lookup
+ *
+ * Returns: null if key was not found, or a pointer to the found data memory location
  */
 extern (C) void *_aaGetRvaluep(AssociativeArray aa, TypeInfo keyti, size_t valuesize, void *pkey)
 {
@@ -101,10 +118,14 @@ extern (C) void *_aaGetRvaluep(AssociativeArray aa, TypeInfo keyti, size_t value
 }
 
 /**
- * Determine if key is in aa.
- * Returns:
- *      null    not in aa
- *      !=null  in aa, return pointer to value
+ * Find a key in an associative array
+ *
+ * Params:
+ *  aa = associative array
+ *  keyti = typeinfo for the associative array key type
+ *  pkey = pointer to the key data
+ *
+ * Returns: null if key isn't found, otherwise a pointer to the key's data
  */
 extern (C) void* _aaInp(AssociativeArray aa, TypeInfo keyti, void *pkey)
 {
@@ -125,8 +146,12 @@ extern (C) void* _aaInp(AssociativeArray aa, TypeInfo keyti, void *pkey)
 }
 
 /**
- * Delete key entry in aa[].
- * If key is not in aa[], do nothing.
+ * Remove a key from an associative array
+ *
+ * Params:
+ *  aa = associative array
+ *  keyti = typeinfo for the associative array key type
+ *  pkey = pointer to the key data
  */
 extern (C) void _aaDelp(AssociativeArray aa, TypeInfo keyti, void *pkey)
 {
@@ -159,7 +184,14 @@ extern (C) void _aaDelp(AssociativeArray aa, TypeInfo keyti, void *pkey)
 }
 
 /**
- * Produce array of values from aa.
+ * Generate an array of values from the associative array
+ *
+ * Params:
+ *  aa = associative array
+ *  keysize = type size for the associative array key type
+ *  valuesize = type size for the associative array value type
+ *
+ * Returns: array of values
  */
 extern (C) Array _aaValues(AssociativeArray aa, size_t keysize, size_t valuesize)
 {
@@ -191,15 +223,28 @@ extern (C) Array _aaValues(AssociativeArray aa, size_t keysize, size_t valuesize
 }
 
 /**
- * Rehash an array.
+ * Rehash an associative array
+ *
+ * Params:
+ *  aa = pointer to the associative array
+ *  keyti = typeinfo for the associative array key type
+ *
+ * Returns: the rehashed associative array
  */
-extern (C) AssociativeArray _aaRehash(AssociativeArray* paa, TypeInfo keyti)
+extern (C) AssociativeArray _aaRehash(AssociativeArray* aa, TypeInfo keyti)
 {
-    return *paa;
+    return *aa;
 }
 
 /**
- * Produce array of N byte keys from aa.
+ * Generate an array of keys from the associative array
+ *
+ * Params:
+ *  aa = associative array
+ *  keysize = type size for the associative array key type
+ *  valuesize = type size for the associative array value type
+ *
+ * Returns: array of keys
  */
 extern (C) Array _aaKeys(AssociativeArray aa, size_t keysize)
 {
@@ -231,7 +276,14 @@ extern (C) Array _aaKeys(AssociativeArray aa, size_t keysize)
 }
 
 /**
- * 'apply' for associative arrays - to support foreach
+ * Support for foreach loops on an associative array
+ *
+ * Params:
+ *  aa = associative array
+ *  keysize = type size for the associative array key type
+ *  dg = delegate to apply to each element in the associative array
+ *
+ * Returns: result of dg
  */
 extern (C) int _aaApply(AssociativeArray aa, size_t keysize, int delegate(void *) dg)
 {
@@ -255,6 +307,16 @@ extern (C) int _aaApply(AssociativeArray aa, size_t keysize, int delegate(void *
     return result;
 }
 
+/**
+ * Support for foreach loops on an associative array using an index parameter
+ *
+ * Params:
+ *  aa = associative array
+ *  keysize = type size for the associative array key type
+ *  dg = delegate to apply to each element in the associative array
+ *
+ * Returns: result of dg
+ */
 extern (C) int _aaApply2(AssociativeArray aa, size_t keysize, int delegate(void *, void *) dg)
 {
     int result;

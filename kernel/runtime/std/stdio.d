@@ -1,28 +1,45 @@
 /**
  * Standard I/O operations
  *
- *
  * Copyright: 2008 The Neptune Project
  */
  
 module std.stdio;
 
+import kernel.arch.native;
+
 import std.integer;
 import std.stdarg;
 
-extern(C) void putc(char c);
-
+/**
+ * Write a single character to screen
+ *
+ * Params:
+ *  c = character to write
+ */
 void write(char c)
 {
     putc(c);
 }
 
+/**
+ * Write a single character to screen, followed by a newline
+ *
+ * Params:
+ *  c = character to write
+ */
 void writeln(char c)
 {
     putc(c);
     putc('\n');
 }
 
+/**
+ * Write a string of characters to screen
+ *
+ * Params:
+ *  str = string to write
+ */
 void write(char[] str)
 {
     foreach(c; str)
@@ -31,24 +48,43 @@ void write(char[] str)
     }
 }
 
+/**
+ * Write a string of characters to screen, followed by a newline
+ *
+ * Params:
+ *  str = string to write
+ */
 void writeln(char[] str)
 {
     write(str);
     putc('\n');
 }
 
+/**
+ * Write a formatted string to screen
+ */
 void writef(...)
 {
     doFormat(_arguments, _argptr);
 }
 
+/**
+ * Write a formatted string to screen, followed by a newline
+ */
 void writefln(...)
 {
-    
     doFormat(_arguments, _argptr);
     putc('\n');
 }
 
+/**
+ * Parse a list of arguments to writef or writefln and perform the
+ * formatting operations specified in all format strings
+ *
+ * Params:
+ *  args = array of typeinfo paramters for arguments
+ *  argptr = argptr used to reference values for all arguments
+ */
 private void doFormat(TypeInfo[] args, va_list argptr)
 {
     // Iterate through arguments

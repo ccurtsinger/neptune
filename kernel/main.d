@@ -15,6 +15,7 @@ import kernel.mem.addrspace;
 import kernel.mem.heap;
 
 import std.stdio;
+import std.string;
 
 extern(C) void _main(MultibootInfo* multiboot, uint magic)
 {
@@ -53,6 +54,16 @@ extern(C) void _main(MultibootInfo* multiboot, uint magic)
     
     // Initialize the kernel heap
     heap = HeapAllocator(&phys, &addr, ZoneType.KERNEL_HEAP);
+    
+    size_t[char[]] test;
+    
+    test["pants"] = 1;
+    test["shirt"] = 3;
+    
+    foreach(key, data; test)
+    {
+        writefln("%s: %u", key, data);
+    }
     
     for(;;){}
 }

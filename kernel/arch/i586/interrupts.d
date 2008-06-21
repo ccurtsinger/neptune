@@ -11,6 +11,7 @@ import kernel.arch.i586.descriptors;
 import kernel.arch.i586.pic;
 import kernel.arch.i586.registers;
 
+import kernel.core;
 import kernel.syscall;
 
 import std.stdio;
@@ -18,7 +19,7 @@ import std.stdio;
 version(arch_i586):
 
 Descriptor[256] idt;
-InterruptHandler[256] int_handlers;
+char[][256] interrupt_events;
 
 void setup_interrupts()
 {
@@ -65,28 +66,11 @@ void setup_interrupts()
     set_isr(129, &isr_129, 3);
     set_isr(130, &isr_130, 3);
     
-    int_handlers[0] = InterruptHandler("divide by zero exception");
-    int_handlers[1] = InterruptHandler("debug exception");
-    int_handlers[2] = InterruptHandler("non-maskable interrupt");
-    int_handlers[3] = InterruptHandler("breakpoint exception");
-    int_handlers[4] = InterruptHandler("overflow exception");
-    int_handlers[5] = InterruptHandler("bound-range exception");
-    int_handlers[6] = InterruptHandler("invalid opcode");
-    int_handlers[7] = InterruptHandler("device not available");
-    int_handlers[8] = InterruptHandler("double fault");
-    int_handlers[10] = InterruptHandler("invalid TSS");
-    int_handlers[11] = InterruptHandler("segment not present");
-    int_handlers[12] = InterruptHandler("stack exception");
-    int_handlers[13] = InterruptHandler("general protection fault");
-    int_handlers[14] = InterruptHandler("page fault");
-    int_handlers[16] = InterruptHandler("x87 floating point exception");
-    int_handlers[17] = InterruptHandler("alignment check exception");
-    int_handlers[18] = InterruptHandler("machine check exception");
-    int_handlers[19] = InterruptHandler("SIMD floating point exception");
+    interrupt_events[32] = "dev.pit";
     
     lidt(idt);
     
-    remap_pic(32, 0xFFFF);
+    remap_pic(32, 0xFFFE);
 }
 
 void set_isr(size_t interrupt, void* handler, size_t dpl)
@@ -99,11 +83,37 @@ void set_isr(size_t interrupt, void* handler, size_t dpl)
     idt[interrupt].offset = cast(size_t)handler;
 }
 
+char[][] interrupt_errors = [   "divide by zero exception",
+                                "debug exception",
+                                "non-maskable interrupt"
+                                "breakpoint exception",
+                                "overflow exception",
+                                "bound-range exception",
+                                "invalid opcode",
+                                "device not available",
+                                "double fault",
+                                "unhandled interrupt",
+                                "invalid TSS",
+                                "segment not present",
+                                "stack exception",
+                                "general protection fault",
+                                "page fault",
+                                "unhandled interrupt",
+                                "x87 floating point exception",
+                                "alignment check exception",
+                                "machine check exception",
+                                "SIMD floating point exception"];
+
 extern(C) void common_interrupt(int interrupt, int error, Context context)
 {
-    if(!int_handlers[interrupt].set || !int_handlers[interrupt](&context))
+    if(interrupt_events[interrupt].length == 0)
     {
-        writefln("interrupt %u: %s", interrupt, int_handlers[interrupt].error);
+        char[] message = "unhandled interrupt";
+        
+        if(interrupt < interrupt_errors.length)
+            message = interrupt_errors[interrupt];
+        
+        writefln("interrupt %u: %s", interrupt, message);
         writefln("  error: %02#x", error);
         writefln("   %%eip: %08#x", context.eip);
         writefln("   %%esp: %08#x", context.esp);
@@ -121,6 +131,10 @@ extern(C) void common_interrupt(int interrupt, int error, Context context)
     
         for(;;){}
     }
+    else
+    {
+        root.raiseEvent(interrupt_events[interrupt]);
+    }
 }
 
 struct Context
@@ -137,36 +151,6 @@ struct Context
     uint flags;
     uint esp;
     uint ss;
-}
-
-struct InterruptHandler
-{
-    bool set = false;
-    char[] error = "unhandled interrupt";
-    bool function(Context*) handler = null;
-    
-    public static InterruptHandler opCall(char[] error)
-    {
-        InterruptHandler i;
-        i.error = error;
-        return i;
-    }
-    
-    public static InterruptHandler opCall(bool function(Context*) handler, char[] error)
-    {
-        InterruptHandler i;
-        i.handler = handler;
-        i.error = error;
-        i.set = true;
-        return i;
-    }
-    
-    public bool opCall(Context* c)
-    {
-        assert(handler !is null, "Invoked null interrupt handler");
-        
-        return handler(c);
-    }
 }
 
 template isr(int num)

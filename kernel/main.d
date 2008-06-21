@@ -20,7 +20,7 @@ import std.string;
 
 extern(C) void _main(MultibootInfo* multiboot, uint magic)
 {
-    PageTable* pagetable = startup();
+    PageTable* pagetable = arch_init();
     
     // Initialize the physical memory allocator
     phys.init();
@@ -56,32 +56,16 @@ extern(C) void _main(MultibootInfo* multiboot, uint magic)
     // Initialize the kernel heap
     heap = HeapAllocator(&phys, &addr, ZoneType.KERNEL_HEAP);
     
-    root.addHandler("test", EventHandler(0, &handler1));
-    root.addHandler("test.a", EventHandler(0, &handler2));
-    root.addHandler("test.b", EventHandler(0, &handler3));
-    root.addHandler("test.a.1", EventHandler(0, &handler4));
-
-    root.raiseEvent("test.a.1");
+    arch_setup();
+    
+    root.addHandler("dev", EventHandler(0, &dev_handler));
+    
+    enable_interrupts();
     
     for(;;){}
 }
 
-void handler1(char[] domain)
+void dev_handler(char[] domain)
 {
-    writefln("handler1: %s", domain);
-}
-
-void handler2(char[] domain)
-{
-    writefln("handler2: %s", domain);
-}
-
-void handler3(char[] domain)
-{
-    writefln("handler3: %s", domain);
-}
-
-void handler4(char[] domain)
-{
-    writefln("handler4: %s", domain);
+    writeln("device event!");
 }

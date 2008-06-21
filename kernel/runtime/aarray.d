@@ -136,7 +136,7 @@ extern (C) void* _aaInp(AssociativeArray aa, TypeInfo keyti, void *pkey)
     
     while(c !is null)
     {
-        if(memcmp(c.key, pkey, keyti.tsize()) == 0)
+        if(keyti.compare(pkey, c.key) == 0)
             return c.data;
         
         c = c.next;
@@ -160,7 +160,7 @@ extern (C) void _aaDelp(AssociativeArray aa, TypeInfo keyti, void *pkey)
     
     while(c !is null)
     {
-        if(memcmp(c.key, pkey, keyti.tsize()) == 0)
+        if(keyti.compare(pkey, c.key) == 0)
         {
             if(prev is null)
             {

@@ -99,9 +99,9 @@ void set_isr(size_t interrupt, void* handler, size_t dpl)
     idt[interrupt].offset = cast(size_t)handler;
 }
 
-extern(C) void common_interrupt(int interrupt, int error, Context* context)
+extern(C) void common_interrupt(int interrupt, int error, Context context)
 {
-    if(!int_handlers[interrupt].set || !int_handlers[interrupt](context))
+    if(!int_handlers[interrupt].set || !int_handlers[interrupt](&context))
     {
         writefln("interrupt %u: %s", interrupt, int_handlers[interrupt].error);
         writefln("  error: %02#x", error);
@@ -189,11 +189,10 @@ template isr(int num)
                 \"push %%ecx\";
                 \"push %%ebx\";
                 \"push %%eax\";
-                \"push %%esp\";
                 \"push %%edi\";
                 \"push $" ~ num.stringof ~ "\";
                 \"call common_interrupt\";
-                \"add $12, %%esp\";
+                \"add $8, %%esp\";
                 \"pop %%eax\";
                 \"pop %%ebx\";
                 \"pop %%ecx\";
@@ -221,11 +220,10 @@ template isr(int num)
                 \"push %%ecx\";
                 \"push %%ebx\";
                 \"push %%eax\";
-                \"push %%esp\";
                 \"push $0\";
                 \"push $" ~ num.stringof ~ "\";
                 \"call common_interrupt\";
-                \"add $12, %%esp\";
+                \"add $8, %%esp\";
                 \"pop %%eax\";
                 \"pop %%ebx\";
                 \"pop %%ecx\";

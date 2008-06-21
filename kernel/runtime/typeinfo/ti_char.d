@@ -9,8 +9,19 @@ class TypeInfo_a : TypeInfo
     }
 
     void[] init()
-    {   static char c;
+    {
+        static char c;
 
         return (cast(char *)&c)[0 .. 1];
+    }
+    
+    int compare(void *p1, void *p2)
+    {
+        if(*cast(char*)p1 < *cast(char*)p2)
+            return -1;
+        else if(*cast(char*)p1 > *cast(char*)p2)
+            return 1;
+            
+        return 0;
     }
 }

@@ -11,8 +11,19 @@ class TypeInfo_w : TypeInfo
     }
     
     void[] init()
-    {   static dchar c;
+    {
+        static dchar c;
 
         return (cast(dchar *)&c)[0 .. 1];
+    }
+    
+    int compare(void *p1, void *p2)
+    {
+        if(*cast(dchar*)p1 < *cast(dchar*)p2)
+            return -1;
+        else if(*cast(dchar*)p1 > *cast(dchar*)p2)
+            return 1;
+            
+        return 0;
     }
 }

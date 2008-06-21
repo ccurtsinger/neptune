@@ -280,7 +280,7 @@ extern(C) void isr_128()
     asm
     {
         naked;
-        "jmp syscall_a";
+        "call syscall_a";
         "iret";
     }
 }
@@ -290,7 +290,7 @@ extern(C) void isr_129()
     asm
     {
         naked;
-        "jmp syscall_b";
+        "call syscall_b";
         "iret";
     }
 }
@@ -300,7 +300,7 @@ extern(C) void isr_130()
     asm
     {
         naked;
-        "jmp syscall_c";
+        "call syscall_c";
         "iret";
     }
 }

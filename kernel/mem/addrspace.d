@@ -84,9 +84,6 @@ struct AddressSpace
         a.zones[ZoneType.KERNEL_STACK] = Zone(MemoryRange(KERNEL_VIRTUAL_BASE + kernel_size, KERNEL_STACK_TOP - (KERNEL_VIRTUAL_BASE + kernel_size)), false);
         a.zones[ZoneType.KERNEL_DYNAMIC] = Zone(MemoryRange(KERNEL_STACK_TOP, VIRTUAL_MEMORY_MAX - KERNEL_STACK_TOP + 1));
         
-        // Mark kernel binary pages as occupied
-        a.allocate(ZoneType.KERNEL_BINARY, kernel_size);
-        
         return a;
     }
     

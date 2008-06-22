@@ -40,6 +40,10 @@ PageTable* arch_init()
 
 void arch_setup()
 {
+    PageTable* pagetable = cast(PageTable*)(cr3 + 0xC0000000);
+    
+    pagetable.unmap(0);
+    
     root.addHandler("dev.pit", EventHandler(0, &pit_handler));
 }
 

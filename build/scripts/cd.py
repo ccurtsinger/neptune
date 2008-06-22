@@ -30,12 +30,15 @@ def createCD(target, source, env):
     boot_path   = os.path.join(iso_path, 'boot')
     grub_path   = os.path.join(boot_path, 'grub')
     stage2_path = os.path.join(grub_path, 'stage2_eltorito')
+    server_path = os.path.join(iso_path, 'servers')
 
     # Give us a clean place to put the iso files
     if os.path.isdir(iso_path):
         rmtree(iso_path)
 
     mkdir(grub_path)
+    
+    mkdir(server_path)
 
     for source_file in source:
         basename = os.path.basename(source_file.path)
@@ -46,6 +49,8 @@ def createCD(target, source, env):
             link(source_file.path, stage2_path)
         elif basename == 'iso-menu.lst':
             link(source_file.path, os.path.join(grub_path, 'menu.lst'))
+        else:
+            link(source_file.path, os.path.join(server_path, basename))
 
     call(['mkisofs', '-R', '-no-emul-boot', '-boot-info-table',
           '-boot-load-size', '4',

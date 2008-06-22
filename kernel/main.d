@@ -9,6 +9,7 @@ module kernel.main;
 import kernel.core;
 import kernel.event;
 import kernel.spec.multiboot;
+import kernel.spec.elf;
 
 import kernel.arch.setup;
 import kernel.arch.paging;
@@ -50,6 +51,33 @@ extern(C) void _main(MultibootInfo* multiboot, uint magic)
             }
         }
     }
+    
+    ElfHeader* process_image;
+    
+    foreach(mod; multiboot.getModules())
+    {
+        writeln(mod.getString());
+        ElfHeader* elf = cast(ElfHeader*)mod.getData();
+        
+        if(elf.valid())
+        {
+            writeln("valid!");
+            process_image = elf;
+        }
+    }
+    
+    auto program_headers = process_image.getProgramHeaders();
+    size_t total = 0;
+    
+    foreach(h; program_headers)
+    {
+        writefln("%s: %#x %#x", h.getTypeName(), h.getMemorySize(), h.getFileSize());
+        total += h.getMemorySize();
+    }
+    
+    writefln("Total Size of module: %#x", total);
+    
+    for(;;){}
     
     // Initialize the base address space
     addr = AddressSpace(pagetable, 0, FRAME_SIZE);

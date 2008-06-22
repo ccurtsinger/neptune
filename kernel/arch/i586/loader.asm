@@ -28,8 +28,8 @@ pagetable:
     ; enabled because it can't fetch the next instruction! It's ok to unmap this page later.
     dd 0x00000083
     times (KERNEL_PAGE_NUMBER - 1) dd 0                 ; Pages before kernel space.
-    ; This page directory entry defines a 4MB page containing the kernel.
-    dd 0x00000083
+    ; This page directory entry defines a 4MB page containing the kernel.  Set bit 9 to mark as used for kernel
+    dd 0x00000283
     times (1024 - KERNEL_PAGE_NUMBER - 1) dd 0  ; Pages after the kernel image.
 
 
@@ -64,8 +64,8 @@ _loader:
 StartInHigherHalf:
     ; Unmap the identity-mapped first 4MB of physical address space. It should not be needed
     ; anymore.
-    mov dword [pagetable], 0
-    invlpg [0]
+    ;mov dword [pagetable], 0
+    ;invlpg [0]
 
     ; NOTE: From now on, paging should be enabled. The first 4MB of physical address space is
     ; mapped starting at KERNEL_VIRTUAL_BASE. Everything is linked to this address, so no more
@@ -76,7 +76,7 @@ StartInHigherHalf:
 
     ; pass Multiboot info structure -- WARNING: This is a physical address and may not be
     ; in the first 4MB!
-    add ebx, KERNEL_VIRTUAL_BASE
+    ;add ebx, KERNEL_VIRTUAL_BASE
     push ebx
 
     call  _main                  ; call kernel proper

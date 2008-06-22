@@ -14,6 +14,7 @@ import kernel.spec.elf;
 import kernel.arch.setup;
 import kernel.arch.paging;
 import kernel.arch.constants;
+import kernel.arch.common;
 
 import kernel.mem.physical;
 import kernel.mem.addrspace;
@@ -76,8 +77,6 @@ extern(C) void _main(MultibootInfo* multiboot, uint magic)
     }
     
     writefln("Total Size of module: %#x", total);
-    
-    for(;;){}
     
     // Initialize the base address space
     addr = AddressSpace(pagetable, 0, FRAME_SIZE);

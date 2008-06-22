@@ -7,6 +7,7 @@
 module kernel.arch.i586.paging;
 
 import kernel.arch.i586.constants;
+import kernel.arch.i586.registers;
 import kernel.arch.i586.util;
 
 import kernel.mem.range;
@@ -24,7 +25,6 @@ struct Page
     void clear()
     {
         data = 0;
-        bits[7] = true;
     }
 
     void invalidate()
@@ -50,6 +50,7 @@ struct Page
     mixin(property!("cachedisable", "bool", "bits[4]"));
     mixin(property!("accessed", "bool", "bits[5]"));
     mixin(property!("dirty", "bool", "bits[6]"));
+    mixin(property!("large", "bool", "bits[7]"));
     mixin(property!("global", "bool", "bits[8]"));
     
     // Define OS-used properties
@@ -67,6 +68,15 @@ struct PageTable
     private Page* findPage(size_t address)
     {
         return &(pages[address>>22]);
+    }
+    
+    public size_t load()
+    {
+        size_t old_pagetable = cr3;
+        size_t physical = lookup(this);
+        cr3 = physical;
+        
+        return old_pagetable;
     }
     
     public size_t lookup(void* address)
@@ -123,6 +133,7 @@ struct PageTable
         p.writable = writable;
         p.user = user_flag;
         p.global = global;
+        p.large = true;
         p.present = true;
         p.locked = locked;
         p.used = true;

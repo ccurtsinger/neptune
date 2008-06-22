@@ -60,6 +60,9 @@ void setup_interrupts()
     set_isr(45, &isr_45, 0);
     set_isr(46, &isr_46, 0);
     set_isr(47, &isr_47, 0);
+    
+    // Timer
+    set_isr(80, &isr_80, 0);
 
     // Syscalls
     set_isr(128, &isr_128, 3);
@@ -85,7 +88,7 @@ void set_isr(size_t interrupt, void* handler, size_t dpl)
 
 char[][] interrupt_errors = [   "divide by zero exception",
                                 "debug exception",
-                                "non-maskable interrupt"
+                                "non-maskable interrupt",
                                 "breakpoint exception",
                                 "overflow exception",
                                 "bound-range exception",
@@ -256,6 +259,8 @@ mixin(isr!(44));
 mixin(isr!(45));
 mixin(isr!(46));
 mixin(isr!(47));
+
+mixin(isr!(80));
 
 extern(C) void isr_128()
 {

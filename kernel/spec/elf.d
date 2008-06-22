@@ -4,22 +4,18 @@
  * Copyright: 2008 The Neptune Project
  */
  
-module spec.elf64;
+module spec.elf;
 
-version(arch_x86_64)
+version(arch_i586)
 {
-    version = elf64;
-}
-else version(arch_i586_pc_elf_loader)
-{
-    version = elf64;
+    version = elf;
 }
 
-version(elf64):
+version(elf):
 
 import std.string;
 
-enum ElfIdent : size_t
+enum ElfIdent : uint
 {
     MAG0 = 0,
     MAG1 = 1,
@@ -27,9 +23,7 @@ enum ElfIdent : size_t
     MAG3 = 3,
     CLASS = 4,
     DATA = 5,
-    VERSION = 6,
-    OSABI = 7,
-    ABIVERSION = 8,
+    VERSION = 6
 }
 
 enum ElfClass : ubyte
@@ -42,13 +36,6 @@ enum ElfData : ubyte
 {
     LSB = 1,
     MSB = 2
-}
-
-enum OSABI : ubyte
-{
-    SYSV = 0,
-    HPUX = 1,
-    STANDALONE = 255
 }
 
 enum ElfType : ushort
@@ -112,50 +99,29 @@ enum RelocationType : ulong
     // S = value of symbol
     // Z = size of symbol
     
-    R_X86_64_NONE = 0,              // none
-    R_X86_64_64 = 1,                // S + A
-    R_X86_64_PC32 = 2,              // S + A - P
-    R_X86_64_GOT32 = 3,             // G + A
-    R_X86_64_PLT32 = 4,             // L + A - P
-    R_X86_64_COPY = 5,              // none
-    R_X86_64_GLOB_DAT = 6,          // S
-    R_X86_64_JUMP_SLOT = 7,         // S
-    R_X86_64_RELATIVE = 8,          // B + A
-    R_X86_64_GOTPCREL = 9,          // G + GOT + A - P
-    R_X86_64_32 = 10,               // S + A
-    R_X86_64_32S = 11,              // S + A
-    R_X86_64_16 = 12,               // S + A
-    R_X86_64_PC16 = 13,             // S + A - P
-    R_X86_64_8 = 14,                // S + A
-    R_X86_64_PC8 = 15,              // S + A - P
-    R_X86_64_DTPMOD64 = 16,
-    R_X86_64_DTPOFF64 = 17,
-    R_X86_64_TPOFF64 = 18,
-    R_X86_64_TLSGD = 19,
-    R_X86_64_TLSLD = 20,
-    R_X86_64_DTPOFF32 = 21,
-    R_X86_64_GOTTPOFF = 22,
-    R_X86_64_TPOFF32 = 23,
-    R_X86_64_PC64 = 24,             // S + A - P
-    R_X86_64_GOTOFF64 = 25,         // S + A - GOT
-    R_X86_64_GOTPC32 = 26,          // GOT + A - P
-    R_X86_64_SIZE32 = 32,           // Z + A
-    R_X86_64_SIZE64 = 33,           // Z + A
-    R_X86_64_GOTPC32_TLSDESC = 34,
-    R_X86_64_TLSDESC_CALL = 35,
-    R_X86_64_TLSDESC = 36,
+    R_386_NONE = 0,     // none
+    R_386_32 = 1,       // S + A
+    R_386_PC32 = 2,     // S + A - P
+    R_386_GOT32 = 3,    // G + A - P
+    R_386_PLT32 = 4,    // L + A - P
+    R_386_COPY = 5,     // none
+    R_386_GLOB_DAT = 6, // S
+    R_386_JMP_SLOT = 7, // S
+    R_386_RELATIVE = 8, // B + A
+    R_386_GOTOFF = 9,   // S + A - GOT
+    R_386_GOTPC = 10    // GOT + A - P
 }
 
-struct Elf64Header
+struct ElfHeader
 {
     align(1):
     ubyte[16] ident;    ///<Identifier
     ushort	type;	    ///<Type
     ushort	machine;    ///<Machine
     uint    ver;        ///<Format version  
-    ulong   entry;	    ///<Process entry address
-    ulong   phoff;	    ///<Program Header Table offset
-    ulong   shoff;	    ///<Section Header Table offset
+    uint    entry;	    ///<Process entry address
+    uint    phoff;	    ///<Program Header Table offset
+    uint    shoff;	    ///<Section Header Table offset
     uint    flags;	    ///<Flags
     ushort  size;	    ///<Elf header size
     ushort  phsize;	    ///<Program header entry size
@@ -166,17 +132,20 @@ struct Elf64Header
     
     public bool valid()
     {
-        return checkMagicNumbers() && is64Bit() && isLittleEndian() && isCurrentVersion() && getABI() == OSABI.SYSV && getABIVersion() == 0 && isAMD64();
+        return checkMagicNumbers() && is32Bit() && isLittleEndian() && isCurrentVersion();
     }
     
     public bool checkMagicNumbers()
     {
-        return ident[ElfIdent.MAG0] == 0x7f && ident[ElfIdent.MAG1] == cast(ubyte)'E' && ident[ElfIdent.MAG2] == cast(ubyte)'L' && ident[ElfIdent.MAG3] == cast(ubyte)'F';
+        return  ident[ElfIdent.MAG0] == 0x7f && 
+                ident[ElfIdent.MAG1] == cast(ubyte)'E' && 
+                ident[ElfIdent.MAG2] == cast(ubyte)'L' && 
+                ident[ElfIdent.MAG3] == cast(ubyte)'F';
     }
     
-    public bool is64Bit()
+    public bool is32Bit()
     {
-        return ident[ElfIdent.CLASS] == ElfClass.ELF64;
+        return ident[ElfIdent.CLASS] == ElfClass.ELF32;
     }
     
     public bool isLittleEndian()
@@ -189,16 +158,6 @@ struct Elf64Header
         return ident[ElfIdent.VERSION] == 1 && ver == 1;
     }
     
-    public OSABI getABI()
-    {
-        return cast(OSABI)ident[ElfIdent.OSABI];
-    }
-    
-    public ubyte getABIVersion()
-    {
-        return ident[ElfIdent.ABIVERSION];
-    }
-    
     public bool isExecutable()
     {
         return type == ElfType.EXEC;
@@ -209,37 +168,32 @@ struct Elf64Header
         return type == ElfType.DYN;
     }
     
-    public bool isAMD64()
+    public ElfProgramHeader[] getProgramHeaders()
     {
-        return machine == 0x3E;
-    }
-    
-    public Elf64ProgramHeader[] getProgramHeaders()
-    {
-        Elf64ProgramHeader* header = cast(Elf64ProgramHeader*)(cast(ulong)this+phoff);
+        ElfProgramHeader* header = cast(ElfProgramHeader*)(cast(uint)this+phoff);
         
         return header[0..phnum];
     }
     
-    public Elf64SectionHeader[] getSectionHeaders()
+    public ElfSectionHeader[] getSectionHeaders()
     {
-        Elf64SectionHeader* header = cast(Elf64SectionHeader*)(cast(ulong)this+shoff);
+        ElfSectionHeader* header = cast(ElfSectionHeader*)(cast(uint)this+shoff);
         
         return header[0..shnum];
     }
     
-    public Elf64SectionHeader getSectionNameSection()
+    public ElfSectionHeader getSectionNameSection()
     {
         auto sheaders = getSectionHeaders();
         
         return sheaders[shstrndx];
     }
     
-    public Elf64SectionHeader* getSection(char[] seek)
+    public ElfSectionHeader* getSection(char[] seek)
     {
         auto sheaders = getSectionHeaders();
         
-        auto shstrtab = Elf64StringTable(getSection(shstrndx).getData(this));
+        auto shstrtab = ElfStringTable(getSection(shstrndx).getData(this));
         
         foreach(size_t i, section; sheaders)
         {
@@ -252,7 +206,7 @@ struct Elf64Header
         return null;
     }
     
-    public Elf64SectionHeader* getSection(size_t num)
+    public ElfSectionHeader* getSection(size_t num)
     {
         auto sheaders = getSectionHeaders();
         
@@ -262,13 +216,13 @@ struct Elf64Header
         return null;
     }
     
-    public Elf64Rela[] getRelocations(char[] section)
+    public ElfRela[] getRelocations(char[] section)
     {
-        Elf64SectionHeader* rela = getSection(section);
+        ElfSectionHeader* rela = getSection(section);
         
-        size_t relocations = (cast(size_t)rela.size)/Elf64Rela.sizeof;
+        size_t relocations = (cast(size_t)rela.size)/ElfRela.sizeof;
         
-        return (cast(Elf64Rela*)(cast(ulong)this + rela.offset))[0..relocations];
+        return (cast(ElfRela*)(cast(uint)this + rela.offset))[0..relocations];
     }
     
     /*public void load(PageTable* pagetable, bool user = false)
@@ -283,15 +237,15 @@ struct Elf64Header
     {
         // Find the PLT relocation table
         auto rela_plt_section = getSection(".rela.plt");
-        Elf64Rela[] rela_plt = cast(Elf64Rela[])rela_plt_section.getData(this);
+        ElfRela[] rela_plt = cast(ElfRela[])rela_plt_section.getData(this);
         
         // Get the symbol table for PLT relocations
         auto symtab_section = getSection(rela_plt_section.getLink());
-        auto symtab = cast(Elf64Symbol[])symtab_section.getData(this);
+        auto symtab = cast(ElfSymbol[])symtab_section.getData(this);
         
         // Get the string table for PLT relocations
         auto strtab_section = getSection(symtab_section.getLink());
-        auto strtab = Elf64StringTable(strtab_section.getData(this));
+        auto strtab = ElfStringTable(strtab_section.getData(this));
         
         // Get the name of the symbol to locate (currently unused)
         char[] symbol = strtab[symtab[rela_plt[plt_index].getSymbolIndex()].name];
@@ -313,17 +267,17 @@ struct Elf64Header
     }*/
 }
 
-struct Elf64ProgramHeader
+struct ElfProgramHeader
 {
     align(1):
-    uint    type;	    ///<Program header type
-    uint    flags;	    ///<Flags
-    ulong   offset;	    ///<File offset of segment
-    ulong   vAddr;	    ///<Virtual start address
-    ulong   pAddr;	    ///<Physical start address
-    ulong   fileSize;   ///<Byte size in file
-    ulong   memSize;    ///<Byte size in memory
-    ulong   algn;	    ///<Required alignment
+    uint type;	   ///<Program header type
+    uint offset;   ///<File offset of segment
+    uint vAddr;	   ///<Virtual start address
+    uint pAddr;	   ///<Physical start address
+    uint fileSize; ///<Byte size in file
+    uint memSize;  ///<Byte size in memory
+    uint flags;	   ///<Flags
+    uint algn;	   ///<Required alignment
     
     public ProgramHeaderType getType()
     {
@@ -413,28 +367,28 @@ struct Elf64ProgramHeader
     }*/
 }
 
-struct Elf64SectionHeader
+struct ElfSectionHeader
 {
     align(1):
-    uint    name;	    ///<Index into Section Header String Table
-    uint    type;	    ///<Section type
-    ulong   flags;	    ///<Flags
-    ulong   addr;	    ///<Address of first byte
-    ulong   offset;	    ///<File offset
-    ulong   size;	    ///<Section size (bytes)
-    uint    link;	    ///<Table Index Link
-    uint    info;	    ///<Extra Info
-    ulong   algn;	    ///<Address alignment constraint
-    ulong   entsize;    ///<Size of fixed-sized entries in section, or zero
+    uint name;	    ///<Index into Section Header String Table
+    uint type;	    ///<Section type
+    uint flags;	    ///<Flags
+    uint addr;	    ///<Address of first byte
+    uint offset;	///<File offset
+    uint size;	    ///<Section size (bytes)
+    uint link;	    ///<Table Index Link
+    uint info;	    ///<Extra Info
+    uint algn;	    ///<Address alignment constraint
+    uint entsize;   ///<Size of fixed-sized entries in section, or zero
     
     public void* getBase(void* base)
     {
-        return cast(void*)(offset + cast(size_t)base);
+        return cast(void*)(offset + cast(uint)base);
     }
     
     public byte[] getData(void* base)
     {
-        return (cast(byte*)(offset + cast(size_t)base))[0..size];
+        return (cast(byte*)(offset + cast(uint)base))[0..size];
     }
     
     public void* getAddress()
@@ -470,9 +424,9 @@ struct Elf64SectionHeader
         return link;
     }
     
-    public char[] getName(Elf64Header* elf)
+    public char[] getName(ElfHeader* elf)
     {
-        auto shstrtab = Elf64StringTable(elf.getSection(elf.shstrndx).getData(elf));
+        auto shstrtab = ElfStringTable(elf.getSection(elf.shstrndx).getData(elf));
         
         return shstrtab[name];
     }
@@ -530,7 +484,7 @@ struct Elf64SectionHeader
     }
 }
 
-struct Elf64Rela
+struct ElfRela
 {
     ulong offset;
     ulong info;
@@ -556,7 +510,7 @@ struct Elf64Rela
         RelocationType type = getType();
         byte[] target;
         
-        if(type == RelocationType.R_X86_64_COPY)
+        /*if(type == RelocationType.R_X86_64_COPY)
         {
             target = (cast(byte*)offset)[0..size];
         }
@@ -569,10 +523,10 @@ struct Elf64Rela
             target = (cast(byte*)offset)[0..size];
         }
         else
-        {
+        {*/
             assert(false, "Unsupported relocation type");
             for(;;){}
-        }
+        //}
         
         return target;
     }
@@ -598,13 +552,13 @@ struct Elf64Rela
     }
 }
 
-struct Elf64StringTable
+struct ElfStringTable
 {
     private char[] strtab;
     
-    public static Elf64StringTable opCall(byte[] data)
+    public static ElfStringTable opCall(byte[] data)
     {
-        Elf64StringTable t;
+        ElfStringTable t;
         t.strtab = cast(char[])data;
         return t;
     }
@@ -615,7 +569,7 @@ struct Elf64StringTable
     }
 }
 
-struct Elf64Symbol
+struct ElfSymbol
 {
     ushort  name;       ///<Index into string table
     ubyte   info;       ///<Type and binding infor

@@ -97,7 +97,7 @@ struct MultibootInfo
 	{
 	    if(flag_bits[2])
 	    {
-	        return ctodstr(cast(char*)ptov(cmdline));
+	        return ctodstr(cast(char*)cmdline);
 	    }
         
         return "";
@@ -105,13 +105,13 @@ struct MultibootInfo
 	
 	public MultibootModule[] getModules()
 	{
-	    MultibootModule* m = cast(MultibootModule*)ptov(mods_addr);
+	    MultibootModule* m = cast(MultibootModule*)mods_addr;
         return m[0..mods_count];
 	}
 	
 	public MemoryMap getMemoryMap()
 	{
-	    return MemoryMap(cast(MemoryMapEntry*)ptov(mmap_addr), mmap_length);
+	    return MemoryMap(cast(MemoryMapEntry*)mmap_addr, mmap_length);
 	}
 }
 
@@ -143,9 +143,7 @@ struct MultibootModule
 	
 	char[] getString()
 	{
-	    size_t len = cstrlen(string);
-	    
-	    return string[0..len];
+	    return ctodstr(string);
 	}
 	
 	byte[] getData()

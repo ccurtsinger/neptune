@@ -19,37 +19,6 @@ const size_t FRAME_SIZE = 0x400000;
 const size_t FRAME_BITS = 22;
 const size_t HZ = 4;
 
-enum Interrupt
-{
-    DIVIDE_BY_ZERO = 0,
-    DEBUG = 1,
-    NMI = 2,
-    BREAKPOINT = 3,
-    OVERFLOW = 4,
-
-    INVALID_OPCODE = 6,
-    PAGE_FAULT = 14,
-
-    ALIGNMENT_CHECK = 17,
-
-    KEYBOARD = 33,
-    COM2 = 35,
-    COM1 = 36,
-    LPT2 = 37,
-    FLOPPY = 38,
-    LPT1 = 39,
-    RTC = 40,
-    MOUSE = 44,
-    IDE1 = 46,
-    IDE2 = 47,
-
-    TIMER = 80,
-
-    SYSCALL_A = 128,
-    SYSCALL_B = 129,
-    SYSCALL_C = 130
-}
-
 enum GDTSelector
 {
     KERNEL_CODE = 0x8,

@@ -9,7 +9,10 @@ module kernel.main;
 import kernel.core;
 import kernel.event;
 import kernel.spec.multiboot;
-import kernel.arch.native;
+
+import kernel.arch.setup;
+import kernel.arch.paging;
+import kernel.arch.constants;
 
 import kernel.mem.physical;
 import kernel.mem.addrspace;

@@ -6,7 +6,7 @@
 
 module kernel.spec.multiboot;
 
-import kernel.arch.native;
+import kernel.arch.setup;
 
 import std.bitarray;
 import std.string;

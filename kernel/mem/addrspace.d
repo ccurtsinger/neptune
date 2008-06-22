@@ -6,7 +6,9 @@
  
 module kernel.mem.addrspace;
 
-import kernel.arch.native;
+import kernel.arch.paging;
+import kernel.arch.constants;
+
 import kernel.mem.range;
 
 import std.bitarray;

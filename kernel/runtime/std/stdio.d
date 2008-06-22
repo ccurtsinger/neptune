@@ -6,7 +6,7 @@
  
 module std.stdio;
 
-import kernel.arch.native;
+import kernel.arch.screen;
 
 import std.integer;
 import std.stdarg;

@@ -6,7 +6,7 @@
 
 module kernel.mem.physical;
 
-import kernel.arch.native;
+import kernel.arch.constants;
 
 import std.bitarray;
 

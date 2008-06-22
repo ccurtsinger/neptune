@@ -4,7 +4,7 @@
  * Copyright: 2008 The Neptune Project
  */
 
-import kernel.arch.native;
+import kernel.arch.constants;
 
 import kernel.mem.physical;
 import kernel.mem.addrspace;

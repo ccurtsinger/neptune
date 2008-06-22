@@ -28,8 +28,6 @@ extern(C) void _main(MultibootInfo* multiboot, uint magic)
     // Initialize the physical memory allocator
     phys.init();
     
-    size_t lost = 0;
-    
     // Free memory from the multiboot memory map
     foreach(mem; multiboot.getMemoryMap())
     {

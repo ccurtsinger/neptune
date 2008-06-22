@@ -58,14 +58,7 @@ extern(C) void _main(MultibootInfo* multiboot, uint magic)
     
     arch_setup();
     
-    root.addHandler("dev", EventHandler(0, &dev_handler));
-    
     enable_interrupts();
     
     for(;;){}
-}
-
-void dev_handler(char[] domain)
-{
-    writeln("device event!");
 }

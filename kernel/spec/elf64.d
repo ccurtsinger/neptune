@@ -313,18 +313,6 @@ struct Elf64Header
     }*/
 }
 
-/*public ulong syscall_1()
-{
-    writeln("syscall_1()");
-    return 0xDEF;
-}
-
-public ulong syscall_2()
-{
-    writeln("syscall_2()");
-    return 0x123;
-}*/
-
 struct Elf64ProgramHeader
 {
     align(1):

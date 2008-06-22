@@ -57,7 +57,7 @@ struct Page
     mixin(property!("locked", "bool", "bits[10]"));
 
     // Define the base address property (shift left 22 bits when getting, right 22 when setting)
-    mixin(property!("base", "size_t", "bits[22..32]", "<<22", ">>22"));
+    mixin(property!("base", "size_t", "bits[12..32]", "<<22", ">>22"));
 }
 
 struct PageTable
@@ -93,14 +93,6 @@ struct PageTable
         }
         
         return 0;
-    }
-
-    public void clear()
-    {
-        foreach(p; pages)
-        {
-            p.clear();
-        }
     }
     
     public bool map(size_t v_addr, size_t p_addr, Permission user, Permission superuser, bool global, bool locked)

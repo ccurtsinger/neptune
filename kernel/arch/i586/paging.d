@@ -12,6 +12,7 @@ import kernel.arch.i586.util;
 
 import kernel.mem.range;
 
+import std.mem;
 import std.bitarray;
 
 extern(C) size_t palloc();
@@ -30,21 +31,6 @@ struct PageTableEntry
         data = 0;
     }
 
-    void invalidate()
-    {
-        version(arch_i586)
-        {
-            asm
-            {
-                "invlpg (%[address])" : : [address] "a" base();
-            }
-        }
-        else
-        {
-            assert(false, "Unsupported operation on non-native architecute: PageTableEntry.invalidate()");
-        }
-    }
-
     // Define single bit access properties
     mixin(property!("present", "bool", "bits[0]"));
     mixin(property!("writable", "bool", "bits[1]"));
@@ -61,9 +47,9 @@ struct PageTableEntry
     mixin(property!("locked", "bool", "bits[10]"));
     
     // Define the physical base address property
-    mixin(property!("base", "size_t", "bits[22..32]", "<<12", ">>12"));
+    mixin(property!("base", "size_t", "bits[12..32]", "<<12", ">>12"));
 }
-
+import std.stdio;
 struct PageTable
 {
     private PageTableEntry[1024] entries;
@@ -71,23 +57,23 @@ struct PageTable
     private PageTableEntry* findPage(size_t address, bool recursing = false)
     {
         size_t dir_index = address>>22;
-        size_t table_index = address>>12;
+        size_t table_index = (address>>12) & 0x3FF;
         
         PageTableEntry* dir_entry = &(entries[dir_index]);
         PageTableEntry* table_entry;
         
-        PageTableEntry* table;
+        PageTableEntry[] table;
         
         bool kernel_mem;
         
         if(dir_index < KERNEL_VIRTUAL_BASE>>22)
         {
-            table = cast(PageTableEntry*)(USER_MEM_DIR + dir_index*FRAME_SIZE);
+            table = (cast(PageTableEntry*)(USER_MEM_DIR + dir_index*FRAME_SIZE))[0..1024];
             kernel_mem = false;
         }
         else
         {
-            table = cast(PageTableEntry*)(KERNEL_MEM_DIR + dir_index*FRAME_SIZE);
+            table = (cast(PageTableEntry*)(KERNEL_MEM_DIR + dir_index*FRAME_SIZE))[0..1024];
             kernel_mem = true;
         }
         
@@ -103,27 +89,78 @@ struct PageTable
             dir_entry.user = true;
             dir_entry.present = true;
             
-            PageTableEntry* table_ref = findPage(cast(size_t)table, true);
+            PageTableEntry* table_ref = findPage(cast(size_t)table.ptr, true);
             
             table_ref.clear();
             table_ref.base = new_table;
             table_ref.writable = true;
-            table_ref.user = true;
+            table_ref.user = false;
             table_ref.present = true;
             
-            table_ref.invalidate();
+            invalidate(cast(size_t)table.ptr);
+            
+            memset(table.ptr, 0, FRAME_SIZE);
         }
         
         return &(table[table_index]);
     }
     
-    public size_t load()
+    public PageTable* clone()
     {
-        size_t old_pagetable = cr3;
-        size_t physical = lookup(this);
-        cr3 = physical;
+        MemoryRange r = allocate(FRAME_SIZE, MemoryRange(KERNEL_STACK_TOP, KERNEL_MEM_DIR - KERNEL_STACK_TOP));
+        size_t new_pagetable = palloc();
+        map(r.base, new_pagetable, Permission("---"), Permission("rw-"), true, true);
+    
+        PageTable* p = cast(PageTable*)r.base;
         
-        return old_pagetable;
+        for(size_t i=0; i<1024; i++)
+        {
+            p.entries[i].clear();
+            
+            if(i >= KERNEL_VIRTUAL_BASE>>22)
+                p.entries[i] = entries[i];
+        }
+        
+        size_t new_table = palloc();
+        
+        PageTableEntry* user_dir = &(p.entries[USER_MEM_DIR>>22]);
+        user_dir.base = new_table;
+        user_dir.writable = true;
+        user_dir.user = false;
+        user_dir.present = true;
+        
+        MemoryRange temp_mem = allocate(FRAME_SIZE, MemoryRange(KERNEL_STACK_TOP, KERNEL_MEM_DIR - KERNEL_STACK_TOP));
+        
+        map(temp_mem.base, new_table, Permission("---"), Permission("rw-"), false, false);
+        
+        PageTableEntry[] table = (cast(PageTableEntry*)temp_mem.base)[0..1024];
+        
+        PageTableEntry* user_dir_ref = &(table[USER_MEM_DIR>>22]);
+        
+        user_dir_ref.base = new_table;
+        user_dir.writable = true;
+        user_dir.user = false;
+        user_dir.present = true;
+        
+        //unmap(temp_mem.base);
+        free(temp_mem);
+        
+        return p;
+    }
+    
+    void invalidate(size_t address)
+    {
+        version(arch_i586)
+        {
+            asm
+            {
+                "invlpg (%[address])" : : [address] "a" address;
+            }
+        }
+        else
+        {
+            assert(false, "Unsupported operation on non-native architecute: PageTableEntry.invalidate()");
+        }
     }
     
     public size_t lookup(void* address)
@@ -168,7 +205,7 @@ struct PageTable
         p.locked = locked;
         p.used = true;
         
-        p.invalidate();
+        invalidate(v_addr);
         
         return true;
     }
@@ -182,7 +219,7 @@ struct PageTable
         
         p.present = false;
         
-        p.invalidate();
+        invalidate(v_addr);
         
         return true;
     }

@@ -44,7 +44,7 @@ extern(C) void _main(MultibootInfo* multiboot, uint magic)
             // If the boundary isn't page-aligned, bump up to the next page
             if(offset != 0)
                 offset = FRAME_SIZE - offset;
-            
+                
             // Loop over all complete pages in the set
             for(size_t i=offset; i<=mem.size && i+FRAME_SIZE <= mem.size; i+=FRAME_SIZE)
             {
@@ -53,7 +53,7 @@ extern(C) void _main(MultibootInfo* multiboot, uint magic)
         }
     }
     
-    ElfHeader* process_image;
+    /*ElfHeader* process_image;
     
     foreach(mod; multiboot.getModules())
     {
@@ -76,7 +76,7 @@ extern(C) void _main(MultibootInfo* multiboot, uint magic)
         total += h.getMemorySize();
     }
     
-    writefln("Total Size of module: %#x", total);
+    writefln("Total Size of module: %#x", total);*/
     
     // Initialize the base address space
     addr = AddressSpace(pagetable, 0, FRAME_SIZE);

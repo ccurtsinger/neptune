@@ -27,3 +27,9 @@ void set_kernel_entry_stack(size_t p)
     tss.ss0 = GDTSelector.KERNEL_DATA;
     tss.esp0 = p;
 }
+
+void load_page_table(size_t p)
+{
+    assert(p % 0x1000 == 0, "Page table must be aligned to 0x1000 bytes");
+    cr3 = p & 0xFFFFF000;
+}

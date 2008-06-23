@@ -8,6 +8,8 @@ module kernel.arch.i586.setup;
 
 import kernel.core;
 import kernel.event;
+import kernel.mem.range;
+import kernel.mem.addrspace;
 
 import std.stdio;
 import std.port;
@@ -46,6 +48,10 @@ void arch_setup()
     pagetable.unmap(0);
     
     root.addHandler("dev.pit", EventHandler(0, &pit_handler));
+    
+    PageTable* p = pagetable.clone();
+    
+    load_page_table(pagetable.lookup(p));
 }
 
 void pit_handler(char[] domain)

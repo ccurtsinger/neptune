@@ -82,8 +82,7 @@ extern(C) void _main(MultibootInfo* multiboot, uint magic)
     addr = AddressSpace(pagetable, 0, FRAME_SIZE);
     
     // Initialize the kernel heap
-    heap = HeapAllocator(&phys, &addr, ZoneType.KERNEL_HEAP);
-    
+    heap = HeapAllocator(&phys, &addr, ZoneType.KERNEL_HEAP);    
     arch_setup();
     
     enable_interrupts();

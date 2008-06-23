@@ -14,7 +14,10 @@ import kernel.mem.range;
 
 import std.bitarray;
 
-struct Page
+extern(C) size_t palloc();
+extern(C) void pfree(size_t);
+
+struct PageTableEntry
 {
     union
     {
@@ -38,7 +41,7 @@ struct Page
         }
         else
         {
-            assert(false, "Unsupported operation on non-native architecute: Page.invalidate()");
+            assert(false, "Unsupported operation on non-native architecute: PageTableEntry.invalidate()");
         }
     }
 
@@ -50,24 +53,70 @@ struct Page
     mixin(property!("cachedisable", "bool", "bits[4]"));
     mixin(property!("accessed", "bool", "bits[5]"));
     mixin(property!("dirty", "bool", "bits[6]"));
-    mixin(property!("large", "bool", "bits[7]"));
+    //mixin(property!("large", "bool", "bits[7]"));
     mixin(property!("global", "bool", "bits[8]"));
     
     // Define OS-used properties
     mixin(property!("used", "bool", "bits[9]"));
     mixin(property!("locked", "bool", "bits[10]"));
-
-    // Define the base address property (shift left 22 bits when getting, right 22 when setting)
-    mixin(property!("base", "size_t", "bits[22..32]", "<<22", ">>22"));
+    
+    // Define the physical base address property
+    mixin(property!("base", "size_t", "bits[22..32]", "<<12", ">>12"));
 }
 
 struct PageTable
 {
-    private Page[1024] pages;
+    private PageTableEntry[1024] entries;
     
-    private Page* findPage(size_t address)
+    private PageTableEntry* findPage(size_t address, bool recursing = false)
     {
-        return &(pages[address>>22]);
+        size_t dir_index = address>>22;
+        size_t table_index = address>>12;
+        
+        PageTableEntry* dir_entry = &(entries[dir_index]);
+        PageTableEntry* table_entry;
+        
+        PageTableEntry* table;
+        
+        bool kernel_mem;
+        
+        if(dir_index < KERNEL_VIRTUAL_BASE>>22)
+        {
+            table = cast(PageTableEntry*)(USER_MEM_DIR + dir_index*FRAME_SIZE);
+            kernel_mem = false;
+        }
+        else
+        {
+            table = cast(PageTableEntry*)(KERNEL_MEM_DIR + dir_index*FRAME_SIZE);
+            kernel_mem = true;
+        }
+        
+        if(!dir_entry.present)
+        {
+            assert(!recursing, "Endless recursive loop in PageTable.findPage()");
+            
+            size_t new_table = palloc();
+        
+            dir_entry.clear();
+            dir_entry.base = new_table;
+            dir_entry.writable = true;
+            dir_entry.user = !kernel_mem;
+            dir_entry.global = kernel_mem;
+            dir_entry.present = true;
+            
+            PageTableEntry* table_ref = findPage(cast(size_t)table, true);
+            
+            table_ref.clear();
+            table_ref.base = new_table;
+            table_ref.writable = true;
+            table_ref.user = !kernel_mem;
+            table_ref.global = kernel_mem;
+            table_ref.present = true;
+            
+            table_ref.invalidate();
+        }
+        
+        return &(table[table_index]);
     }
     
     public size_t load()
@@ -81,7 +130,7 @@ struct PageTable
     
     public size_t lookup(void* address)
     {
-        Page* p = findPage(cast(size_t)address);
+        PageTableEntry* p = findPage(cast(size_t)address);
         
         if(p.present)
             return p.base + cast(size_t)address % FRAME_SIZE;
@@ -94,7 +143,7 @@ struct PageTable
         size_t offset = address & ~0x400000;
         size_t base = address - offset;
         
-        foreach(size_t i, p; pages)
+        foreach(size_t i, p; entries)
         {
             if(p.present() && base == p.base() && (!writable || p.writable()) && (!user || p.user()))
             {
@@ -107,7 +156,7 @@ struct PageTable
     
     public bool map(size_t v_addr, size_t p_addr, Permission user, Permission superuser, bool global, bool locked)
     {
-        Page* p = findPage(v_addr);
+        PageTableEntry* p = findPage(v_addr);
         
         assert(p !is null, "Page not found");
         assert(p.used, "Cannot map unallocated page");
@@ -133,7 +182,6 @@ struct PageTable
         p.writable = writable;
         p.user = user_flag;
         p.global = global;
-        p.large = true;
         p.present = true;
         p.locked = locked;
         p.used = true;
@@ -145,7 +193,7 @@ struct PageTable
     
     public bool unmap(size_t v_addr)
     {
-        Page* p = findPage(v_addr);
+        PageTableEntry* p = findPage(v_addr);
         
         if(!p.present)
             return false;
@@ -177,7 +225,7 @@ struct PageTable
         
         while(found_count * FRAME_SIZE < size && offset <= bound.size - FRAME_SIZE)
         {
-            Page* p;
+            PageTableEntry* p;
             
             if(increasing)
                 p = findPage(bound.base + offset);
@@ -203,7 +251,7 @@ struct PageTable
         {
             for(size_t i=0; i<found_count; i++)
             {
-                Page* p;
+                PageTableEntry* p;
                 
                 if(increasing)
                     p = findPage(bound.base + found_base + i*FRAME_SIZE);
@@ -233,7 +281,7 @@ struct PageTable
     {
         for(size_t c = 0; c <= range.size - FRAME_SIZE; c += FRAME_SIZE)
         {
-            Page* p = findPage(c + range.base);
+            PageTableEntry* p = findPage(c + range.base);
             p.used = false;
         }
     }

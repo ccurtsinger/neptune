@@ -17,3 +17,13 @@ AddressSpace addr;
 HeapAllocator heap;
 
 EventDomain root;
+
+extern(C) size_t palloc()
+{
+    return phys.allocate();
+}
+
+extern(C) void pfree(size_t p)
+{
+    phys.free(p);
+}

@@ -100,8 +100,7 @@ struct PageTable
             dir_entry.clear();
             dir_entry.base = new_table;
             dir_entry.writable = true;
-            dir_entry.user = !kernel_mem;
-            dir_entry.global = kernel_mem;
+            dir_entry.user = true;
             dir_entry.present = true;
             
             PageTableEntry* table_ref = findPage(cast(size_t)table, true);
@@ -109,8 +108,7 @@ struct PageTable
             table_ref.clear();
             table_ref.base = new_table;
             table_ref.writable = true;
-            table_ref.user = !kernel_mem;
-            table_ref.global = kernel_mem;
+            table_ref.user = true;
             table_ref.present = true;
             
             table_ref.invalidate();
@@ -134,22 +132,6 @@ struct PageTable
         
         if(p.present)
             return p.base + cast(size_t)address % FRAME_SIZE;
-        
-        return 0;
-    }
-    
-    public size_t reverseLookup(size_t address, bool writable = false, bool user = false)
-    {
-        size_t offset = address & ~0x400000;
-        size_t base = address - offset;
-        
-        foreach(size_t i, p; entries)
-        {
-            if(p.present() && base == p.base() && (!writable || p.writable()) && (!user || p.user()))
-            {
-                return (i<<22) | offset;
-            }
-        }
         
         return 0;
     }

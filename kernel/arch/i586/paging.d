@@ -118,7 +118,11 @@ struct PageTable
             p.entries[i].clear();
             
             if(i >= KERNEL_VIRTUAL_BASE>>22)
+            {
+                //make sure all page tables are mapped into the top level directory before cloning
+                findPage(i<<22);
                 p.entries[i] = entries[i];
+            }
         }
         
         size_t new_table = palloc();

@@ -36,14 +36,17 @@ extern(C) void _main(MultibootInfo* multiboot, uint magic)
         // If memory region is available
         if(mem.type == 1)
         {
-            // TODO: Determine if the page is occupied by the kernel binary, and if so, don't free it
-            
             // Determine the offset into a page frame of the base
             size_t offset = mem.base % FRAME_SIZE;
             
             // If the boundary isn't page-aligned, bump up to the next page
             if(offset != 0)
                 offset = FRAME_SIZE - offset;
+                
+            // TODO: Determine if the page is occupied by the kernel binary, and if so, don't free it
+            // this is a temporary fix, assuming a 4MB kernel
+            if(mem.base + offset < 0x400000)
+                offset = 0x400000 - mem.base;
                 
             // Loop over all complete pages in the set
             for(size_t i=offset; i<=mem.size && i+FRAME_SIZE <= mem.size; i+=FRAME_SIZE)
@@ -78,8 +81,8 @@ extern(C) void _main(MultibootInfo* multiboot, uint magic)
     
     writefln("Total Size of module: %#x", total);*/
     
-    // Initialize the base address space
-    addr = AddressSpace(pagetable, 0, FRAME_SIZE);
+    // Initialize the base address space (assume 4MB kernel)
+    addr = AddressSpace(pagetable, 0, 0x400000);
     
     // Initialize the kernel heap
     heap = HeapAllocator(&phys, &addr, ZoneType.KERNEL_HEAP);    

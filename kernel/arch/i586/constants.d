@@ -18,6 +18,9 @@ const size_t VIRTUAL_MEMORY_MAX = 0xFFFFFFFF - DIR_SIZE;
 const size_t USER_MEM_DIR = KERNEL_VIRTUAL_BASE - DIR_SIZE;
 const size_t KERNEL_MEM_DIR = VIRTUAL_MEMORY_MAX + 1;
 
+const size_t KERNEL_PHYSICAL_ENTRY = 0x100000;
+const size_t KERNEL_ENTRY = 0xC0100000;
+
 const size_t DIR_SIZE = 0x400000;
 const size_t FRAME_SIZE = 0x1000;
 const size_t FRAME_BITS = 12;

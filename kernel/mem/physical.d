@@ -51,6 +51,16 @@ struct PhysicalAllocator
     }
     
     /**
+     * Mark a page as in use
+     */
+    void set(size_t paddr)
+    {
+        paddr >>= FRAME_BITS;
+        
+        bits[paddr] = true;
+    }
+    
+    /**
      * Mark and return the corresponding physical address
      * for the next available page
      */

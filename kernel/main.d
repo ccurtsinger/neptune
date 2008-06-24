@@ -43,17 +43,36 @@ extern(C) void _main(MultibootInfo* multiboot, uint magic)
             if(offset != 0)
                 offset = FRAME_SIZE - offset;
                 
-            // TODO: Determine if the page is occupied by the kernel binary, and if so, don't free it
-            // this is a temporary fix, assuming a 4MB kernel
-            if(mem.base + offset < 0x400000)
-                offset = 0x400000 - mem.base;
-                
             // Loop over all complete pages in the set
             for(size_t i=offset; i<=mem.size && i+FRAME_SIZE <= mem.size; i+=FRAME_SIZE)
             {
                 phys.free(mem.base + i);
             }
         }
+    }
+    
+    // Read ELF section headers from the multiboot structure
+    ElfSectionHeader[] sections = multiboot.getElfSectionHeaders();
+    
+    // Track the highest section upper-boundary
+    size_t max = 0;
+    
+    foreach(i, s; sections)
+    {
+        if(s.getOffset() + s.getSize() > max)
+            max = s.getOffset() + s.getSize();
+    }
+
+    // Compute the top of the kernel binary
+    max += KERNEL_PHYSICAL_ENTRY;
+    
+    // Find the bottom of the page containing the start of the kernel binary
+    size_t base = KERNEL_PHYSICAL_ENTRY - (KERNEL_PHYSICAL_ENTRY % FRAME_SIZE);
+    
+    // Mark all memory used by the kernel binary as occupied
+    for(size_t i=base; i<max; i+=FRAME_SIZE)
+    {
+        phys.set(i);
     }
     
     /*ElfHeader* process_image;

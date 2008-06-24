@@ -12,7 +12,7 @@ CHECKSUM    equ -(MAGIC + FLAGS)                    ; Checksum of header data
 KERNEL_VIRTUAL_BASE equ 0xC0000000                  ; 3GB
 KERNEL_DIR_OFFSET equ (KERNEL_VIRTUAL_BASE >> 22)   ; Page directory index of kernel's 4MB PTE.
 PAGE_DIR_ENTRY_BITS equ 0x203                       ; Set present, writable, and used bits
-STACKSIZE equ 0x4000                                ; Reserve 16K for kernel stack
+STACKSIZE equ 0x2000                                ; Reserve 8K for kernel startup stack
 
 section .data
 

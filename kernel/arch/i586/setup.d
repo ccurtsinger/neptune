@@ -47,8 +47,6 @@ void arch_setup()
     
     pagetable.unmap(0);
     
-    
-    
     PageTable* p = pagetable.clone();
     
     load_page_table(pagetable.lookup(p));

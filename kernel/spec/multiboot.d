@@ -7,6 +7,7 @@
 module kernel.spec.multiboot;
 
 import kernel.arch.setup;
+import kernel.spec.elf;
 
 import std.bitarray;
 import std.string;
@@ -112,6 +113,14 @@ struct MultibootInfo
 	public MemoryMap getMemoryMap()
 	{
 	    return MemoryMap(cast(MemoryMapEntry*)mmap_addr, mmap_length);
+	}
+	
+	public ElfSectionHeader[] getElfSectionHeaders()
+	{
+	    if(flag_bits[5])
+            return (cast(ElfSectionHeader*)elf_sec.addr)[0..elf_sec.num];
+        else
+            return null;
 	}
 }
 

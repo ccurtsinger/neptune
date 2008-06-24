@@ -23,13 +23,13 @@ ZoneType zone;
 
 Block* freeblock = null;
 
-extern(C) void m_init(AddressSpace* init_address_space, ZoneType init_zone)
+void m_init(AddressSpace* init_address_space, ZoneType init_zone)
 {
     address_space = init_address_space;
     zone = init_zone;
 }
     
-extern(C) void* m_alloc(size_t size)
+void* m_alloc(size_t size)
 {
     size_t allocated_size = size + Block.sizeof;
     
@@ -83,14 +83,14 @@ extern(C) void* m_alloc(size_t size)
     return m_alloc(size);
 }
     
-extern(C) size_t m_size(void* p)
+size_t m_size(void* p)
 {
     Block* b = cast(Block*)(p - Block.sizeof);
     
     return b.size - Block.sizeof;
 }
     
-extern(C) void m_free(void* p)
+void m_free(void* p)
 {
     Block* newblock = cast(Block*)(p - Block.sizeof);
     

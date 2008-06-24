@@ -32,7 +32,7 @@
 
 module array;
 
-import kernel.core;
+import kernel.mem.heap;
 
 import std.mem;
 
@@ -90,8 +90,6 @@ extern (C) void[] _d_arraycast(size_t tsize, size_t fsize, void[] a)
     return a;
 }
 
-import std.stdio;
-
 /**
  * Append an element to an array
  *
@@ -109,9 +107,9 @@ extern (C) byte[] _d_arrayappendcTp(TypeInfo ti, inout byte[] x, void *argp)
     auto newlength = length + 1;
     auto newsize = newlength * sizeelem;
 
-    if(x.ptr is null || heap.size(x.ptr) < newsize)
+    if(x.ptr is null || m_size(x.ptr) < newsize)
     {
-        byte* newdata = cast(byte *)heap.allocate(newsize);
+        byte* newdata = cast(byte *)m_alloc(newsize);
         
         memcpy(newdata, x.ptr, length * sizeelem);
         

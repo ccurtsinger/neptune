@@ -30,7 +30,7 @@
 
 module lifetime;
 
-import kernel.core;
+import kernel.mem.heap;
 
 import std.mem;
 import array;
@@ -47,7 +47,7 @@ private extern (D) alias void (*fp_t)(Object);
  */
 extern (C) Object _d_newclass(ClassInfo ci)
 {
-    void* p = heap.allocate(ci.init.length);
+    void* p = m_alloc(ci.init.length);
     
     (cast(byte*) p)[0 .. ci.init.length] = ci.init[];
     
@@ -103,7 +103,7 @@ extern (C) void _d_delclass(Object* p)
         else
             rt_finalize(cast(void*) *p);
 
-        heap.free(cast(void*) *p);
+        m_free(cast(void*) *p);
         
         *p = null;
     }
@@ -128,7 +128,7 @@ extern (C) Array _d_newarrayT(TypeInfo ti, size_t length)
         result.length = length;
         size *= length;
 
-        result.data = cast(byte*)heap.allocate(size+1);
+        result.data = cast(byte*)m_alloc(size+1);
 
         memset(result.data, 0, size);
     }
@@ -175,7 +175,7 @@ extern (C) void _d_delarray(Array *p)
 
         if (p.data)
         {
-            heap.free(p.data);
+            m_free(p.data);
         }
         
         p.data = null;
@@ -193,7 +193,7 @@ extern (C) void _d_delmemory(void** p)
 {
     if (*p)
     {
-        heap.free(*p);
+        m_free(*p);
         *p = null;
     }
 }

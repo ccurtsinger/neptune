@@ -6,7 +6,7 @@
  
 module aarray;
  
-import kernel.core;
+import kernel.mem.heap;
 
 import std.mem;
 
@@ -75,15 +75,15 @@ extern (C) void *_aaGetp(AssociativeArray* aa, TypeInfo keyti, size_t valuesize,
     if(p !is null)
         return p;
     
-    AssociativeArrayNode* node = cast(AssociativeArrayNode*)heap.allocate(AssociativeArrayNode.sizeof);
-    node.key = heap.allocate(keyti.tsize());
-    node.data = heap.allocate(valuesize);
+    AssociativeArrayNode* node = cast(AssociativeArrayNode*)m_alloc(AssociativeArrayNode.sizeof);
+    node.key = m_alloc(keyti.tsize());
+    node.data = m_alloc(valuesize);
     
     memcpy(node.key, pkey, keyti.tsize());
 
     if(aa.head is null)
     {
-        aa.head = cast(AssociativeArrayNode**)heap.allocate((AssociativeArrayNode*).sizeof);
+        aa.head = cast(AssociativeArrayNode**)m_alloc((AssociativeArrayNode*).sizeof);
         *aa.head = node;
     }
     else
@@ -171,9 +171,9 @@ extern (C) void _aaDelp(AssociativeArray aa, TypeInfo keyti, void *pkey)
                 prev.next = c.next;
             }
             
-            heap.free(c.key);
-            heap.free(c.data);
-            heap.free(c);
+            m_free(c.key);
+            m_free(c.data);
+            m_free(c);
             
             return;
         }
@@ -205,7 +205,7 @@ extern (C) Array _aaValues(AssociativeArray aa, size_t keysize, size_t valuesize
     }
         
     ret.length = _aaLen(aa);
-    ret.ptr = heap.allocate(ret.length * valuesize);
+    ret.ptr = m_alloc(ret.length * valuesize);
     
     size_t offset = 0;
         
@@ -258,7 +258,7 @@ extern (C) Array _aaKeys(AssociativeArray aa, size_t keysize)
     }
         
     ret.length = _aaLen(aa);
-    ret.ptr = heap.allocate(ret.length * keysize);
+    ret.ptr = m_alloc(ret.length * keysize);
     
     size_t offset = 0;
         

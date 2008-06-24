@@ -10,69 +10,43 @@ import kernel.arch.constants;
 
 import std.bitarray;
 
-struct PhysicalAllocator
-{
-    // Allocate enough bits for the entire address space
-    union
-    {
-        uint[PHYSICAL_MEMORY_MAX / (32 * FRAME_SIZE) + 1] available;
-        BitArray bits;
-    }
-    
-    /**
-     * Mark all pages as unavailable
-     */
-    void init()
-    {
-        for(size_t index = 0; index < available.length; index++)
-        {
-            available[index] = uint.max;
-        }
-    }
-    
-    /**
-     * Check if a page is available
-     */
-    bool check(size_t paddr)
-    {
-        paddr >>= FRAME_BITS;
+BitArray bits;
+uint[PHYSICAL_MEMORY_MAX / (32 * FRAME_SIZE) + 1] available;
 
-        return !bits[paddr];
-    }
-    
-    /**
-     * Mark a page as available
-     */
-    void free(size_t paddr)
+extern(C) void p_init()
+{
+    for(size_t index = 0; index < available.length; index++)
     {
-        paddr >>= FRAME_BITS;
-        
-        bits[paddr] = false;
+        available[index] = uint.max;
     }
+}
+
+extern(C) bool p_state(size_t address)
+{
+    address >>= FRAME_BITS;
+    return !bits[address];
+}
+
+extern(C) void p_set(size_t address)
+{
+    address >>= FRAME_BITS;
+    bits[address] = true;
+}
+
+extern(C) void p_free(size_t address)
+{
+    address >>= FRAME_BITS;
+    bits[address] = false;
+}
+
+extern(C) size_t p_alloc()
+{
+    // TODO: Synchronize or make atomic
+    size_t p = bits.setFirstCleared(available.sizeof * 8);
     
-    /**
-     * Mark a page as in use
-     */
-    void set(size_t paddr)
-    {
-        paddr >>= FRAME_BITS;
-        
-        bits[paddr] = true;
-    }
+    if(p < available.sizeof * 8)
+        return p<<FRAME_BITS;
     
-    /**
-     * Mark and return the corresponding physical address
-     * for the next available page
-     */
-    size_t allocate()
-    {
-        // TODO: Synchronize or make atomic
-        size_t p = bits.setFirstCleared(available.sizeof * 8);
-        
-        if(p < available.sizeof * 8)
-            return p<<FRAME_BITS;
-        
-        // TODO: raise event to invoke swapping to disk or page collection
-        assert(false, "Out of physical memory");
-    }
+    // TODO: raise event to invoke swapping to disk or page collection
+    assert(false, "Out of physical memory");
 }

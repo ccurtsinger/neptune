@@ -11,12 +11,10 @@ import kernel.arch.i586.registers;
 import kernel.arch.i586.util;
 
 import kernel.mem.range;
+import kernel.mem.physical;
 
 import std.mem;
 import std.bitarray;
-
-extern(C) size_t palloc();
-extern(C) void pfree(size_t);
 
 struct PageTableEntry
 {
@@ -81,7 +79,7 @@ struct PageTable
         {
             assert(!recursing, "Endless recursive loop in PageTable.findPage()");
             
-            size_t new_table = palloc();
+            size_t new_table = p_alloc();
         
             dir_entry.clear();
             dir_entry.base = new_table;
@@ -108,7 +106,7 @@ struct PageTable
     public PageTable* clone()
     {
         MemoryRange r = allocate(FRAME_SIZE, MemoryRange(KERNEL_STACK_TOP, KERNEL_MEM_DIR - KERNEL_STACK_TOP));
-        size_t new_pagetable = palloc();
+        size_t new_pagetable = p_alloc();
         map(r.base, new_pagetable, Permission("---"), Permission("rw-"), true, true);
     
         PageTable* p = cast(PageTable*)r.base;
@@ -125,7 +123,7 @@ struct PageTable
             }
         }
         
-        size_t new_table = palloc();
+        size_t new_table = p_alloc();
         
         PageTableEntry* user_dir = &(p.entries[USER_MEM_DIR>>22]);
         user_dir.base = new_table;

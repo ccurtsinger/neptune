@@ -28,7 +28,7 @@ extern(C) void _main(MultibootInfo* multiboot, uint magic)
     PageTable* pagetable = arch_init();
     
     // Initialize the physical memory allocator
-    phys.init();
+    p_init();
     
     // Free memory from the multiboot memory map
     foreach(mem; multiboot.getMemoryMap())
@@ -46,7 +46,7 @@ extern(C) void _main(MultibootInfo* multiboot, uint magic)
             // Loop over all complete pages in the set
             for(size_t i=offset; i<=mem.size && i+FRAME_SIZE <= mem.size; i+=FRAME_SIZE)
             {
-                phys.free(mem.base + i);
+                p_free(mem.base + i);
             }
         }
     }
@@ -72,7 +72,7 @@ extern(C) void _main(MultibootInfo* multiboot, uint magic)
     // Mark all memory used by the kernel binary as occupied
     for(size_t i=base; i<max; i+=FRAME_SIZE)
     {
-        phys.set(i);
+        p_set(i);
     }
     
     /*ElfHeader* process_image;
@@ -104,7 +104,7 @@ extern(C) void _main(MultibootInfo* multiboot, uint magic)
     addr = AddressSpace(pagetable, 0, 0x400000);
     
     // Initialize the kernel heap
-    heap = HeapAllocator(&phys, &addr, ZoneType.KERNEL_HEAP);    
+    m_init(&addr, ZoneType.KERNEL_HEAP);    
     arch_setup();
     
     enable_interrupts();

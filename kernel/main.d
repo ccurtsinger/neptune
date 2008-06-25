@@ -30,9 +30,6 @@ extern(C) void _main(MultibootInfo* multiboot, uint magic)
     // Initialize the physical memory allocator
     p_init();
     
-    if(p_state(0xb8000))
-        writefln("0xb8000 is free");
-    
     // Free memory from the multiboot memory map
     foreach(mem; multiboot.getMemoryMap())
     {
@@ -90,7 +87,7 @@ extern(C) void _main(MultibootInfo* multiboot, uint magic)
         
         if(elf.valid())
         {
-            writefln("Loaded ELF module '%s'", mod.getString());
+            writefln("Loaded ELF module %s", mod.getString());
             
             // Mark physical memory used by modules as used
             size_t base = mod.getBase();
@@ -148,13 +145,9 @@ struct Process
                 elf_top = h.getMemorySize() + h.getVirtualAddress();
         }
 
-        writefln("Elf binary maps in from %p to %p", elf_base, elf_top);
-        
         // Pass a zero kernel size, since this address space will never be used to allocate on the kernel heap
         p.addr = AddressSpace(new_pagetable, elf_base, elf_top - elf_base, 0);
-        
-        writefln("pagetable: %p (%p)", p.pagetable, new_pagetable);
-        
+
         load_page_table(p.pagetable);
         
         auto binary = p.addr.allocate(ZoneType.BINARY, elf_top - elf_base);
@@ -185,8 +178,6 @@ struct Process
         p.context.esp = stack.top - 2*size_t.sizeof;
         p.context.ebp = stack.top - 1*size_t.sizeof;
         
-        writefln("%#x %#x", 4*(cast(size_t)elf.getEntry() >> 22), 4*((cast(size_t)elf.getEntry() >> 12)&0x3ff));
-
         load_page_table(pagetable_phys);
         
         return p;

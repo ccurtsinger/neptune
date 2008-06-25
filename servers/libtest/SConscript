@@ -1,6 +1,0 @@
-# Grab the build environment
-Import('env', 'triton')
-
-server = [File('test')]
-
-Return('server')

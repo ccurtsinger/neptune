@@ -1,7 +1,0 @@
-# Grab the build environment
-Import('env')
-
-obj_list  = [env.gdc('process.o', 'process.d')]
-obj_list += [env.gdc('procallocator.o', 'procallocator.d')]
-
-Return('obj_list')

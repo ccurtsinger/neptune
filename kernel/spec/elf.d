@@ -168,6 +168,11 @@ struct ElfHeader
         return type == ElfType.DYN;
     }
     
+    public size_t getEntry()
+    {
+        return entry;
+    }
+    
     public ElfProgramHeader[] getProgramHeaders()
     {
         ElfProgramHeader* header = cast(ElfProgramHeader*)(cast(uint)this+phoff);

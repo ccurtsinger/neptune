@@ -74,15 +74,17 @@ def setupEnv(target, version, **kw_args):
     return env
 
 # Set up the i586 environment
-env = setupEnv('i586', 'release')
+env = setupEnv('i586', 'debug')
 
 # Build the Kernel
 kernel = SConscript('kernel/SConscript', exports='env', build_dir='build/kernel', duplicate=0)
+
+test = SConscript('test/SConscript', exports='env', build_dir='build/test/', duplicate=0)
 
 Depends('neptune.iso', kernel)
 
 # Build the CD
 cd_env = Environment(BUILDERS={'CD': CDBuilder})
-AlwaysBuild(cd_env.CD('neptune.iso', [kernel, 'grub/stage2_eltorito', 'grub/iso-menu.lst']))
+AlwaysBuild(cd_env.CD('neptune.iso', [kernel, 'grub/stage2_eltorito', 'grub/iso-menu.lst', test]))
 
 Default('neptune.iso')

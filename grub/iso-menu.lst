@@ -4,6 +4,6 @@ timeout 1
 title  neptune2
 root   (cd)
 kernel /boot/kernel
-module /boot/kernel
+module /servers/test
 boot
 savedefault

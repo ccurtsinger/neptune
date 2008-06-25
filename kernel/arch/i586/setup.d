@@ -8,8 +8,6 @@ module kernel.arch.i586.setup;
 
 import kernel.core;
 import kernel.event;
-import kernel.mem.range;
-import kernel.mem.addrspace;
 
 import std.stdio;
 import std.port;
@@ -29,7 +27,7 @@ PageTable* arch_init()
 {
     disable_interrupts();
 
-    PageTable* pagetable = cast(PageTable*)(cr3 + 0xC0000000);
+    PageTable* pagetable = cast(PageTable*)(cr3 + KERNEL_VIRTUAL_BASE);
 
     setup_gdt();
     setup_tss();
@@ -43,13 +41,13 @@ PageTable* arch_init()
 
 void arch_setup()
 {
-    PageTable* pagetable = cast(PageTable*)(cr3 + 0xC0000000);
+    PageTable* pagetable = cast(PageTable*)(cr3 + KERNEL_VIRTUAL_BASE);
     
     pagetable.unmap(0);
     
-    PageTable* p = pagetable.clone();
+    //PageTable* p = pagetable.clone();
     
-    load_page_table(pagetable.lookup(p));
+    //load_page_table(pagetable.lookup(p));
     
     root.addHandler("dev.pit", EventHandler(0, &pit_handler));
 }

@@ -46,7 +46,7 @@ struct AddressSpace
     
     private Zone[9] zones;
     
-    public static AddressSpace opCall(PageTable* pagetable, size_t binary_size, size_t kernel_size)
+    public static AddressSpace opCall(PageTable* pagetable, size_t entry, size_t binary_size, size_t kernel_size)
     {
         // Round the binary size off to a multiple of FRAME_SIZE
         size_t r = binary_size % FRAME_SIZE;
@@ -67,13 +67,13 @@ struct AddressSpace
         a.zones[ZoneType.INFO] = Zone(MemoryRange(FRAME_SIZE, FRAME_SIZE));
         
         // Reserve memory for the process binary image
-        a.zones[ZoneType.BINARY] = Zone(MemoryRange(2*FRAME_SIZE, binary_size));
+        a.zones[ZoneType.BINARY] = Zone(MemoryRange(entry, binary_size));
         
         // Reserve an upward-growing user heap
-        a.zones[ZoneType.HEAP] = Zone(MemoryRange(2*FRAME_SIZE + binary_size, STACK_TOP - (2*FRAME_SIZE + binary_size)));
+        a.zones[ZoneType.HEAP] = Zone(MemoryRange(entry + binary_size, STACK_TOP - (entry + binary_size)));
         
         // Reserve a downward-growing user stack
-        a.zones[ZoneType.STACK] = Zone(MemoryRange(2*FRAME_SIZE + binary_size, STACK_TOP - (2*FRAME_SIZE + binary_size)), false);
+        a.zones[ZoneType.STACK] = Zone(MemoryRange(entry + binary_size, STACK_TOP - (entry + binary_size)), false);
         
         // Reserve fixed-size dynamic memory range
         a.zones[ZoneType.DYNAMIC] = Zone(MemoryRange(STACK_TOP, USER_VIRTUAL_TOP - STACK_TOP));

@@ -7,6 +7,7 @@
 module kernel.arch.i586.interrupts;
 
 import kernel.arch.i586.constants;
+import kernel.arch.i586.common;
 import kernel.arch.i586.descriptors;
 import kernel.arch.i586.pic;
 import kernel.arch.i586.registers;
@@ -17,6 +18,8 @@ import kernel.syscall;
 import std.stdio;
 
 version(arch_i586):
+
+extern(C) void task_switch(Context*);
 
 Descriptor[256] idt;
 char[][256] interrupt_events;
@@ -109,6 +112,13 @@ char[][] interrupt_errors = [   "divide by zero exception",
 
 extern(C) void common_interrupt(int interrupt, int error, Context context)
 {
+    // Temporary handler for task switcher
+    if(interrupt == 32)
+    {
+        task_switch(&context);
+        return;
+    }
+    
     if(interrupt_events[interrupt].length == 0)
     {
         char[] message = "unhandled interrupt";
@@ -138,22 +148,6 @@ extern(C) void common_interrupt(int interrupt, int error, Context context)
     {
         root.raiseEvent(interrupt_events[interrupt]);
     }
-}
-
-struct Context
-{
-    uint eax;
-    uint ebx;
-    uint ecx;
-    uint edx;
-    uint esi;
-    uint edi;
-    uint ebp;
-    uint eip;
-    uint cs;
-    uint flags;
-    uint esp;
-    uint ss;
 }
 
 template isr(int num)

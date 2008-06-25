@@ -1,0 +1,8 @@
+# Grab the build environment
+Import('env')
+
+obj_list  = [env.gdc('elf.o',       'elf.d')]
+obj_list += [env.gdc('elf64.o',     'elf64.d')]
+obj_list += [env.gdc('multiboot.o', 'multiboot.d')]
+
+Return('obj_list')

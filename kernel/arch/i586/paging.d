@@ -16,8 +16,6 @@ import kernel.mem.physical;
 import std.mem;
 import std.bitarray;
 
-debug import std.stdio;
-
 struct PageTableEntry
 {
     union
@@ -51,13 +49,13 @@ struct PageTableEntry
     
     size_t base()
     {
-        return data & ~0xFFF;
+        return data & 0xFFFFF000;
     }
     
     void base(size_t b)
     {
         data &= 0x00000FFF;
-        data |= b & ~0xFFF;
+        data |= b & 0xFFFFF000;
     }
 }
 
@@ -192,8 +190,6 @@ struct PageTable
     
     public bool map(size_t v_addr, size_t p_addr, Permission user, Permission superuser, bool global, bool locked)
     {
-        debug writefln("mapping %p to %p", v_addr, p_addr);
-        
         PageTableEntry* p = findPage(v_addr);
         
         assert(p !is null, "Page not found");
@@ -210,15 +206,11 @@ struct PageTable
         
         // Check if the page is already mapped.  If the requested mapping is already present, return true
         if(p.present && p.base == p_addr && p.writable == writable && p.user == user_flag && p.global == global)
-        {
-            debug writefln("existing entry used: %p", p.data);
             return true;
-        }
+
         else if(p.present)
-        {
-            debug writefln("existing entry conflicts: %p", p.data);
             return false;
-        }
+
         
         p.clear();
         p.base = p_addr;
@@ -230,8 +222,6 @@ struct PageTable
         p.used = true;
         
         invalidate(v_addr);
-        
-        debug writefln("new entry set: %p", p.data);
         
         return true;
     }

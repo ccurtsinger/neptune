@@ -42,12 +42,11 @@ PageTable* arch_init()
 void arch_setup()
 {
     PageTable* pagetable = cast(PageTable*)(cr3 + KERNEL_VIRTUAL_BASE);
-    
-    pagetable.unmap(0);
-    
-    //PageTable* p = pagetable.clone();
-    
-    //load_page_table(pagetable.lookup(p));
+
+    for(size_t i=0; i<1024*FRAME_SIZE; i+=FRAME_SIZE)
+    {
+        pagetable.unmap(i);
+    }
     
     root.addHandler("dev.pit", EventHandler(0, &pit_handler));
 }

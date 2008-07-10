@@ -87,4 +87,17 @@ extern(C) void task_switch(Context* context)
         set_kernel_entry_stack(processes[current].k_stack);
         *context = processes[current].context;
     }
+    else
+    {
+        processes[current].context = *context;
+        
+        current++;
+        
+        if(current >= processes.length)
+            current = 0;
+        
+        load_page_table(processes[current].pagetable);
+        set_kernel_entry_stack(processes[current].k_stack);
+        *context = processes[current].context;
+    }
 }

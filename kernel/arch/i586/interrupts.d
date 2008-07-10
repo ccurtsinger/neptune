@@ -16,6 +16,7 @@ import kernel.core;
 import kernel.syscall;
 
 import std.stdio;
+import std.port;
 
 version(arch_i586):
 
@@ -116,6 +117,8 @@ extern(C) void common_interrupt(int interrupt, int error, Context context)
     if(interrupt == 32)
     {
         task_switch(&context);
+        outp(PIC1, PIC_EOI);
+        
         return;
     }
     

@@ -80,11 +80,14 @@ env = setupEnv('i586', 'debug')
 kernel = SConscript('kernel/SConscript', exports='env', build_dir='build/kernel', duplicate=0)
 
 test = SConscript('test/SConscript', exports='env', build_dir='build/test/', duplicate=0)
+test2 = SConscript('test2/SConscript', exports='env', build_dir='build/test2/', duplicate=0)
 
 Depends('neptune.iso', kernel)
+Depends('neptune.iso', test)
+Depends('neptune.iso', test2)
 
 # Build the CD
 cd_env = Environment(BUILDERS={'CD': CDBuilder})
-AlwaysBuild(cd_env.CD('neptune.iso', [kernel, 'grub/stage2_eltorito', 'grub/iso-menu.lst', test, 'build/test/test2']))
+AlwaysBuild(cd_env.CD('neptune.iso', [kernel, 'grub/stage2_eltorito', 'grub/iso-menu.lst', test, test2]))
 
 Default('neptune.iso')

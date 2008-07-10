@@ -85,6 +85,6 @@ Depends('neptune.iso', kernel)
 
 # Build the CD
 cd_env = Environment(BUILDERS={'CD': CDBuilder})
-AlwaysBuild(cd_env.CD('neptune.iso', [kernel, 'grub/stage2_eltorito', 'grub/iso-menu.lst', test]))
+AlwaysBuild(cd_env.CD('neptune.iso', [kernel, 'grub/stage2_eltorito', 'grub/iso-menu.lst', test, 'build/test/test2']))
 
 Default('neptune.iso')

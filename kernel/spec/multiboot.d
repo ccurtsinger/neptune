@@ -6,7 +6,9 @@
 
 module kernel.spec.multiboot;
 
-import kernel.arch.setup;
+import kernel.arch.constants;
+import kernel.mem.physical;
+import kernel.mem.range;
 import kernel.spec.elf;
 
 import std.bitarray;
@@ -50,11 +52,10 @@ struct MultibootInfo
 	private uint mods_addr;
 	
 	/// Information about the executable
-	union
-	{
-        private ElfHeaderTable elf_sec;
-        private AOutSymbolTable aout_sym;
-	}
+    private uint elf_sec_num;
+	private uint elf_sec_size;
+	private uint elf_sec_addr;
+	private uint elf_sec_shndx;
     
     /// Information about memory regions
 	private uint mmap_length;
@@ -118,28 +119,74 @@ struct MultibootInfo
 	public ElfSectionHeader[] getElfSectionHeaders()
 	{
 	    if(flag_bits[5])
-            return (cast(ElfSectionHeader*)elf_sec.addr)[0..elf_sec.num];
+            return (cast(ElfSectionHeader*)elf_sec_addr)[0..elf_sec_num];
         else
             return null;
 	}
-}
+	
+	public MemoryRange getKernelMemoryRange()
+	{
+	    // Track the highest section upper-boundary
+        size_t kernel_top = 0;
+        
+        foreach(i, s; getElfSectionHeaders())
+        {
+            if(s.getOffset() + s.getSize() > kernel_top)
+                kernel_top = s.getOffset() + s.getSize();
+        }
 
-/* The symbol table for a.out. */
-struct AOutSymbolTable
-{
-	uint tabsize;
-	uint strsize;
-	uint addr;
-	uint reserved;
-}
+        // Compute the top of the kernel binary
+        kernel_top += KERNEL_PHYSICAL_ENTRY;
 
-/* The section header table for ELF. */
-struct ElfHeaderTable
-{
-	uint num;
-	uint size;
-	uint addr;
-	uint shndx;
+        return MemoryRange(KERNEL_PHYSICAL_ENTRY, kernel_top);
+	}
+	
+	public void initMemory()
+	{
+	    // Free memory from the multiboot memory map
+        foreach(mem; getMemoryMap())
+        {
+            // If memory region is available
+            if(mem.type == 1)
+            {
+                // Determine the offset into a page frame of the base
+                size_t offset = mem.base % FRAME_SIZE;
+                
+                // If the boundary isn't page-aligned, bump up to the next page
+                if(offset != 0)
+                    offset = FRAME_SIZE - offset;
+                
+                // Loop over all complete pages in the set
+                for(size_t i=offset; i+FRAME_SIZE <= mem.size; i+=FRAME_SIZE)
+                {
+                    p_free(mem.base + i);
+                }
+            }
+        }
+        
+        MemoryRange kernel = getKernelMemoryRange().aligned(FRAME_SIZE);
+        
+        // Mark all memory used by the kernel binary as occupied
+        for(size_t i=kernel.base; i<kernel.top; i+=FRAME_SIZE)
+        {
+            p_set(i);
+        }
+        
+        // Reserve memory for the multiboot module headers
+        MultibootModule[] modules = getModules();
+        
+        MemoryRange module_mem = MemoryRange(cast(size_t)modules.ptr, modules.length*MultibootModule.sizeof).aligned(FRAME_SIZE);
+        
+        for(size_t i=module_mem.base; i<module_mem.top; i+=FRAME_SIZE)
+        {
+            p_set(i);
+        }
+        
+        foreach(m; modules)
+        {
+            m.initMemory();
+        }
+	}
 }
 
 /* The module structure. */
@@ -147,29 +194,46 @@ struct MultibootModule
 {
 	private byte* mod_start;
 	private byte* mod_end;
-	private char* string;
+	private char* mod_string;
 	private uint reserved;
 	
-	char[] getString()
+	public char[] string()
 	{
-	    return ctodstr(string);
+	    return ctodstr(mod_string);
 	}
 	
-	byte[] getData()
+	public byte[] data()
 	{
 	    size_t size = mod_end - mod_start;
 	    
 	    return mod_start[0..size];
 	}
 	
-	size_t getBase()
+	public size_t base()
 	{
 	    return cast(size_t)mod_start;
 	}
 	
-	size_t getSize()
+	public size_t size()
 	{
 	    return cast(size_t)(mod_end - mod_start);
+	}
+	
+	public MemoryRange range()
+	{
+	    return MemoryRange(base, base+size);
+	}
+	
+	public void initMemory()
+	{
+	    p_set(cast(size_t)mod_string);
+	    
+	    MemoryRange data_mem = range.aligned(FRAME_SIZE);
+	    
+	    for(size_t i=data_mem.base; i<data_mem.top; i+=FRAME_SIZE)
+	    {
+	        p_set(i);
+	    }
 	}
 }
 

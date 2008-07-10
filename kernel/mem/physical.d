@@ -46,17 +46,11 @@ void p_free(size_t address)
     address >>= FRAME_BITS;
     pmem.bits[address] = false;
 }
-import std.stdio;
+
 size_t p_alloc()
 {
     // TODO: Synchronize or make atomic
     size_t p = pmem.bits.setFirstCleared(pmem.available.sizeof * 8);
-    
-    if(p == 0xB8000>>FRAME_BITS)
-    {
-        writefln("Allocating %p", p<<FRAME_BITS);
-        for(;;){}
-    }
     
     if(p < pmem.available.sizeof * 8)
         return p<<FRAME_BITS;

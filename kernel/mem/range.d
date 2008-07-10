@@ -27,4 +27,20 @@ struct MemoryRange
         
         size = t - base;
     }
+    
+    public MemoryRange aligned(size_t alignment)
+    {
+        MemoryRange r = MemoryRange(base, size);
+        
+        size_t offset = base % alignment;
+        r.base -= alignment;
+        r.size += alignment;
+        
+        offset = r.size % alignment;
+        
+        if(offset > 0)
+            r.size += alignment - offset;
+            
+        return r;
+    }
 }

@@ -7,10 +7,12 @@
 module kernel.syscall;
 
 import std.stdio;
+import std.string;
 
-extern(C) void syscall_a()
+extern(C) void syscall_a(char* str1, char* str2)
 {
-    write('a');
+    write(ctodstr(str1));
+    write(ctodstr(str2));
     for(size_t i=0; i<3000000; i++){}
 }
 

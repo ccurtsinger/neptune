@@ -264,7 +264,12 @@ extern(C) void isr_128()
     asm
     {
         naked;
+        "push %%eax";
+        "push 12(%%ebp)";
+        "push 8(%%ebp)";
         "call syscall_a";
+        "add $8, %%esp";
+        "pop %%eax";
         "iret";
     }
 }

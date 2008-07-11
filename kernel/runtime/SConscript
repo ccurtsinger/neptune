@@ -8,6 +8,7 @@ obj_list += [env.gdc('error.o',     'error.d')]
 obj_list += [env.gdc('invariant.o', 'invariant.d')]
 obj_list += [env.gdc('lifetime.o',  'lifetime.d')]
 obj_list += [env.gdc('object.o',    'object.d')]
+obj_list += [env.gdc('sync.o',      'sync.d')]
 
 obj_list += SConscript('gcc/SConscript', exports='env')
 obj_list += SConscript('std/SConscript', exports='env')

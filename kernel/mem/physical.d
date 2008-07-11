@@ -7,6 +7,7 @@
 module kernel.mem.physical;
 
 import kernel.arch.constants;
+import kernel.lock;
 
 import std.bitarray;
 
@@ -20,9 +21,13 @@ struct PhysicalMemoryMap
 }
 
 PhysicalMemoryMap pmem;
+Lock pmem_lock;
 
 void p_init()
 {
+    pmem_lock.spinlock();
+    scope(exit) pmem_lock.unlock();
+    
     for(size_t index = 0; index < pmem.available.length; index++)
     {
         pmem.available[index] = uint.max;
@@ -31,25 +36,36 @@ void p_init()
 
 bool p_state(size_t address)
 {
+    pmem_lock.spinlock();
+    scope(exit) pmem_lock.unlock();
+    
     address >>= FRAME_BITS;
     return !pmem.bits[address];
 }
 
 void p_set(size_t address)
 {
+    pmem_lock.spinlock();
+    scope(exit) pmem_lock.unlock();
+    
     address >>= FRAME_BITS;
     pmem.bits[address] = true;
 }
 
 void p_free(size_t address)
 {
+    pmem_lock.spinlock();
+    scope(exit) pmem_lock.unlock();
+    
     address >>= FRAME_BITS;
     pmem.bits[address] = false;
 }
 
 size_t p_alloc()
 {
-    // TODO: Synchronize or make atomic
+    pmem_lock.spinlock();
+    scope(exit) pmem_lock.unlock();
+    
     size_t p = pmem.bits.setFirstCleared(pmem.available.sizeof * 8);
     
     if(p < pmem.available.sizeof * 8)

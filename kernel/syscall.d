@@ -9,10 +9,17 @@ module kernel.syscall;
 import std.stdio;
 import std.string;
 
-extern(C) void syscall_a(char* str1, char* str2)
+struct Test
+{
+    int a;
+    int b;
+    int c;
+}
+
+extern(C) void syscall_a(char* str1, Test t)
 {
     write(ctodstr(str1));
-    write(ctodstr(str2));
+    writefln("[%u, %u, %u]", t.a, t.b, t.c);
     for(size_t i=0; i<3000000; i++){}
 }
 

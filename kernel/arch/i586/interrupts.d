@@ -265,10 +265,12 @@ extern(C) void isr_128()
     {
         naked;
         "push %%eax";
+        "push 20(%%ebp)";
+        "push 16(%%ebp)";
         "push 12(%%ebp)";
         "push 8(%%ebp)";
         "call syscall_a";
-        "add $8, %%esp";
+        "add $16, %%esp";
         "pop %%eax";
         "iret";
     }

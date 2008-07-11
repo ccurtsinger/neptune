@@ -6,36 +6,24 @@ import kernel.monitor;
 struct CriticalSection
 {
 	Lock mutex;
-	CriticalSection* next;
+	size_t magic;
 }
 
-CriticalSection* cslist = null;
 Lock lock;
 size_t count = 0;
 
 extern(C) void _d_criticalenter(CriticalSection* cs)
 {
-	lock.spinlock();
-	
-	CriticalSection* c = cslist;
-	
-	while(c !is null)
-	{
-		if(c == cs)
-			break;
-		else
-			c = c.next;
-	}
-	
-	if(c is null)
-	{
-		cs.mutex = Lock();
-		cs.next = cslist;
-		cslist = cs;
-		count++;
-	}
-	
-	lock.unlock();
+    if(cs.magic != 0x1234ABCD)
+    {
+        lock.spinlock();
+        
+        cs.mutex = Lock();
+        cs.magic = 0x1234ABCD;
+        count++;
+        
+        lock.unlock();
+    }
 	
 	cs.mutex.spinlock();
 }

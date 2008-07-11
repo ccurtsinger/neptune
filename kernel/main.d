@@ -9,6 +9,7 @@ module kernel.main;
 import kernel.core;
 import kernel.event;
 import kernel.process;
+import kernel.scheduler;
 
 import kernel.spec.multiboot;
 import kernel.spec.elf;
@@ -64,7 +65,7 @@ extern(C) void _main(MultibootInfo* multiboot, uint magic)
             }
             
             // Create a process for this module
-            processes ~= Process(cast(ElfHeader*)(cast(size_t)elf + KERNEL_VIRTUAL_BASE));
+            add_process(Process(cast(ElfHeader*)(cast(size_t)elf + KERNEL_VIRTUAL_BASE)));
         }
     }
     
@@ -73,31 +74,4 @@ extern(C) void _main(MultibootInfo* multiboot, uint magic)
     enable_interrupts();
     
     for(;;){}
-}
-
-Process[] processes;
-size_t current = size_t.max;
-
-extern(C) void task_switch(Context* context)
-{
-    if(current == size_t.max)
-    {
-        current = 0;
-        load_page_table(processes[current].pagetable);
-        set_kernel_entry_stack(processes[current].k_stack);
-        *context = processes[current].context;
-    }
-    else
-    {
-        processes[current].context = *context;
-        
-        current++;
-        
-        if(current >= processes.length)
-            current = 0;
-        
-        load_page_table(processes[current].pagetable);
-        set_kernel_entry_stack(processes[current].k_stack);
-        *context = processes[current].context;
-    }
 }

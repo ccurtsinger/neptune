@@ -13,14 +13,13 @@ import kernel.arch.i586.pic;
 import kernel.arch.i586.registers;
 
 import kernel.core;
+import kernel.scheduler;
 import kernel.syscall;
 
 import std.stdio;
 import std.port;
 
 version(arch_i586):
-
-extern(C) void task_switch(Context*);
 
 Descriptor[256] idt;
 char[][256] interrupt_events;

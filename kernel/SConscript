@@ -10,6 +10,7 @@ obj_list += [env.gdc('lock.o',      'lock.d')]
 obj_list += [env.gdc('main.o',      'main.d')]
 obj_list += [env.gdc('monitor.o',   'monitor.d')]
 obj_list += [env.gdc('process.o',   'process.d')]
+obj_list += [env.gdc('scheduler.o', 'scheduler.d')]
 obj_list += [env.gdc('syscall.o',   'syscall.d')]
 
 obj_list += SConscript('mem/SConscript', exports='env')

@@ -12,6 +12,7 @@ from buildinfo import InfoBuilder
 
 # Set up custom builders
 yasm = Builder(action = 'yasm $YASMFLAGS -o $TARGET $SOURCE')
+yasm64 = Builder(action = 'yasm $YASM64FLAGS -o $TARGET $SOURCE')
 gdc = Builder(action = 'gdc $GDCFLAGS -c -o $TARGET $SOURCE')
 obj = Builder(action = '')
 
@@ -29,6 +30,7 @@ def setupEnv(target, version, **kw_args):
 
     # Our custom builders
     env['BUILDERS']['yasm']        = yasm
+    env['BUILDERS']['yasm64']      = yasm64
     env['BUILDERS']['gdc']         = gdc
     env['BUILDERS']['obj']         = obj
     env['BUILDERS']['Link']        = link
@@ -41,15 +43,11 @@ def setupEnv(target, version, **kw_args):
     env['GDCFLAGS'] += ' -mno-red-zone'
     env['GDCFLAGS'] += ' -fno-exceptions'
 
-    # Set target-specific YASM and GDC flags
-    if(target == 'i586'):
-        env['YASMFLAGS'] = '-f elf'
-    elif(target == 'x86_64'):
-        env['YASMFLAGS'] = '-f elf64'
+    env['YASMFLAGS'] = '-f elf'
+    env['YASM64FLAGS'] = '-f elf64'
+
+    if(target == 'x86_64'):
         env['GDCFLAGS'] += ' -mcmodel=kernel'
-    else:
-        print 'Invalid target: ' + target
-        raise
 
     # Set version-specific flags
     if(version == 'debug'):

@@ -1,0 +1,11 @@
+# Grab the build environment
+Import('env')
+
+if(env['target'] == 'x86_64'):
+    obj_list  = [env.yasm('loader.o', 'loader.asm')]
+else:
+    obj_list = []
+
+#obj_list += [env.gdc('paging.o', 'paging.d')]
+
+Return('obj_list')

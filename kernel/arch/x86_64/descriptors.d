@@ -4,15 +4,15 @@
  * Copyright: 2008 The Neptune Project
  */
 
-module kernel.arch.i586.descriptors;
+module kernel.arch.x86_64.descriptors;
 
 import kernel.arch.util;
 
-import kernel.arch.i586.constants;
+import kernel.arch.x86_64.constants;
 
 import std.bitarray;
 
-version(arch_i586)
+version(arch_x86_64)
 {
     Descriptor[16] gdt;
     TSS tss;
@@ -95,16 +95,6 @@ version(arch_i586)
         asm
         {
             "lgdt (%[gdtp])" : : [gdtp] "b" &gdtp;
-            
-            // Reload the segment selectors
-            "jmp $0x8, $reload_cs";
-            "reload_cs:";
-            "mov $0x10, %%ax";
-            "mov %%ax, %%ds";
-            "mov %%ax, %%es";
-            "mov %%ax, %%fs";
-            "mov %%ax, %%gs";
-            "mov %%ax, %%ss";
         }
     }
 
@@ -162,13 +152,14 @@ struct Descriptor
 {
     union
     {
-        ulong data;
+        ulong[2] data;
         BitArray bits;
     }
     
     void clear()
     {
-        data = 0;
+        data[0] = 0;
+        data[1] = 0;
     }
     
     // Limit property for non-system descriptors
@@ -188,25 +179,25 @@ struct Descriptor
     // Base property for non-system descriptors
     size_t base()
     {
-        return bits[16..40] | (bits[56..64] << 24);
+        return bits[16..40] | (bits[56..96] << 24);
     }
     
     void base(size_t b)
     {
         bits[16..40] = b;
-        bits[56..64] = b>>24;
+        bits[56..96] = b>>24;
     }
     
     // Offset property for system descriptors
     size_t offset()
     {
-        return bits[0..16] | (bits[48..64]<<16);
+        return bits[0..16] | (bits[48..96]<<16);
     }
     
     void offset(size_t o)
     {
         bits[0..16] = o;
-        bits[48..64] = o>>16;
+        bits[48..96] = o>>16;
     }
     
     mixin(property!("accessed", "bool", "bits[40]"));

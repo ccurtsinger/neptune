@@ -32,9 +32,22 @@
 
 module object;
 
-alias uint size_t;
-alias uint hash_t;
-alias int ptrdiff_t;
+version(arch_i586)
+{
+    alias uint size_t;
+    alias uint hash_t;
+    alias int ptrdiff_t;
+}
+else version(arch_x86_64)
+{
+    alias ulong size_t;
+    alias ulong hash_t;
+    alias long ptrdiff_t;
+}
+else
+{
+    static assert(false, "Unsupported architecture");
+}
 
 import std.mem;
 

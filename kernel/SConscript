@@ -17,6 +17,6 @@ obj_list += SConscript('mem/SConscript', exports='env')
 obj_list += SConscript('runtime/SConscript', exports='env')
 obj_list += SConscript('spec/SConscript', exports='env')
 
-kernel = env.Link('kernel', obj_list, LINKSCRIPTS = ['kernel/arch/' + env['target'] + '/linker.ld'])
+kernel = env.Link(env['type'], obj_list, LINKSCRIPTS = ['kernel/arch/' + env['target'] + '/linker.ld'])
 
 Return('kernel')

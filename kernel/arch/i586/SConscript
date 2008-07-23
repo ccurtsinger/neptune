@@ -3,6 +3,8 @@ Import('env')
 
 if(env['target'] == 'i586'):
     obj_list  = [env.yasm('loader.o', 'loader.asm')]
+else:
+    obj_list = []
 
 obj_list += [env.gdc('common.o',        'common.d')]
 obj_list += [env.gdc('constants.o',     'constants.d')]
@@ -13,6 +15,5 @@ obj_list += [env.gdc('registers.o',     'registers.d')]
 obj_list += [env.gdc('screen.o',        'screen.d')]
 obj_list += [env.gdc('setup.o',         'setup.d')]
 obj_list += [env.gdc('descriptors.o',   'descriptors.d')]
-obj_list += [env.gdc('util.o',          'util.d')]
 
 Return('obj_list')

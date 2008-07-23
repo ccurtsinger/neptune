@@ -10,9 +10,12 @@ version(arch_x86_64)
 {
     version = elf64;
 }
-else version(arch_i586_pc_elf_loader)
+else version(arch_i586)
 {
-    version = elf64;
+    version(loader)
+    {
+        version = elf64;
+    }
 }
 
 version(elf64):

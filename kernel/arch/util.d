@@ -4,7 +4,7 @@
  * Copyright: 2008 The Neptune Project
  */
  
-module kernel.arch.i586.util;
+module kernel.arch.util;
 
 template property(char[] name, char[] type, char[] reference, char[] get = "", char[] set = "")
 {

@@ -19,7 +19,7 @@ obj = Builder(action = '')
 link = Linker()
 partial_link = PartialLinker()
 
-def setupEnv(target, version, **kw_args):
+def setupEnv(target, version, type_version, **kw_args):
     """ Creates a custom environment for the target """
 
     # Start with a standard cross compile environment
@@ -27,6 +27,7 @@ def setupEnv(target, version, **kw_args):
 
     env['target'] = target
     env['version'] = version
+    env['type'] = type_version
 
     # Our custom builders
     env['BUILDERS']['yasm']        = yasm
@@ -39,6 +40,7 @@ def setupEnv(target, version, **kw_args):
 
     # Set global GDC flags
     env['GDCFLAGS']  = ' -fversion=arch_' + target
+    env['GDCFLAGS'] += ' -fversion=' + type_version
     env['GDCFLAGS'] += ' -Ikernel/runtime'
     env['GDCFLAGS'] += ' -mno-red-zone'
     env['GDCFLAGS'] += ' -fno-exceptions'
@@ -71,21 +73,24 @@ def setupEnv(target, version, **kw_args):
 
     return env
 
-# Set up the i586 environment
-env = setupEnv('i586', 'debug')
+target = 'x86_64'
+servers = []
 
-# Build the Kernel
+# Set up the build environment
+env = setupEnv(target, 'debug', 'kernel')
+
+# Build the kernel
 kernel = SConscript('kernel/SConscript', exports='env', build_dir='build/kernel', duplicate=0)
 
-test = SConscript('test/SConscript', exports='env', build_dir='build/test/', duplicate=0)
-test2 = SConscript('test2/SConscript', exports='env', build_dir='build/test2/', duplicate=0)
+if(target == 'x86_64'):
+    env32 = setupEnv('i586', 'debug', 'loader')
+    servers += SConscript('kernel/SConscript', exports={'env':env32}, build_dir='build/loader', duplicate=0)
 
-Depends('neptune.iso', kernel)
-Depends('neptune.iso', test)
-Depends('neptune.iso', test2)
+servers += SConscript('test/SConscript', exports='env', build_dir='build/test/', duplicate=0)
+servers += SConscript('test2/SConscript', exports='env', build_dir='build/test2/', duplicate=0)
 
 # Build the CD
 cd_env = Environment(BUILDERS={'CD': CDBuilder})
-AlwaysBuild(cd_env.CD('neptune.iso', [kernel, 'grub/stage2_eltorito', 'grub/iso-menu.lst', test, test2]))
+AlwaysBuild(cd_env.CD('neptune.iso', [kernel, 'grub/stage2_eltorito', 'kernel/arch/' + env['target'] + '/iso-menu.lst'] + servers))
 
 Default('neptune.iso')

@@ -70,16 +70,13 @@ struct Process
         
         assert(p.addr.map(kernel_stack.base, p_alloc(), Permission("---"), Permission("rw-"), false, false));
         
-        version(arch_i586)
-        {
-            p.context.eip = cast(size_t)elf.getEntry();
-            p.context.cs = GDTSelector.USER_CODE | 0x3;
-            p.context.ss = GDTSelector.USER_DATA | 0x3;
-            p.context.flags = 0x202;
-            
-            p.context.esp = stack.top - 2*size_t.sizeof;
-            p.context.ebp = stack.top - 1*size_t.sizeof;
-        }
+        p.context.eip = cast(size_t)elf.getEntry();
+        p.context.cs = GDTSelector.USER_CODE | 0x3;
+        p.context.ss = GDTSelector.USER_DATA | 0x3;
+        p.context.flags = 0x202;
+        
+        p.context.esp = stack.top - 2*size_t.sizeof;
+        p.context.ebp = stack.top - 1*size_t.sizeof;
         
         load_page_table(pagetable_phys);
         

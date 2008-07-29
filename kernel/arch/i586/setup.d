@@ -41,21 +41,14 @@ PageTable* arch_init()
 
 void arch_setup()
 {
-    version(loader)
-    {
-        assert(false, "Load 64 bit kernel here");
-    }
-    else
-    {
-        PageTable* pagetable = cast(PageTable*)(cr3 + KERNEL_VIRTUAL_BASE);
+    PageTable* pagetable = cast(PageTable*)(cr3 + KERNEL_VIRTUAL_BASE);
 
-        for(size_t i=0; i<1024*FRAME_SIZE; i+=FRAME_SIZE)
-        {
-            pagetable.unmap(i);
-        }
-        
-        root.addHandler("dev.pit", EventHandler(0, &pit_handler));
+    for(size_t i=0; i<1024*FRAME_SIZE; i+=FRAME_SIZE)
+    {
+        pagetable.unmap(i);
     }
+    
+    root.addHandler("dev.pit", EventHandler(0, &pit_handler));
 }
 
 void pit_handler(char[] domain)

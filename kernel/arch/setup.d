@@ -12,7 +12,7 @@ version(arch_i586)
 }
 else version(arch_x86_64)
 {
-    public import kernel.arch.x86_64.setup;
+    static assert(false, "TODO: implement x86_64 architecture support");
 }
 else
 {

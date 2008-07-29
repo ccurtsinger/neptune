@@ -6,8 +6,7 @@
 
 module kernel.arch.i586.descriptors;
 
-import kernel.arch.util;
-
+import kernel.arch.i586.util;
 import kernel.arch.i586.constants;
 
 import std.bitarray;

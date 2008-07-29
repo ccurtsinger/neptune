@@ -12,14 +12,13 @@ from buildinfo import InfoBuilder
 
 # Set up custom builders
 yasm = Builder(action = 'yasm $YASMFLAGS -o $TARGET $SOURCE')
-yasm64 = Builder(action = 'yasm $YASM64FLAGS -o $TARGET $SOURCE')
 gdc = Builder(action = 'gdc $GDCFLAGS -c -o $TARGET $SOURCE')
 obj = Builder(action = '')
 
 link = Linker()
 partial_link = PartialLinker()
 
-def setupEnv(target, version, type_version, **kw_args):
+def setupEnv(target, version, **kw_args):
     """ Creates a custom environment for the target """
 
     # Start with a standard cross compile environment
@@ -27,11 +26,9 @@ def setupEnv(target, version, type_version, **kw_args):
 
     env['target'] = target
     env['version'] = version
-    env['type'] = type_version
 
     # Our custom builders
     env['BUILDERS']['yasm']        = yasm
-    env['BUILDERS']['yasm64']      = yasm64
     env['BUILDERS']['gdc']         = gdc
     env['BUILDERS']['obj']         = obj
     env['BUILDERS']['Link']        = link
@@ -40,16 +37,19 @@ def setupEnv(target, version, type_version, **kw_args):
 
     # Set global GDC flags
     env['GDCFLAGS']  = ' -fversion=arch_' + target
-    env['GDCFLAGS'] += ' -fversion=' + type_version
     env['GDCFLAGS'] += ' -Ikernel/runtime'
     env['GDCFLAGS'] += ' -mno-red-zone'
     env['GDCFLAGS'] += ' -fno-exceptions'
 
-    env['YASMFLAGS'] = '-f elf'
-    env['YASM64FLAGS'] = '-f elf64'
-
-    if(target == 'x86_64'):
+    # Set target-specific YASM and GDC flags
+    if(target == 'i586'):
+        env['YASMFLAGS'] = '-f elf'
+    elif(target == 'x86_64'):
+        env['YASMFLAGS'] = '-f elf64'
         env['GDCFLAGS'] += ' -mcmodel=kernel'
+    else:
+        print 'Invalid target: ' + target
+        raise
 
     # Set version-specific flags
     if(version == 'debug'):
@@ -73,24 +73,21 @@ def setupEnv(target, version, type_version, **kw_args):
 
     return env
 
-target = 'x86_64'
-servers = []
+# Set up the i586 environment
+env = setupEnv('i586', 'debug')
 
-# Set up the build environment
-env = setupEnv(target, 'debug', 'kernel')
-
-# Build the kernel
+# Build the Kernel
 kernel = SConscript('kernel/SConscript', exports='env', build_dir='build/kernel', duplicate=0)
 
-if(target == 'x86_64'):
-    env32 = setupEnv('i586', 'debug', 'loader')
-    servers += SConscript('kernel/SConscript', exports={'env':env32}, build_dir='build/loader', duplicate=0)
+test = SConscript('test/SConscript', exports='env', build_dir='build/test/', duplicate=0)
+test2 = SConscript('test2/SConscript', exports='env', build_dir='build/test2/', duplicate=0)
 
-servers += SConscript('test/SConscript', exports='env', build_dir='build/test/', duplicate=0)
-servers += SConscript('test2/SConscript', exports='env', build_dir='build/test2/', duplicate=0)
+Depends('neptune.iso', kernel)
+Depends('neptune.iso', test)
+Depends('neptune.iso', test2)
 
 # Build the CD
 cd_env = Environment(BUILDERS={'CD': CDBuilder})
-AlwaysBuild(cd_env.CD('neptune.iso', [kernel, 'grub/stage2_eltorito', 'kernel/arch/' + env['target'] + '/iso-menu.lst'] + servers))
+AlwaysBuild(cd_env.CD('neptune.iso', [kernel, 'grub/stage2_eltorito', 'grub/iso-menu.lst', test, test2]))
 
 Default('neptune.iso')

@@ -8,8 +8,7 @@ module kernel.arch.i586.paging;
 
 import kernel.arch.i586.constants;
 import kernel.arch.i586.registers;
-
-import kernel.arch.util;
+import kernel.arch.i586.util;
 
 import kernel.mem.range;
 import kernel.mem.physical;

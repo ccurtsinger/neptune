@@ -1,11 +1,6 @@
 # Grab the build environment
 Import('env')
 
-obj_list = []
-
-if(env['target'] == 'i586'):
-    obj_list += SConscript('i586/SConscript', exports='env')
-elif(env['target'] == 'x86_64' or env['version'] == 'loader'):
-    obj_list += SConscript('x86_64/SConscript', exports='env')
+obj_list = SConscript('i586/SConscript', exports='env')
 
 Return('obj_list')

@@ -10,10 +10,6 @@ version(arch_i586)
 {
     version = elf;
 }
-else version(arch_x86_64)
-{
-    version = elf;
-}
 
 version(elf):
 

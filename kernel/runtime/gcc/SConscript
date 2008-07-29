@@ -1,7 +1,6 @@
 # Grab the build environment
 Import('env')
 
-obj_list = []
-#obj_list = [env.gdc('builtins.o', 'builtins.d')]
+obj_list = [env.gdc('builtins.o', 'builtins.d')]
 
 Return('obj_list')

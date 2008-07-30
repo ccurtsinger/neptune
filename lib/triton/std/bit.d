@@ -1,16 +1,11 @@
 /**
- * Bit testing and setting operations (non-atomic)
+ * Bit testing and setting operations
  * 
- * Based on the implemented bit operations in std.intrinsic
- * written by Walter Bright.
+ * Derived from copyrighted work by Walter Bright (www.digitalmars.com)
  *
- * Authors: Walter Bright, Charlie Curtsinger
- * Date: March 1st, 2008
- * Version: 0.3
- *
- * Copyright: 2004-2008 Digital Mars, www.digitalmars.com
+ * Copyright: 2008 The Neptune Project
  */
- 
+
 /*
  *  Copyright (C) 2004-2008 by Digital Mars, www.digitalmars.com
  *  Written by Walter Bright
@@ -36,8 +31,6 @@
 
 module std.bit;
 
-import std.stdio;
-
 /**
  * Scan for the first set bit
  *
@@ -51,18 +44,18 @@ import std.stdio;
 ptrdiff_t bsf(size_t v)
 {
 	ptrdiff_t i;
-	
+
 	asm
 	{
 	    "bsf %[value], %[index]" : [index] "=r" i : [value] "r" v;
 	}
-	
+
 	return i;
 }
 
 /**
  * Scan for the last set bit
- * 
+ *
  * Params:
  *  v = value to scan through
  *
@@ -73,12 +66,12 @@ ptrdiff_t bsf(size_t v)
 ptrdiff_t bsr(size_t v)
 {
 	ptrdiff_t i;
-	
+
 	asm
 	{
 	    "bsr %[value], %[index]" : [index] "=r" i : [value] "r" v;
 	}
-	
+
 	return i;
 }
 
@@ -91,9 +84,9 @@ ptrdiff_t bsr(size_t v)
  *
  * Returns: the value of the bit being tested
  */
-int bt(uint *p, uint bitnum)
+bool bt(uint *p, uint bitnum)
 {
-    return (p[bitnum / (uint.sizeof*8)] & (1<<(bitnum & ((uint.sizeof*8)-1)))) ? -1 : 0 ;
+    return (p[bitnum / (uint.sizeof*8)] & (1<<(bitnum & ((uint.sizeof*8)-1)))) ? true : false;
 }
 
 /**
@@ -103,13 +96,13 @@ int bt(uint *p, uint bitnum)
  *  p = pointer to the value to operate on
  *  bitnum = bit index to operate on
  */
-int btc(uint *p, uint bitnum)
+bool btc(uint *p, uint bitnum)
 {
     uint * q = p + (bitnum / (uint.sizeof*8));
     uint mask = 1 << (bitnum & ((uint.sizeof*8) - 1));
     int result = *q & mask;
     *q ^= mask;
-    return result ? -1 : 0;
+    return result ? true : false;
 }
 
 /**
@@ -119,38 +112,27 @@ int btc(uint *p, uint bitnum)
  *  p = pointer to the value to operate on
  *  bitnum = bit index to operate on
  */
-int btr(uint *p, uint bitnum)
+bool btr(uint *p, uint bitnum)
 {
     uint * q = p + (bitnum / (uint.sizeof*8));
     uint mask = 1 << (bitnum & ((uint.sizeof*8) - 1));
     int result = *q & mask;
     *q &= ~mask;
-    return result ? -1 : 0;
+    return result ? true : false;
 }
 
 /**
  * Test and set a bit
- * 
+ *
  * Params:
  *  p = pointer to the value to operate on
  *  bitnum = bit index to operate on
  */
-int bts(uint *p, uint bitnum)
+bool bts(uint *p, uint bitnum)
 {
     uint * q = p + (bitnum / (uint.sizeof*8));
     uint mask = 1 << (bitnum & ((uint.sizeof*8) - 1));
     int result = *q & mask;
     *q |= mask;
-    return result ? -1 : 0;
-}
-
-
-/**
- * Swaps bytes in a 4 byte uint end-to-end, i.e. byte 0 becomes
-	byte 3, byte 1 becomes byte 2, byte 2 becomes byte 1, byte 3
-	becomes byte 0.
- */
-uint bswap(uint v)
-{
-    return ((v&0xFF)<<24)|((v&0xFF00)<<8)|((v&0xFF0000)>>>8)|((v&0xFF000000)>>>24);
+    return result ? true : false;
 }

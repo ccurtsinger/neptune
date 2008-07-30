@@ -1,0 +1,6 @@
+# Grab the build environment
+Import('env', 'triton')
+
+server = [File('libtest.so')]
+
+Return('server')

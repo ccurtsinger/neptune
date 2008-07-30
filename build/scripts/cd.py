@@ -14,7 +14,7 @@ def mkdir(path):
 def rmtree(path):
     print "rm -r %s" % path
     shutil.rmtree(path)
-
+    
 def link(src, dst):
     print "ln %s %s" % (src, dst)
     os.link(src, dst)
@@ -25,7 +25,7 @@ def call(*args):
 
 def createCD(target, source, env):
     """ Creates a verto CD with a base system"""
-
+    
     iso_path    = '/tmp/iso'
     boot_path   = os.path.join(iso_path, 'boot')
     grub_path   = os.path.join(boot_path, 'grub')
@@ -35,15 +35,15 @@ def createCD(target, source, env):
     # Give us a clean place to put the iso files
     if os.path.isdir(iso_path):
         rmtree(iso_path)
-
+        
     mkdir(grub_path)
     
     mkdir(server_path)
 
     for source_file in source:
         basename = os.path.basename(source_file.path)
-
-        if basename == 'kernel':
+        
+        if basename == 'loader' or basename == 'kernel':
             link(source_file.path, os.path.join(boot_path, basename))
         elif basename == 'stage2_eltorito':
             link(source_file.path, stage2_path)
@@ -51,7 +51,7 @@ def createCD(target, source, env):
             link(source_file.path, os.path.join(grub_path, 'menu.lst'))
         else:
             link(source_file.path, os.path.join(server_path, basename))
-
+        
     call(['mkisofs', '-R', '-no-emul-boot', '-boot-info-table',
           '-boot-load-size', '4',
           '-b', 'boot/grub/stage2_eltorito',
@@ -59,7 +59,7 @@ def createCD(target, source, env):
           iso_path])
 
     rmtree(iso_path)
-
+        
     return None
 
 CDBuilder = Builder(action = createCD)

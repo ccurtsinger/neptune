@@ -1,76 +1,134 @@
 /**
- * Physical memory allocator
+ * Physical page-frame allocator
  *
- * Copyright: 2008 The Neptune Project
+ * Authors: Charlie Curtsinger
+ * Date: March 1st, 2008
+ * Version: 0.3
+ *
+ * Copyright: 2008 Charlie Curtsinger
  */
 
 module kernel.mem.physical;
 
-import kernel.arch.constants;
-import kernel.lock;
+import util.arch.arch;
 
-import std.bitarray;
+import std.bit;
+import std.stdio;
 
-struct PhysicalMemoryMap
+import kernel.core.env;
+
+const ulong PAGE_BLOCK_SIZE = FRAME_SIZE * 8 * FRAME_SIZE; // The number of bytes that can tracked by a page-sized bitmap
+
+const ulong MAX_MEMORY = 0x100000000; // 4GB for now
+
+const ulong PAGE_BLOCKS = MAX_MEMORY / PAGE_BLOCK_SIZE;
+
+struct PageBlock
 {
-    union
+    private uint[FRAME_SIZE/4] bitmap;
+    
+    public void init()
     {
-        BitArray bits;
-        uint[PHYSICAL_MEMORY_MAX / (32 * FRAME_SIZE) + 1] available;
+        for(size_t i=0; i<bitmap.length; i++)
+        {
+            bitmap[i] = 0;
+        }
+    }
+    
+    public int getAvailable()
+    {
+        for(size_t i=0; i<bitmap.length; i++)
+        {
+            if(bitmap[i] > 0)
+            {
+                size_t bitnum = bsf(bitmap[i]);
+                
+                btr(&(bitmap[i]), bitnum);
+                
+                return bitnum + 32*i;
+            }
+        }
+        
+        return -1;
+    }
+    
+    public void setAvailable(size_t num, bool avl = true)
+    {
+        size_t bitnum = num % 32;
+        
+        size_t index = (num - bitnum) / 32;
+        
+        if(avl)
+            bts(&(bitmap[index]), bitnum);
+        else
+            btr(&(bitmap[index]), bitnum);
     }
 }
 
-PhysicalMemoryMap pmem;
-Lock pmem_lock;
-
-void p_init()
+struct PhysicalMemory
 {
-    pmem_lock.spinlock();
-    scope(exit) pmem_lock.unlock();
+    private PageBlock[PAGE_BLOCKS] blocks;
     
-    for(size_t index = 0; index < pmem.available.length; index++)
+    public void init()
     {
-        pmem.available[index] = uint.max;
+        for(size_t i=0; i<blocks.length; i++)
+        {
+            blocks[i].init();
+        }
     }
-}
-
-bool p_state(size_t address)
-{
-    pmem_lock.spinlock();
-    scope(exit) pmem_lock.unlock();
     
-    address >>= FRAME_BITS;
-    return !pmem.bits[address];
-}
-
-void p_set(size_t address)
-{
-    pmem_lock.spinlock();
-    scope(exit) pmem_lock.unlock();
+    public void add(size_t base, size_t size)
+    {
+        size_t offset = base % FRAME_SIZE;
+        
+        if(offset > 0)
+            base += FRAME_SIZE - offset;
+        
+        size -= size % FRAME_SIZE;
+        
+        for(size_t i=0; i<size; i+= FRAME_SIZE)
+        {
+            size_t addr = i + base;
+            size_t blockoffset = addr % PAGE_BLOCK_SIZE;
+            size_t blocknum = (addr - blockoffset)/PAGE_BLOCK_SIZE;
+            size_t pagenum = blockoffset / FRAME_SIZE;
+            
+            blocks[blocknum].setAvailable(pagenum);
+        }
+    }
     
-    address >>= FRAME_BITS;
-    pmem.bits[address] = true;
-}
-
-void p_free(size_t address)
-{
-    pmem_lock.spinlock();
-    scope(exit) pmem_lock.unlock();
+    public void remove(size_t base, size_t size)
+    {
+        size_t offset = base % FRAME_SIZE;
+        
+        if(offset > 0)
+            base += FRAME_SIZE - offset;
+        
+        size -= size % FRAME_SIZE;
+        
+        for(size_t i=0; i<size; i+= FRAME_SIZE)
+        {
+            size_t addr = i + base;
+            size_t blockoffset = addr % PAGE_BLOCK_SIZE;
+            size_t blocknum = (addr - blockoffset)/PAGE_BLOCK_SIZE;
+            size_t pagenum = blockoffset / FRAME_SIZE;
+            
+            blocks[blocknum].setAvailable(pagenum, false);
+        }
+    }
     
-    address >>= FRAME_BITS;
-    pmem.bits[address] = false;
-}
-
-size_t p_alloc()
-{
-    pmem_lock.spinlock();
-    scope(exit) pmem_lock.unlock();
-    
-    size_t p = pmem.bits.setFirstCleared(pmem.available.sizeof * 8);
-    
-    if(p < pmem.available.sizeof * 8)
-        return p<<FRAME_BITS;
-    
-    // TODO: raise event to invoke swapping to disk or page collection
-    assert(false, "Out of physical memory");
+    public ulong get()
+    {
+        for(size_t i=0; i<blocks.length; i++)
+        {
+            int index = blocks[i].getAvailable();
+            
+            if(index >= 0)
+            {
+                return PAGE_BLOCK_SIZE*cast(ulong)i + index*FRAME_SIZE;
+            }
+        }
+        
+        assert(false, "Out of memory");
+    }
 }

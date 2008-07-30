@@ -1,22 +1,12 @@
 # Grab the build environment
-Import('env')
+Import('env', 'lib')
 
-# Build the arch directory first so the multiboot header ends up at the top
-obj_list  = SConscript('arch/SConscript', exports='env')
+obj_list  = SConscript('boot/SConscript', exports='env')
+obj_list += SConscript('core/SConscript', exports='env')
+obj_list += SConscript('dev/SConscript',  exports='env')
+obj_list += SConscript('mem/SConscript',  exports='env')
+obj_list += SConscript('task/SConscript',  exports='env')
 
-obj_list += [env.gdc('core.o',      'core.d')]
-obj_list += [env.gdc('event.o',     'event.d')]
-obj_list += [env.gdc('lock.o',      'lock.d')]
-obj_list += [env.gdc('main.o',      'main.d')]
-obj_list += [env.gdc('monitor.o',   'monitor.d')]
-obj_list += [env.gdc('process.o',   'process.d')]
-obj_list += [env.gdc('scheduler.o', 'scheduler.d')]
-obj_list += [env.gdc('syscall.o',   'syscall.d')]
-
-obj_list += SConscript('mem/SConscript', exports='env')
-obj_list += SConscript('runtime/SConscript', exports='env')
-obj_list += SConscript('spec/SConscript', exports='env')
-
-kernel = env.Link('kernel', obj_list, LINKSCRIPTS = ['kernel/link/linker.ld'])
+kernel = env.Link('kernel', obj_list + lib['util'] + lib['triton'], LINKSCRIPTS = ['kernel/link/linker.ld'])
 
 Return('kernel')

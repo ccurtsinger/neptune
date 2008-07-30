@@ -1,10 +1,10 @@
 default saved
 timeout 1
 
-title  neptune2
+title  neptune 0.1
 root   (cd)
-kernel /boot/kernel
-module /servers/test
-module /servers/test2
+kernel /boot/loader
+module /boot/kernel
+module /servers/basic
 boot
 savedefault

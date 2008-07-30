@@ -1,6 +1,0 @@
-# Grab the build environment
-Import('env')
-
-test = [env.Program('test.c')]
-
-Return('test')

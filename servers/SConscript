@@ -1,0 +1,9 @@
+# Grab the build environment
+Import('env', 'lib')
+
+server_list  = SConscript('basic/SConscript', exports={'env' : env, 'triton' : lib['triton']})
+
+#server_list  = SConscript('libtest/SConscript',   exports={'env' : env, 'triton' : lib['triton']})
+#server_list += SConscript('sharedlib/SConscript', exports={'env' : env, 'triton' : lib['triton']})
+
+Return('server_list')

@@ -61,70 +61,55 @@ struct PageBlock
     }
 }
 
-struct PhysicalMemory
+private PageBlock[PAGE_BLOCKS] blocks;
+
+extern(C) void p_init()
 {
-    private PageBlock[PAGE_BLOCKS] blocks;
-    
-    public void init()
+    for(size_t i=0; i<blocks.length; i++)
     {
-        for(size_t i=0; i<blocks.length; i++)
+        blocks[i].init();
+    }
+}
+
+extern(C) void p_free(size_t base)
+{
+    size_t offset = base % FRAME_SIZE;
+    
+    if(offset > 0)
+        base += FRAME_SIZE - offset;
+        
+    size_t blockoffset = base % PAGE_BLOCK_SIZE;
+    size_t blocknum = (base - blockoffset)/PAGE_BLOCK_SIZE;
+    size_t pagenum = blockoffset / FRAME_SIZE;
+    
+    blocks[blocknum].setAvailable(pagenum);
+}
+
+extern(C) void p_set(size_t base)
+{
+    size_t offset = base % FRAME_SIZE;
+    
+    if(offset > 0)
+        base += FRAME_SIZE - offset;
+
+    size_t blockoffset = base % PAGE_BLOCK_SIZE;
+    size_t blocknum = (base - blockoffset)/PAGE_BLOCK_SIZE;
+    size_t pagenum = blockoffset / FRAME_SIZE;
+    
+    blocks[blocknum].setAvailable(pagenum, false);
+}
+
+extern(C) ulong p_alloc()
+{
+    for(size_t i=0; i<blocks.length; i++)
+    {
+        int index = blocks[i].getAvailable();
+        
+        if(index >= 0)
         {
-            blocks[i].init();
+            return PAGE_BLOCK_SIZE*cast(ulong)i + index*FRAME_SIZE;
         }
     }
     
-    public void add(size_t base, size_t size)
-    {
-        size_t offset = base % FRAME_SIZE;
-        
-        if(offset > 0)
-            base += FRAME_SIZE - offset;
-        
-        size -= size % FRAME_SIZE;
-        
-        for(size_t i=0; i<size; i+= FRAME_SIZE)
-        {
-            size_t addr = i + base;
-            size_t blockoffset = addr % PAGE_BLOCK_SIZE;
-            size_t blocknum = (addr - blockoffset)/PAGE_BLOCK_SIZE;
-            size_t pagenum = blockoffset / FRAME_SIZE;
-            
-            blocks[blocknum].setAvailable(pagenum);
-        }
-    }
-    
-    public void remove(size_t base, size_t size)
-    {
-        size_t offset = base % FRAME_SIZE;
-        
-        if(offset > 0)
-            base += FRAME_SIZE - offset;
-        
-        size -= size % FRAME_SIZE;
-        
-        for(size_t i=0; i<size; i+= FRAME_SIZE)
-        {
-            size_t addr = i + base;
-            size_t blockoffset = addr % PAGE_BLOCK_SIZE;
-            size_t blocknum = (addr - blockoffset)/PAGE_BLOCK_SIZE;
-            size_t pagenum = blockoffset / FRAME_SIZE;
-            
-            blocks[blocknum].setAvailable(pagenum, false);
-        }
-    }
-    
-    public ulong get()
-    {
-        for(size_t i=0; i<blocks.length; i++)
-        {
-            int index = blocks[i].getAvailable();
-            
-            if(index >= 0)
-            {
-                return PAGE_BLOCK_SIZE*cast(ulong)i + index*FRAME_SIZE;
-            }
-        }
-        
-        assert(false, "Out of memory");
-    }
+    assert(false, "Out of memory");
 }

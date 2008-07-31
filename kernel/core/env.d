@@ -27,10 +27,6 @@ import kernel.task.procallocator;
 Screen screen;
 Keyboard kb;
 
-PhysicalMemory physical;
-WatermarkAllocator heap;
-//TreeAllocator heap;
-
 CPU cpu;
 
 InterruptScope localscope;

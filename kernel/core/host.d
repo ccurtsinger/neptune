@@ -13,31 +13,6 @@ import util.arch.arch;
 
 import kernel.core.env;
 
-extern(C) void* m_alloc(size_t size)
-{
-    return heap.allocate(size);
-}
-
-extern(C) size_t p_alloc()
-{
-    return physical.get();
-}
-
-extern(C) size_t m_size(void* p)
-{
-    return 0;
-}
-
-extern(C) void m_free(void* p)
-{
-    heap.free(p);
-}
-
-extern(C) void p_free(size_t p)
-{
-    physical.add(p, FRAME_SIZE);
-}
-
 extern(C) char _d_getc()
 {
     assert(false, "_d_getc() is not yet implemented");

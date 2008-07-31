@@ -25,12 +25,16 @@ import util.spec.elf64;
 
 import kernel.core.env;
 import kernel.core.interrupt;
+
 import kernel.dev.screen;
 import kernel.dev.kb;
 import kernel.dev.timer;
+
 import kernel.task.procallocator;
 import kernel.task.process;
-import kernel.mem.watermark;
+
+import kernel.mem.physical : p_init, p_set;
+import kernel.mem.watermark : m_init;
 
 extern(C) void _startup(ulong loader, ulong* isrtable)
 {
@@ -180,19 +184,25 @@ public void interrupt_setup(ulong* isrtable)
 
 public void memory_setup()
 {    
-    physical.init();
+    p_init();
     
     foreach(region; loaderData.memoryRegions[0..loaderData.numMemoryRegions])
     {
         if(region.type == 1)
         {
-            physical.add(region.base, region.size);
+            for(size_t i = region.base; i < region.base + region.size; i += FRAME_SIZE)
+            {
+                p_free(i);
+            }
         }
     }
 
     foreach(used_region; loaderData.usedRegions[0..loaderData.numUsedRegions])
     {
-        physical.remove(used_region.base, used_region.size);
+        for(size_t i = used_region.base; i < used_region.base + used_region.size; i += FRAME_SIZE)
+        {
+            p_set(i);
+        }
     }
     
     cpu.pagetable = cast(PageTable*)ptov(loaderData.L4);
@@ -211,8 +221,7 @@ public void memory_setup()
     p.user = true;
     p.invalidate();
     
-    heap.init(cpu.pagetable, 0xFFFF820000000000);
-    //heap = TreeAllocator(0xFFFF820000000000);
+    m_init(cpu.pagetable, 0xFFFF820000000000);
 }
 
 public bool pagefault_handler(Context* context)
@@ -230,7 +239,7 @@ public bool pagefault_handler(Context* context)
         
         return true;
     }
-    else if(addr >= cast(ulong)heap.start && addr <= cast(ulong)heap.end + FRAME_SIZE)
+    else
     {
         // Demand page the kernel heap
         Page* p = (*cpu.pagetable)[addr];
@@ -241,70 +250,20 @@ public bool pagefault_handler(Context* context)
         
         return true;
     }
-    else
+        
+    writefln("Unhandled page fault at address %p", addr);
+    writefln("Error code %#x", context.error);
+    writefln("%%rip: %p", context.rip);
+    
+    //heap.debugDump();
+    
+    version(unwind)
     {
-        // If the fault occurred on a page read violation
-        if(context.error == 0x5)
-        {
-            // Emulate a function call across privilege levels
-            if(addr == cast(ulong)&test_syscall)
-            {
-                context.rax = test_syscall(context.rdi);
-                
-                // Pop off the return address from the caller's stack
-                context.rip = *(cast(ulong*)context.rsp);
-                context.rsp += ulong.sizeof;
-                
-                return true;
-            }
-            /*else if(addr == cast(ulong)&syscall_1)
-            {
-                context.rax = syscall_1();
-                
-                // Pop off the return address from the caller's stack
-                context.rip = *(cast(ulong*)context.rsp);
-                context.rsp += ulong.sizeof;
-                
-                return true;
-            }
-            if(addr == cast(ulong)&syscall_2)
-            {
-                context.rax = syscall_2();
-                
-                // Pop off the return address from the caller's stack
-                context.rip = *(cast(ulong*)context.rsp);
-                context.rsp += ulong.sizeof;
-                
-                return true;
-            }
-            else if(addr == cast(ulong)&Elf64Header.runtimeLink)
-            {
-                Elf64Header* elf = (cast(Elf64Header**)context.rsp)[0];
-                size_t plt_index = (cast(ulong*)context.rsp)[1];
-                
-                // remove GOT[1] and PLT index from stack
-                context.rsp += ulong.sizeof * 2;
-                
-                context.rip = elf.runtimeLink(plt_index);
-                
-                return true;
-            }*/
-        }
-        
-        writefln("Unhandled page fault at address %p", addr);
-        writefln("Error code %#x", context.error);
-        writefln("%%rip: %p", context.rip);
-        
-        //heap.debugDump();
-        
-        version(unwind)
-        {
-            writefln("%p: %s", context.rip, getSymbol(context.rip));
-            stackUnwind(cast(ulong*)context.rsp, cast(ulong*)context.rbp);
-        }
-        
-        for(;;){}
+        writefln("%p: %s", context.rip, getSymbol(context.rip));
+        stackUnwind(cast(ulong*)context.rsp, cast(ulong*)context.rbp);
     }
+    
+    for(;;){}
     
     return false;
 }

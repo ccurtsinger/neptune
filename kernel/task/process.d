@@ -16,13 +16,11 @@ import util.spec.elf64;
 import kernel.core.env;
 
 import kernel.task.procallocator;
-import kernel.mem.watermark;
 
 class Process
 {
     size_t id;
     PageTable* pagetable;
-    WatermarkAllocator heap;
     
     Activation* sa;
     
@@ -41,8 +39,6 @@ class Process
         {
             pagetable.table[i] = Page();
         }
-        
-        heap.init(pagetable, 0x10000000);
 
         elf.load(pagetable, true);
         
@@ -55,13 +51,15 @@ class Process
     
     public void upcall(Processor p, Context* dest)
     {
+        assert(false, "Upcall");
+        
         assert(sa !is null, "Attempted to upcall to process on null activation");
         
         sa.processor_id = p.id;
         
         Context context;
         context.rip = entry;
-        context.rbp = cast(ulong)heap.allocate(2*FRAME_SIZE) + 2*FRAME_SIZE - 2 * ulong.sizeof;
+        //context.rbp = cast(ulong)heap.allocate(2*FRAME_SIZE) + 2*FRAME_SIZE - 2 * ulong.sizeof;
         context.rsp = context.rbp - Activation.sizeof;
         context.rdi = context.rsp;
         context.rsi = cast(ulong)&test_syscall;

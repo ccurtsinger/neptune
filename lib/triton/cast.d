@@ -1,11 +1,7 @@
 /**
  * Object cast support functions for the D language
  *
- * Authors: Walter Bright, Sean Kelly, Charlie Curtsinger
- * Date: March 11th, 2008
- * Version: 0.4
- *
- * Copyright: 2004-2008 Digital Mars, www.digitalmars.com
+ * Copyright: 2008 The Neptune Project
  */
 
 /*

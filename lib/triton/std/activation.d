@@ -1,3 +1,9 @@
+/**
+ * Scheduler activations support
+ *
+ * Copyright: 2008 The Neptune Project
+ */
+
 module std.activation;
 
 import std.context;

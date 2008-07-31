@@ -3,11 +3,7 @@
  *
  * Based on code in Phobos (Walter Bright) and Tango (Sean Kelly)
  *
- * Authors: Walter Bright, Sean Kelly, Charlie Curtsinger
- * Date: March 1st, 2008
- * Version: 0.3
- *
- * Copyright: 2004-2008 Digital Mars, www.digitalmars.com
+ * Copyright: 2008 The Neptune Project
  */
 
 /*
@@ -239,7 +235,7 @@ extern (C) byte[] _d_arraysetlengthT(TypeInfo ti, size_t newlength, Array *p)
 {
     return _d_arraysetlengthiT(ti, newlength, p);
 }
-import std.stdio;
+
 /**
  * Resize dynamic arrays with non-zero initializers
  */

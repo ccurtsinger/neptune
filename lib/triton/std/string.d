@@ -1,11 +1,7 @@
 /**
  * String conversion utilities
  *
- * Authors: Charlie Curtsinger
- * Date: March 1st, 2008
- * Version: 0.3
- *
- * Copyright: 2008 Charlie Curtsinger
+ * Copyright: 2008 The Neptune Project
  */
  
 module std.string;

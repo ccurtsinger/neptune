@@ -1,3 +1,9 @@
+/**
+ * Processor allocator for scheduler activations
+ *
+ * Copyright: 2008 The Neptune Project
+ */
+
 module kernel.task.procallocator;
 
 import std.context;

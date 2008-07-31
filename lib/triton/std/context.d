@@ -1,3 +1,9 @@
+/**
+ * Support for access and operations on saved processor context
+ *
+ * Copyright: 2008 The Neptune Project
+ */
+
 module std.context;
 
 struct Context

@@ -3,11 +3,7 @@
  *
  * Based on module unit test support in Phobos (Walter Bright)
  *
- * Authors: Charlie Curtsinger, Walter Bright
- * Date: March 11th, 2008
- * Version: 0.4
- *
- * Copyright: 2004-2008 Digital Mars, www.digitalmars.com
+ * Copyright: 2008 The Neptune Project
  */
  
 /*

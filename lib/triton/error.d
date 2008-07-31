@@ -1,9 +1,7 @@
 /**
  * Language support for failed asserts and errors
  *
- * Authors: Charlie Curtsinger
- * Date: March 11th, 2008
- * Version: 0.4
+ * Copyright: 2008 The Neptune Project
  */
  
 module error;

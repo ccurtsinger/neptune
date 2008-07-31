@@ -1,3 +1,9 @@
+/**
+ * D symbol demangler
+ *
+ * Copyright: 2008 The Neptune Project
+ */
+
 // Written in the D programming language.
 
 /*

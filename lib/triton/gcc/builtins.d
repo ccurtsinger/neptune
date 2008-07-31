@@ -1,11 +1,9 @@
 /**
  * Built-in functions for GCC
  *
- * Authors: David Friedman
- * Date: March 1st, 2008
- * Version: 0.3
- *
- * Copyright: 2008 David Friedman
+ * Based on code by David Friedman
+ * 
+ * Copyright: 2008 The Neptune Project
  */
 
 /* GDC -- D front-end for GCC

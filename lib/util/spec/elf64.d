@@ -98,51 +98,6 @@ enum SectionHeaderFlags : ulong
     X = 4
 }
 
-enum RelocationType : ulong
-{
-    // A = addend
-    // B = base address of shared object
-    // G = offset into GOT of symbol's entry
-    // GOT = address of GOT
-    // L = address of PLT entry for symbol
-    // P = offset
-    // S = value of symbol
-    // Z = size of symbol
-    
-    R_X86_64_NONE = 0,              // none
-    R_X86_64_64 = 1,                // S + A
-    R_X86_64_PC32 = 2,              // S + A - P
-    R_X86_64_GOT32 = 3,             // G + A
-    R_X86_64_PLT32 = 4,             // L + A - P
-    R_X86_64_COPY = 5,              // none
-    R_X86_64_GLOB_DAT = 6,          // S
-    R_X86_64_JUMP_SLOT = 7,         // S
-    R_X86_64_RELATIVE = 8,          // B + A
-    R_X86_64_GOTPCREL = 9,          // G + GOT + A - P
-    R_X86_64_32 = 10,               // S + A
-    R_X86_64_32S = 11,              // S + A
-    R_X86_64_16 = 12,               // S + A
-    R_X86_64_PC16 = 13,             // S + A - P
-    R_X86_64_8 = 14,                // S + A
-    R_X86_64_PC8 = 15,              // S + A - P
-    R_X86_64_DTPMOD64 = 16,
-    R_X86_64_DTPOFF64 = 17,
-    R_X86_64_TPOFF64 = 18,
-    R_X86_64_TLSGD = 19,
-    R_X86_64_TLSLD = 20,
-    R_X86_64_DTPOFF32 = 21,
-    R_X86_64_GOTTPOFF = 22,
-    R_X86_64_TPOFF32 = 23,
-    R_X86_64_PC64 = 24,             // S + A - P
-    R_X86_64_GOTOFF64 = 25,         // S + A - GOT
-    R_X86_64_GOTPC32 = 26,          // GOT + A - P
-    R_X86_64_SIZE32 = 32,           // Z + A
-    R_X86_64_SIZE64 = 33,           // Z + A
-    R_X86_64_GOTPC32_TLSDESC = 34,
-    R_X86_64_TLSDESC_CALL = 35,
-    R_X86_64_TLSDESC = 36,
-}
-
 struct Elf64Header
 {
     align(1):
@@ -259,13 +214,15 @@ struct Elf64Header
         return null;
     }
     
-    public Elf64Rela[] getRelocations(char[] section)
+    public Elf64Symbol[] getSymbols()
     {
-        Elf64SectionHeader* rela = getSection(section);
-        
-        size_t relocations = (cast(size_t)rela.size)/Elf64Rela.sizeof;
-        
-        return (cast(Elf64Rela*)(cast(ulong)this + rela.offset))[0..relocations];
+        auto symtab_section = getSection(".symtab");
+        auto symtab = cast(Elf64Symbol*)symtab_section.getBase(this);
+       
+        uint num = symtab_section.size;
+        num /= Elf64Symbol.sizeof;
+       
+        return symtab[0..num];
     }
     
     public void load(PageTable* pagetable, bool user = false)
@@ -275,51 +232,6 @@ struct Elf64Header
             p.load(this, pagetable, user);
         }
     }
-    
-    public size_t runtimeLink(size_t plt_index)
-    {
-        // Find the PLT relocation table
-        auto rela_plt_section = getSection(".rela.plt");
-        Elf64Rela[] rela_plt = cast(Elf64Rela[])rela_plt_section.getData(this);
-        
-        // Get the symbol table for PLT relocations
-        auto symtab_section = getSection(rela_plt_section.getLink());
-        auto symtab = cast(Elf64Symbol[])symtab_section.getData(this);
-        
-        // Get the string table for PLT relocations
-        auto strtab_section = getSection(symtab_section.getLink());
-        auto strtab = Elf64StringTable(strtab_section.getData(this));
-        
-        // Get the name of the symbol to locate (currently unused)
-        char[] symbol = strtab[symtab[rela_plt[plt_index].getSymbolIndex()].name];
-        
-        writefln("dynamic linker resolving symbol '%s' (%u)", symbol, plt_index);
-        
-        // Set the value at the relocation's offset to the desired function
-        if(plt_index == 0)
-        {
-            rela_plt[plt_index].setValue(&syscall_1);
-        }
-        else if(plt_index == 1)
-        {
-            rela_plt[plt_index].setValue(&syscall_2);
-        }
-        
-        // Return the address of the function so it can be called
-        return rela_plt[plt_index].getValue();
-    }
-}
-
-public ulong syscall_1()
-{
-    writeln("syscall_1()");
-    return 0xDEF;
-}
-
-public ulong syscall_2()
-{
-    writeln("syscall_2()");
-    return 0x123;
 }
 
 struct Elf64ProgramHeader
@@ -536,74 +448,6 @@ struct Elf64SectionHeader
     public bool isExecutable()
     {
         return (flags & SectionHeaderFlags.X) == SectionHeaderFlags.X;
-    }
-}
-
-struct Elf64Rela
-{
-    ulong offset;
-    ulong info;
-    ulong addend;
-    
-    public ulong getOffset()
-    {
-        return offset;
-    }
-    
-    public RelocationType getType()
-    {
-        return cast(RelocationType)(info & 0xFFFFFFFF);
-    }
-    
-    public uint getSymbolIndex()
-    {
-        return cast(uint)(info >> 32);
-    }
-    
-    public byte[] getTarget(size_t size)
-    {
-        RelocationType type = getType();
-        byte[] target;
-        
-        if(type == RelocationType.R_X86_64_COPY)
-        {
-            target = (cast(byte*)offset)[0..size];
-        }
-        else if(type == RelocationType.R_X86_64_GLOB_DAT)
-        {
-            target = (cast(byte*)offset)[0..size];
-        }
-        else if(type == RelocationType.R_X86_64_JUMP_SLOT)
-        {
-            target = (cast(byte*)offset)[0..size];
-        }
-        else
-        {
-            assert(false, "Unsupported relocation type");
-            for(;;){}
-        }
-        
-        return target;
-    }
-    
-    public void setValue(void* data)
-    {
-        setValue(&data, (void*).sizeof);
-    }
-    
-    public size_t getValue()
-    {
-        byte[] target = getTarget(size_t.sizeof);
-        
-        return *(cast(size_t*)target.ptr);
-    }
-    
-    public void setValue(void* p, size_t size)
-    {
-        byte[] data = (cast(byte*)p)[0..size];
-        byte[] target = getTarget(size);
-        
-        target[0..length] = data[0..length];
     }
 }
 

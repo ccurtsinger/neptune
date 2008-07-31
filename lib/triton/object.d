@@ -150,6 +150,11 @@ class TypeInfo
     {
         return null;
     }
+    
+    int compare(void* a, void* b)
+    {
+        return memcmp(a, b, tsize());
+    }
 }
 
 class TypeInfo_Typedef : TypeInfo
@@ -167,6 +172,11 @@ class TypeInfo_Typedef : TypeInfo
     void[] init()
     {
         return m_init.length ? m_init : base.init();
+    }
+    
+    int compare(void* a, void* b)
+    {
+        return base.compare(a, b);
     }
 
     TypeInfo base;
@@ -206,6 +216,26 @@ class TypeInfo_Array : TypeInfo
     {
         return value;
     }
+    
+    int compare(void *p1, void *p2)
+    {
+        void[] a1 = *cast(void[]*)p1;
+        void[] a2 = *cast(void[]*)p2;
+        size_t sz = value.tsize();
+        size_t len = a1.length;
+
+        if (a2.length < len)
+            len = a2.length;
+            
+        for (size_t u = 0; u < len; u++)
+        {
+            int result = value.compare(a1.ptr + u * sz, a2.ptr + u * sz);
+            if (result)
+                return result;
+        }
+        
+        return cast(int)a1.length - cast(int)a2.length;
+    }
 }
 
 class TypeInfo_StaticArray : TypeInfo
@@ -223,6 +253,21 @@ class TypeInfo_StaticArray : TypeInfo
     TypeInfo next()
     {
         return value;
+    }
+    
+    int compare(void *p1, void *p2)
+    {
+        size_t sz = value.tsize();
+
+        for (size_t u = 0; u < len; u++)
+        {
+            int result = value.compare(p1 + u * sz, p2 + u * sz);
+            
+            if (result)
+                return result;
+        }
+        
+        return 0;
     }
 
     TypeInfo value;
@@ -273,6 +318,29 @@ class TypeInfo_Class : TypeInfo
         return Object.sizeof;
     }
     
+    int compare(void *p1, void *p2)
+    {
+        Object o1 = *cast(Object*)p1;
+        Object o2 = *cast(Object*)p2;
+        int c = 0;
+
+        // Regard null references as always being "less than"
+        if (o1 !is o2)
+        {
+            if (o1)
+            {   
+                if (!o2)
+                    c = 1;
+                else
+                    c = o1.opCmp(o2);
+            }
+            else
+                c = -1;
+        }
+        
+        return c;
+    }
+
     ClassInfo info;
 }
 
@@ -281,6 +349,31 @@ class TypeInfo_Interface : TypeInfo
     size_t tsize()
     {
         return Object.sizeof;
+    }
+    
+    int compare(void *p1, void *p2)
+    {
+        Interface* pi = **cast(Interface ***)*cast(void**)p1;
+        Object o1 = cast(Object)(*cast(void**)p1 - pi.offset);
+        pi = **cast(Interface ***)*cast(void**)p2;
+        Object o2 = cast(Object)(*cast(void**)p2 - pi.offset);
+        int c = 0;
+
+        // Regard null references as always being "less than"
+        if (o1 != o2)
+        {
+            if (o1)
+            {
+                if (!o2)
+                    c = 1;
+                else
+                    c = o1.opCmp(o2);
+            }
+            else
+                c = -1;
+        }
+        
+        return c;
     }
 
     ClassInfo info;

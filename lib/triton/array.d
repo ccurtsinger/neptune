@@ -227,6 +227,11 @@ extern (C) byte[] _d_arraycatnT(TypeInfo ti, uint n, ...)
     return (cast(byte*)a)[0..length];
 }
 
+extern (C) byte[] _d_arraycatT(TypeInfo ti, byte[] x, byte[] y)
+{
+    return _d_arraycatnT(ti, 2, x, y);
+}
+
 /**
  * Resize dynamic arrays with 0 initializers
  */

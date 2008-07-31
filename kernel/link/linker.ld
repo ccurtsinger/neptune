@@ -28,12 +28,6 @@ SECTIONS
     {
         rodata = .;
 		*(.rodata)
-		start_ctors = .;
-		*(.ctor*)
-		end_ctors = .;
-		start_dtors = .;
-		*(.dtor*)
-		end_dtors = .;
 		. = ALIGN(4096);
     }
 

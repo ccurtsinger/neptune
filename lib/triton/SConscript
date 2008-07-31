@@ -2,6 +2,7 @@
 Import('env')
 
 obj_list  = [env.gdc('array.o', 'array.d')]
+obj_list += [env.gdc('aarray.o', 'aarray.d')]
 obj_list += [env.gdc('cast.o', 'cast.d')]
 obj_list += [env.gdc('error.o', 'error.d')]
 obj_list += [env.gdc('host.o', 'host.d')]

@@ -36,6 +36,8 @@ import kernel.task.procallocator;
 import kernel.task.process;
 import kernel.mem.watermark;
 
+int[char[]] test;
+
 extern(C) void _startup(ulong loader, ulong* isrtable)
 {
     // Set the global loader data pointer
@@ -177,11 +179,6 @@ public void interrupt_setup(ulong* isrtable)
         d.stack = 0;
         d.privilege = 0;
         d.present = true;
-        
-        /*if(i == 127)
-        {
-            d.privilege = 3;
-        }*/
     }
     
     cpu.idt.install();
@@ -266,7 +263,7 @@ public bool pagefault_handler(Context* context)
                 
                 return true;
             }
-            else if(addr == cast(ulong)&syscall_1)
+            /*else if(addr == cast(ulong)&syscall_1)
             {
                 context.rax = syscall_1();
                 
@@ -297,7 +294,7 @@ public bool pagefault_handler(Context* context)
                 context.rip = elf.runtimeLink(plt_index);
                 
                 return true;
-            }
+            }*/
         }
         
         writefln("Unhandled page fault at address %p", addr);

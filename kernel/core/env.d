@@ -111,7 +111,7 @@ version(unwind)
         
         auto symbols = loaderData.elfHeader.getSymbols();
         
-        Elf64SymbolTableEntry best;
+        Elf64Symbol best;
         ulong best_distance = ulong.max;
         
         foreach(symbol; symbols)

@@ -73,10 +73,10 @@ def setupEnv(target, version, **kw_args):
     return env
 
 # Set up the i586 environment
-i586_env = setupEnv('i586', 'release')
+i586_env = setupEnv('i586', 'debug')
 
 # Set up the x86_64 environment
-x86_64_env = setupEnv('x86_64', 'release')
+x86_64_env = setupEnv('x86_64', 'debug')
 
 # Build libraries for x86_64-pc-elf
 lib64 = SConscript('lib/SConscript', exports={'env': x86_64_env}, build_dir='build/x86_64/lib', duplicate=0)

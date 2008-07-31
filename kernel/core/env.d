@@ -19,9 +19,6 @@ import kernel.dev.screen;
 import kernel.dev.kb;
 import kernel.dev.timer;
 import kernel.core.interrupt;
-import kernel.mem.physical;
-import kernel.mem.watermark;
-//import kernel.mem.tree;
 import kernel.task.procallocator;
 
 Screen screen;

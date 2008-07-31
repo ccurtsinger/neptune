@@ -34,7 +34,7 @@ import kernel.task.procallocator;
 import kernel.task.process;
 
 import kernel.mem.physical : p_init, p_set;
-import kernel.mem.watermark : m_init;
+import kernel.mem.heap : m_init;
 
 extern(C) void _startup(ulong loader, ulong* isrtable)
 {

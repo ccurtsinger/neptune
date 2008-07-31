@@ -4,7 +4,7 @@
  * Copyright: 2008 The Neptune Project
  */
 
-module kernel.mem.kernel;
+module kernel.mem.heap;
 
 import util.arch.arch;
 import util.arch.paging;

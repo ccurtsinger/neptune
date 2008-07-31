@@ -54,3 +54,13 @@ extern(C) size_t m_size(void* p)
 {
     return 0;
 }
+
+extern(C) size_t m_base()
+{
+    return start;
+}
+
+extern(C) size_t m_limit()
+{
+    return cast(size_t)limit;
+}

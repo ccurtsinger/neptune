@@ -34,7 +34,7 @@ import kernel.task.procallocator;
 import kernel.task.process;
 
 import kernel.mem.physical : p_init, p_set;
-import kernel.mem.heap : m_init;
+import kernel.mem.heap : m_init, m_base, m_limit;
 
 extern(C) void _startup(ulong loader, ulong* isrtable)
 {
@@ -239,7 +239,7 @@ public bool pagefault_handler(Context* context)
         
         return true;
     }
-    else
+    else if(addr >= m_base() && addr < m_limit())
     {
         // Demand page the kernel heap
         Page* p = (*cpu.pagetable)[addr];

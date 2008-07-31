@@ -24,7 +24,7 @@ struct AssociativeArray
 /// Associative array node
 struct AssociativeArrayNode
 {
-    AssociativeArrayNode* next;
+    AssociativeArrayNode* next = null;
     void* key;
     void* data;
 }
@@ -76,7 +76,8 @@ extern (C) void *_aaGetp(AssociativeArray* aa, TypeInfo keyti, size_t valuesize,
     AssociativeArrayNode* node = cast(AssociativeArrayNode*)_d_malloc(AssociativeArrayNode.sizeof);
     node.key = _d_malloc(keyti.tsize());
     node.data = _d_malloc(valuesize);
-    
+    node.next = null;
+
     memcpy(node.key, pkey, keyti.tsize());
 
     if(aa.head is null)

@@ -36,8 +36,6 @@ import kernel.task.procallocator;
 import kernel.task.process;
 import kernel.mem.watermark;
 
-int[char[]] test;
-
 extern(C) void _startup(ulong loader, ulong* isrtable)
 {
     // Set the global loader data pointer

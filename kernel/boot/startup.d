@@ -103,7 +103,7 @@ extern(C) void _startup(ulong loader, ulong* isrtable)
 
 public void gdt_setup()
 {
-    cpu.gdt.init(_d_malloc(ulong.sizeof*256));
+    cpu.gdt.init(m_alloc(ulong.sizeof*256));
     
     NullDescriptor* n = cpu.gdt.getEntry!(NullDescriptor);
     *n = NullDescriptor();
@@ -202,14 +202,14 @@ public void memory_setup()
     cpu.pagetable = cast(PageTable*)ptov(loaderData.L4);
     
     Page* p = (*cpu.pagetable)[0xFFFF81FFFFFFF000];
-    p.address = _d_palloc();
+    p.address = p_alloc();
     p.writable = true;
     p.present = true;
     p.user = true;
     p.invalidate();
     
     p = (*cpu.pagetable)[0xFFFF81FFFFFFE000];
-    p.address = _d_palloc();
+    p.address = p_alloc();
     p.writable = true;
     p.present = true;
     p.user = true;
@@ -238,7 +238,7 @@ public bool pagefault_handler(Context* context)
     {
         // Demand page the kernel heap
         Page* p = (*cpu.pagetable)[addr];
-        p.address = _d_palloc();
+        p.address = p_alloc();
         p.writable = true;
         p.present = true;
         p.user = false;

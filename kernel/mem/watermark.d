@@ -43,7 +43,7 @@ struct WatermarkAllocator
         while(limit - watermark < size)
         {
             Page* p = (*pagetable)[cast(ulong)limit];
-            p.address = _d_palloc();
+            p.address = p_alloc();
             p.writable = true;
             p.present = true;
             p.user = true;

@@ -37,7 +37,7 @@ class Process
         this.id = id;
         sa = null;
         
-        pagetable = cast(PageTable*)ptov(_d_palloc());
+        pagetable = cast(PageTable*)ptov(p_alloc());
 
         pagetable.table[128..512] = cpu.pagetable.table[128..512];
         

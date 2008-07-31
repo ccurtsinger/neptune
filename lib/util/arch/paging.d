@@ -282,7 +282,7 @@ struct PageTable
             {
                 t[index].clear();
 
-                ulong a = _d_palloc();
+                ulong a = p_alloc();
 
                 memset(ptov(a), 0, FRAME_SIZE);
 

@@ -17,27 +17,27 @@ import util.arch.arch;
 
 import kernel.core.env;
 
-extern(C) void* _d_malloc(size_t size)
+extern(C) void* m_alloc(size_t size)
 {
     return heap.allocate(size);
 }
 
-extern(C) size_t _d_palloc()
+extern(C) size_t p_alloc()
 {
     return physical.get();
 }
 
-extern(C) size_t _d_allocsize(void* p)
+extern(C) size_t m_size(void* p)
 {
     return 0;
 }
 
-extern(C) void _d_free(void* p)
+extern(C) void m_free(void* p)
 {
     heap.free(p);
 }
 
-extern(C) void _d_pfree(size_t p)
+extern(C) void p_free(size_t p)
 {
     physical.add(p, FRAME_SIZE);
 }
@@ -76,17 +76,17 @@ extern(C) void _d_abort()
  */
 unittest
 {
-    ulong a = _d_palloc();
-    ulong b = _d_palloc();
+    ulong a = p_alloc();
+    ulong b = p_alloc();
     
-    _d_pfree(a);
+    p_free(a);
     
-    ulong c = _d_palloc();
+    ulong c = p_alloc();
     
     assert(a == c && b == a + FRAME_SIZE, "physical allocator unit test failed"); 
     
-    _d_pfree(b);
-    _d_pfree(c);
+    p_free(b);
+    p_free(c);
 }
 
 /**
@@ -94,11 +94,11 @@ unittest
  */
 unittest
 {
-    void* a = _d_malloc(ulong.sizeof);
-    void* b = _d_malloc(ulong.sizeof);
+    void* a = m_alloc(ulong.sizeof);
+    void* b = m_alloc(ulong.sizeof);
     
     assert(b >= a + ulong.sizeof, "heap allocator unit test failed");
     
-    _d_free(a);
-    _d_free(b);
+    m_free(a);
+    m_free(b);
 }

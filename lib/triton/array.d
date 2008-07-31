@@ -131,7 +131,7 @@ extern (C) Array _d_arrayappendT(TypeInfo ti, Array *px, byte[] y)
     auto newlength = length + y.length;
     auto newsize = newlength * sizeelem;
 
-    byte* newdata = cast(byte*)_d_malloc(newlength * sizeelem);
+    byte* newdata = cast(byte*)m_alloc(newlength * sizeelem);
 
     memcpy(newdata, px.data, length * sizeelem);
     px.data = newdata;
@@ -158,9 +158,9 @@ extern (C) byte[] _d_arrayappendcTp(TypeInfo ti, inout byte[] x, void *argp)
     auto newlength = length + 1;
     auto newsize = newlength * sizeelem;
 
-    if(_d_allocsize(x.ptr) < newsize)
+    if(m_size(x.ptr) < newsize)
     {
-        byte* newdata = cast(byte *)_d_malloc(newsize);
+        byte* newdata = cast(byte *)m_alloc(newsize);
         
         memcpy(newdata, x.ptr, length * sizeelem);
         
@@ -207,7 +207,7 @@ extern (C) byte[] _d_arraycatnT(TypeInfo ti, uint n, ...)
         return null;
     }
 
-    a = _d_malloc(length * size);
+    a = m_alloc(length * size);
 
     va_start!(typeof(n))(va, n);
 
@@ -260,9 +260,9 @@ extern (C) byte[] _d_arraysetlengthiT(TypeInfo ti, size_t newlength, Array *p)
             {
                 size = p.length * ti.next.tsize();
                 
-                if(_d_allocsize(p.data) <= newsize + 1)
+                if(m_size(p.data) <= newsize + 1)
                 {
-                    newdata = cast(byte*)_d_malloc(newsize + 1);
+                    newdata = cast(byte*)m_alloc(newsize + 1);
                     newdata[0..size] = p.data[0..size];
                     
                     delete p.data;
@@ -276,7 +276,7 @@ extern (C) byte[] _d_arraysetlengthiT(TypeInfo ti, size_t newlength, Array *p)
         }
         else
         {
-            newdata = cast(byte*)_d_malloc(newsize+1);
+            newdata = cast(byte*)m_alloc(newsize+1);
         }
         
         auto q = initializer.ptr;

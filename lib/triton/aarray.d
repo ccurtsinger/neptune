@@ -73,16 +73,16 @@ extern (C) void *_aaGetp(AssociativeArray* aa, TypeInfo keyti, size_t valuesize,
     if(p !is null)
         return p;
     
-    AssociativeArrayNode* node = cast(AssociativeArrayNode*)_d_malloc(AssociativeArrayNode.sizeof);
-    node.key = _d_malloc(keyti.tsize());
-    node.data = _d_malloc(valuesize);
+    AssociativeArrayNode* node = cast(AssociativeArrayNode*)m_alloc(AssociativeArrayNode.sizeof);
+    node.key = m_alloc(keyti.tsize());
+    node.data = m_alloc(valuesize);
     node.next = null;
 
     memcpy(node.key, pkey, keyti.tsize());
 
     if(aa.head is null)
     {
-        aa.head = cast(AssociativeArrayNode**)_d_malloc((AssociativeArrayNode*).sizeof);
+        aa.head = cast(AssociativeArrayNode**)m_alloc((AssociativeArrayNode*).sizeof);
         *aa.head = node;
     }
     else
@@ -170,9 +170,9 @@ extern (C) void _aaDelp(AssociativeArray aa, TypeInfo keyti, void *pkey)
                 prev.next = c.next;
             }
             
-            _d_free(c.key);
-            _d_free(c.data);
-            _d_free(c);
+            m_free(c.key);
+            m_free(c.data);
+            m_free(c);
             
             return;
         }
@@ -204,7 +204,7 @@ extern (C) Array _aaValues(AssociativeArray aa, size_t keysize, size_t valuesize
     }
         
     ret.length = _aaLen(aa);
-    ret.ptr = _d_malloc(ret.length * valuesize);
+    ret.ptr = m_alloc(ret.length * valuesize);
     
     size_t offset = 0;
         
@@ -257,7 +257,7 @@ extern (C) Array _aaKeys(AssociativeArray aa, size_t keysize)
     }
         
     ret.length = _aaLen(aa);
-    ret.ptr = _d_malloc(ret.length * keysize);
+    ret.ptr = m_alloc(ret.length * keysize);
     
     size_t offset = 0;
         

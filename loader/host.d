@@ -23,24 +23,24 @@ private size_t cursor_x = 0;
 private size_t cursor_y = 0;
 private char* mem = cast(char*)0xB8000;
 
-extern(C) void* _d_malloc(size_t size)
+extern(C) void* m_alloc(size_t size)
 {
     nextPage += FRAME_SIZE;
 	return cast(void*)nextPage;
 }
 
-extern(C) size_t _d_palloc()
+extern(C) size_t p_alloc()
 {
     nextPage += FRAME_SIZE;
 	return nextPage;
 }
 
-extern(C) size_t _d_allocsize(void* p)
+extern(C) size_t m_size(void* p)
 {
     return FRAME_SIZE;
 }
 
-extern(C) void _d_free(void* p)
+extern(C) void m_free(void* p)
 {
     // Do nothing here
 }

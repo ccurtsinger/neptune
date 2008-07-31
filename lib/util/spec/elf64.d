@@ -492,7 +492,7 @@ private void mapData(PageTable* pagetable, ulong virtual, ubyte[] data, bool use
     
     if(!p.present)
     {
-        p.address = _d_palloc();
+        p.address = p_alloc();
         p.writable = true;
         p.present = true;
         p.user = user;

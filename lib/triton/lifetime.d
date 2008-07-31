@@ -52,7 +52,7 @@ private extern (D) alias void (*fp_t)(Object);
  */
 extern (C) Object _d_newclass(ClassInfo ci)
 {
-    void* p = _d_malloc(ci.init.length);
+    void* p = m_alloc(ci.init.length);
     
     (cast(byte*) p)[0 .. ci.init.length] = ci.init[];
     
@@ -108,7 +108,7 @@ extern (C) void _d_delclass(Object* p)
         else
             rt_finalize(cast(void*) *p);
 
-        _d_free(cast(void*) *p);
+        m_free(cast(void*) *p);
         
         *p = null;
     }
@@ -133,7 +133,7 @@ extern (C) Array _d_newarrayT(TypeInfo ti, size_t length)
         result.length = length;
         size *= length;
 
-        result.data = cast(byte*)_d_malloc(size+1);
+        result.data = cast(byte*)m_alloc(size+1);
 
         memset(result.data, 0, size);
     }
@@ -180,7 +180,7 @@ extern (C) void _d_delarray(Array *p)
 
         if (p.data)
         {
-            _d_free(p.data);
+            m_free(p.data);
         }
         
         p.data = null;
@@ -198,7 +198,7 @@ extern (C) void _d_delmemory(void** p)
 {
     if (*p)
     {
-        _d_free(*p);
+        m_free(*p);
         *p = null;
     }
 }

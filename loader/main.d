@@ -176,7 +176,7 @@ public void mapData(ulong virtual, size_t physical, ubyte[] data)
 
 void gdt_setup()
 {
-    //cpu.gdt = GDT(ptov(loader.host._d_palloc()));
+    //cpu.gdt = GDT(ptov(loader.host.p_alloc()));
     cpu.gdt.init(gdt_data.ptr);
     
     NullDescriptor* n = cpu.gdt.getEntry!(NullDescriptor);

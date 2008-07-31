@@ -41,22 +41,22 @@ void thread()
     }
 }
 
-extern(C) void _d_allocsize()
+extern(C) void m_size()
 {
     return 0;
 }
 
-extern(C) void _d_malloc()
+extern(C) void m_alloc()
 {
 
 }
 
-extern(C) void _d_free()
+extern(C) void m_free()
 {
     
 }
 
-extern(C) void _d_palloc()
+extern(C) void p_alloc()
 {
     
 }

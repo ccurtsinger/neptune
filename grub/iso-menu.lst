@@ -6,5 +6,6 @@ root   (cd)
 kernel /boot/loader
 module /boot/kernel
 module /servers/basic
+module /servers/basic
 boot
 savedefault

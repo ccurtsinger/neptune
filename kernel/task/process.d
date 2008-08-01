@@ -15,6 +15,8 @@ import util.spec.elf64;
 
 import kernel.core.env;
 
+import kernel.mem.virtual;
+
 import kernel.task.procallocator;
 
 class Process
@@ -24,11 +26,16 @@ class Process
     
     Activation* sa;
     
+    VirtualAllocator stack;
+    
     ulong entry;
     
     public this(size_t id, Elf64Header* elf)
     {
         this.id = id;
+        
+        stack = VirtualAllocator(0x400000, 0x800000, false);
+        
         sa = null;
         
         pagetable = cast(PageTable*)ptov(p_alloc());
@@ -51,18 +58,24 @@ class Process
     
     public void upcall(Processor p, Context* dest)
     {
-        assert(false, "Upcall");
-        
         assert(sa !is null, "Attempted to upcall to process on null activation");
         
         sa.processor_id = p.id;
         
+        size_t stack_base = stack.allocate();
+        size_t stack_top = stack_base + FRAME_SIZE;
+        
+        Page* stack_page = (*pagetable)[stack_base];
+        stack_page.address = p_alloc();
+        stack_page.writable = true;
+        stack_page.present = true;
+        stack_page.user = true;
+        
         Context context;
         context.rip = entry;
-        //context.rbp = cast(ulong)heap.allocate(2*FRAME_SIZE) + 2*FRAME_SIZE - 2 * ulong.sizeof;
+        context.rbp = stack_top - 2 * ulong.sizeof;
         context.rsp = context.rbp - Activation.sizeof;
         context.rdi = context.rsp;
-        context.rsi = cast(ulong)&test_syscall;
         context.rflags = 0x000000000000202;
         context.cs = 0x18 | 3;
         context.ss = 0x20 | 3;

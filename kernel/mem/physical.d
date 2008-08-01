@@ -1,5 +1,5 @@
 /**
- * Physical page-frame allocator
+ * Physical page frame allocator
  *
  * Copyright: 2008 The Neptune Project
  */

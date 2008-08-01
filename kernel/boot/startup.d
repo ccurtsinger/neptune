@@ -93,12 +93,27 @@ extern(C) void _startup(ulong loader, ulong* isrtable)
         
         Process p = new Process(i, elf);
     }
+    
+    localscope.setHandler(128, &syscall);
  
     // Start the APIC timer on the same interrupt as the previously initialized timer device
     cpu.apic.setTimer(127, true, 10);
     
     // Idle until a task switch is performed
     for(;;){}
+}
+
+public bool syscall(Context* context)
+{
+    writefln("syscall!");
+    writefln("%p", cpu.pagetable);
+    
+    for(size_t i=0; i<10000000; i++)
+    {
+        asm{"pause";}
+    }
+    
+    return true;
 }
 
 public void gdt_setup()
@@ -177,6 +192,9 @@ public void interrupt_setup(ulong* isrtable)
         d.stack = 0;
         d.privilege = 0;
         d.present = true;
+        
+        if(i == 128)
+            d.privilege = 3;
     }
     
     cpu.idt.install();

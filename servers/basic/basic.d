@@ -7,12 +7,8 @@
 import std.activation;
 import std.context;
 
-ulong function(ulong) syscall;
-
 extern(C) int _start(Activation* sa, ulong s)
 {
-    syscall = cast(ulong function(ulong))s;
-    
     if(sa.type == SA_NEW)
     {
         thread();
@@ -33,7 +29,10 @@ void thread()
     
     while(1 < 2)
     {
-        x = syscall(x);
+        asm
+        {
+            "int $128";
+        }
     }
 }
 

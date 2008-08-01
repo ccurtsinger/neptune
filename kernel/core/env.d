@@ -20,6 +20,7 @@ import kernel.dev.kb;
 import kernel.dev.timer;
 import kernel.core.interrupt;
 import kernel.task.procallocator;
+import kernel.mem.virtual;
 
 Screen screen;
 Keyboard kb;
@@ -27,6 +28,8 @@ Keyboard kb;
 CPU cpu;
 
 InterruptScope localscope;
+
+VirtualAllocator kernel_heap;
 
 LoaderData* loaderData;
 

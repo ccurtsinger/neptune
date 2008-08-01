@@ -4,29 +4,8 @@
  * Copyright: 2008 The Neptune Project
  */
 
-import std.activation;
-import std.context;
-
-extern(C) int _start(Activation* sa, ulong s)
+extern(C) int _start()
 {
-    if(sa.type == SA_NEW)
-    {
-        thread();
-    }
-    else if(sa.type == SA_PREEMPTED)
-    {
-        sa.context.load();
-    }
-    
-	for(;;){}
-	
-	return 0;
-}
-
-void thread()
-{
-    ulong x;
-    
     while(1 < 2)
     {
         asm
@@ -34,6 +13,8 @@ void thread()
             "int $128";
         }
     }
+    
+    return 0;
 }
 
 extern(C) void m_size()

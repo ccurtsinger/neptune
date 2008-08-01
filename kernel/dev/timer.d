@@ -7,7 +7,7 @@
 module kernel.dev.timer;
 
 import kernel.core.env;
-import kernel.task.procallocator;
+import kernel.task.scheduler;
 
 import std.stdio;
 import std.context;
@@ -27,7 +27,7 @@ class Timer
     {
         time++;
         
-        procalloc.tick(context);
+        scheduler.tick(context);
         
         return true;
     }

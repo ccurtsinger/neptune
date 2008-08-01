@@ -19,7 +19,7 @@ import kernel.dev.screen;
 import kernel.dev.kb;
 import kernel.dev.timer;
 import kernel.core.interrupt;
-import kernel.task.procallocator;
+import kernel.task.scheduler;
 
 Screen screen;
 Keyboard kb;
@@ -28,8 +28,7 @@ InterruptScope localscope;
 
 LoaderData* loaderData;
 
-ProcessorAllocator procalloc;
-Processor local;
+Scheduler scheduler;
 
 Timer timer;
 

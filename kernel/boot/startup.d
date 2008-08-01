@@ -30,7 +30,7 @@ import kernel.dev.screen;
 import kernel.dev.kb;
 import kernel.dev.timer;
 
-import kernel.task.procallocator;
+import kernel.task.scheduler;
 import kernel.task.process;
 
 import kernel.mem.physical : p_init, p_set;
@@ -76,12 +76,8 @@ extern(C) void _startup(ulong loader, ulong* isrtable)
     // Initialize the keyboard device
     kb.init(33);
     
-    // Set the current processor with ID 0
-    local = new Processor(0);
-    
     // Initialize the processor allocator and add the current processor to its pool
-    procalloc = new ProcessorAllocator();
-    procalloc.add(local);
+    scheduler = new Scheduler();
     
     // Initialize the timer device
     timer = new Timer(127);
@@ -98,6 +94,8 @@ extern(C) void _startup(ulong loader, ulong* isrtable)
         elf = cast(Elf64Header*)mod.base;
         
         Process p = new Process(i, elf);
+        
+        scheduler.add(p);
     }
     
     localscope.setHandler(128, &syscall);
@@ -111,7 +109,7 @@ extern(C) void _startup(ulong loader, ulong* isrtable)
 
 public bool syscall(Context* context)
 {
-    writefln("syscall!");
+    writeln("syscall!");
     writefln("%p", CPU.pagetable);
     
     for(size_t i=0; i<10000000; i++)

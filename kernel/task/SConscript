@@ -2,6 +2,6 @@
 Import('env')
 
 obj_list  = [env.gdc('process.o', 'process.d')]
-obj_list += [env.gdc('procallocator.o', 'procallocator.d')]
+obj_list += [env.gdc('scheduler.o', 'scheduler.d')]
 
 Return('obj_list')

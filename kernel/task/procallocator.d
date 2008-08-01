@@ -6,6 +6,8 @@
 
 module kernel.task.procallocator;
 
+import util.arch.cpu;
+
 import std.context;
 import std.activation;
 
@@ -43,8 +45,7 @@ class Processor
         current_process = process;
         *dest = *context;
 
-        cpu.pagetable = process.pagetable;
-        cpu.loadPageDir();
+        CPU.pagetable = process.pagetable;
     }
 }
 

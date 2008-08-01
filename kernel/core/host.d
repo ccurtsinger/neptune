@@ -9,6 +9,7 @@ module kernel.core.host;
 
 import std.stdio;
 
+import util.arch.cpu;
 import util.arch.arch;
 
 import kernel.core.env;
@@ -20,7 +21,7 @@ extern(C) char _d_getc()
 
 extern(C) void _d_error(char[] msg, char[] file, size_t line)
 {
-    cpu.disableInterrupts();
+    CPU.disableInterrupts();
     
     writeln(msg);
 	
@@ -31,7 +32,7 @@ extern(C) void _d_error(char[] msg, char[] file, size_t line)
 	
 	version(unwind)
 	{
-	    stackUnwind(cast(ulong*)cpu.rsp, cast(ulong*)cpu.rbp);
+	    stackUnwind(cast(ulong*)CPU.rsp, cast(ulong*)CPU.rbp);
 	}
 	
 	for(;;){}

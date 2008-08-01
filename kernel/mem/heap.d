@@ -35,7 +35,7 @@ extern(C) void* m_alloc(size_t size)
         p.address = p_alloc();
         p.writable = true;
         p.present = true;
-        p.user = true;
+        p.user = false;
         
         limit += FRAME_SIZE;
     }

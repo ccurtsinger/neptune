@@ -20,16 +20,11 @@ import kernel.dev.kb;
 import kernel.dev.timer;
 import kernel.core.interrupt;
 import kernel.task.procallocator;
-import kernel.mem.virtual;
 
 Screen screen;
 Keyboard kb;
 
-CPU cpu;
-
 InterruptScope localscope;
-
-VirtualAllocator kernel_heap;
 
 LoaderData* loaderData;
 
@@ -37,12 +32,6 @@ ProcessorAllocator procalloc;
 Processor local;
 
 Timer timer;
-
-ulong test_syscall(ulong x)
-{
-    writefln("%#X", x);
-    return x+1;
-}
 
 /**
  * Data passed from the 32 bit loader

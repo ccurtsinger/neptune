@@ -6,6 +6,7 @@
 
 module kernel.core.interrupt;
 
+import util.arch.cpu;
 import util.arch.idt;
 import util.arch.apic;
 
@@ -98,7 +99,7 @@ extern(C) void _common_interrupt(ulong interrupt, Context* stack)
     }
     else if(interrupt < 32)
     {
-        cpu.disableInterrupts();
+        CPU.disableInterrupts();
         
         writefln("Interrupt %u", interrupt);
         writefln("  error: %#X", stack.error);
@@ -133,5 +134,5 @@ extern(C) void _common_interrupt(ulong interrupt, Context* stack)
         }
     }
 
-    cpu.apic.write(APIC_EOI, 1);
+    CPU.apic.write(APIC_EOI, 1);
 }

@@ -9,6 +9,7 @@ module kernel.dev.kb;
 import std.port;
 import std.context;
 
+import util.arch.cpu;
 import kernel.core.env;
 
 struct Keyboard
@@ -238,7 +239,7 @@ struct Keyboard
     {
         volatile while(queue.length == 0)
         {
-            cpu.halt();
+            CPU.halt();
         }
         
         char c = queue[0];

@@ -128,10 +128,10 @@ extern(C) ulong _setup(MultibootInfo* boot, uint magic)
         
         auto p = pheaders[0];
     
-        cpu.pagetable = new PageTable();
-        _data.L4 = cast(ulong)cpu.pagetable;
+        CPU.pagetable = new PageTable();
+        _data.L4 = cast(ulong)CPU.pagetable;
 
-        elf.load(cpu.pagetable);
+        elf.load(CPU.pagetable);
         
         gdt_setup();
         startLongMode();
@@ -160,7 +160,7 @@ public void mapData(ulong virtual, size_t physical, ubyte[] data)
     
     (cast(ubyte*)ptov(physical))[0..limit] = data[0..limit];
     
-    Page* p = (*cpu.pagetable)[virtual];
+    Page* p = (*CPU.pagetable)[virtual];
     p.address = physical;
     p.writable = true;
     p.present = true;
@@ -172,13 +172,13 @@ public void mapData(ulong virtual, size_t physical, ubyte[] data)
 
 void gdt_setup()
 {
-    //cpu.gdt = GDT(ptov(loader.host.p_alloc()));
-    cpu.gdt.init(gdt_data.ptr);
+    //CPU.gdt = GDT(ptov(loader.host.p_alloc()));
+    CPU.gdt.init(gdt_data.ptr);
     
-    NullDescriptor* n = cpu.gdt.getEntry!(NullDescriptor);
+    NullDescriptor* n = CPU.gdt.getEntry!(NullDescriptor);
     *n = NullDescriptor();
     
-    Descriptor* kc64 = cpu.gdt.getEntry!(Descriptor);
+    Descriptor* kc64 = CPU.gdt.getEntry!(Descriptor);
     *kc64 = Descriptor(true);
     kc64.conforming = false;
     kc64.privilege = 0;
@@ -186,13 +186,13 @@ void gdt_setup()
     kc64.longmode = true;
     kc64.operand = false;
     
-    Descriptor* kd = cpu.gdt.getEntry!(Descriptor);
+    Descriptor* kd = CPU.gdt.getEntry!(Descriptor);
     *kd = Descriptor(false);
     kd.privilege = 0;
     kd.writable = true;
     kd.present = true;
     
-    Descriptor* kc = cpu.gdt.getEntry!(Descriptor);
+    Descriptor* kc = CPU.gdt.getEntry!(Descriptor);
     *kc = Descriptor(true);
     kc.conforming = false;
     kc.privilege = 0;
@@ -200,12 +200,12 @@ void gdt_setup()
     kc.longmode = false;
     kc.operand = true;
     
-    cpu.gdt.install();
+    CPU.gdt.install();
 }
 
 void mapDir(ulong base, ulong addr)
 {
-    Page[] dir = (*cpu.pagetable)[base, 1];
+    Page[] dir = (*CPU.pagetable)[base, 1];
    
     ulong count = 0;
     
@@ -223,8 +223,8 @@ void mapDir(ulong base, ulong addr)
 
 void startLongMode()
 {
-    cpu.enablePAE();
-    cpu.enableWP();
+    CPU.enablePAE();
+    CPU.enableWP();
 
     writeln("Identity mapping low memory");
     mapDir(0x00000000, 0x00000000);
@@ -241,10 +241,9 @@ void startLongMode()
     {
 	    mapDir(LINEAR_MEM_BASE + c, c);
 	}
-
-    cpu.loadPageDir();
-    cpu.enableLongMode();
-    cpu.enablePaging();
+	
+    CPU.enableLongMode();
+    CPU.enablePaging();
 }
 
 public void addUsedRegion(size_t base, size_t size)

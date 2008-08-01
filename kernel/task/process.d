@@ -9,6 +9,7 @@ module kernel.task.process;
 import std.context;
 import std.activation;
 
+import util.arch.cpu;
 import util.arch.arch;
 import util.arch.paging;
 import util.spec.elf64;
@@ -40,7 +41,7 @@ class Process
         
         pagetable = cast(PageTable*)ptov(p_alloc());
 
-        pagetable.table[128..512] = cpu.pagetable.table[128..512];
+        pagetable.table[128..512] = CPU.pagetable.table[128..512];
         
         for(size_t i=0; i<128; i++)
         {
@@ -80,8 +81,7 @@ class Process
         context.cs = 0x18 | 3;
         context.ss = 0x20 | 3;
         
-        cpu.pagetable = pagetable;
-        cpu.loadPageDir();
+        CPU.pagetable = pagetable;
         
         *(cast(Activation*)context.rsp) = *sa;
         

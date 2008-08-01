@@ -53,6 +53,7 @@ def setupEnv(target, version, **kw_args):
     if(version == 'debug'):
         env['GDCFLAGS'] += ' -O0'
         env['GDCFLAGS'] += ' -funittest'
+        env['GDCFLAGS'] += ' -fdebug'
         env['GDCFLAGS'] += ' -fversion=unwind'
     elif(version == 'release'):
         env['GDCFLAGS'] += ' -Os'

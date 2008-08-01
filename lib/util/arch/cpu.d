@@ -19,7 +19,7 @@ const uint CPU_BUS_SPEED = 1000000000;
 
 template registerProperty(char[] name)
 {
-    const char[] registerProperty = "static size_t " ~ name ~ "() {
+    const char[] registerProperty = "public static size_t " ~ name ~ "() {
         size_t value;
         asm
         {
@@ -28,7 +28,7 @@ template registerProperty(char[] name)
         return value; 
     }
     
-    static void " ~ name ~ "(size_t value) {
+    public static void " ~ name ~ "(size_t value) {
         asm
         {
             \"mov %[value], %%" ~ name ~ "\" : : [value] \"a\" value;
@@ -38,18 +38,17 @@ template registerProperty(char[] name)
 
 struct CPU
 {
-    APIC* apic;
-    GDT gdt;
-    IDT idt;
-    TSS tss;
-    PageTable* pagetable;
+    public static APIC* apic;
+    public static GDT gdt;
+    public static IDT idt;
+    public static TSS tss;
     
-    static void halt()
+    public static void halt()
     {
         asm{ "hlt"; }
     }
     
-    static ulong readMsr(uint msr)
+    public static ulong readMsr(uint msr)
     {
         uint hi;
         uint lo;
@@ -66,7 +65,7 @@ struct CPU
         return data;
     }
     
-    static void writeMsr(uint msr, ulong data)
+    public static void writeMsr(uint msr, ulong data)
     {
         uint hi = cast(uint)(data>>32);
         uint lo = cast(uint)(data & 0xFFFFFFFF);
@@ -77,19 +76,24 @@ struct CPU
         }
     }
     
-    static void enableInterrupts()
+    public static void enableInterrupts()
     {
         asm{"sti";}
     }
     
-    static void disableInterrupts()
+    public static void disableInterrupts()
     {
         asm{"cli";}
     }
     
-    void loadPageDir()
+    public static void pagetable(PageTable* p)
     {
-        cr3 = vtop(pagetable);
+        cr3 = vtop(p);
+    }
+    
+    public static PageTable* pagetable()
+    {
+        return cast(PageTable*)ptov(cr3);
     }
     
     version(x86_64)
@@ -113,22 +117,22 @@ struct CPU
     }
     else version(i586)
     {
-        static void enablePAE()
+        public static void enablePAE()
         {
             cr4 = cr4 | 0x20;
         }
         
-        static void enableWP()
+        public static void enableWP()
         {
             cr0 = cr0 | 0x10000;
         }
         
-        static void enableLongMode()
+        public static void enableLongMode()
         {
             writeMsr(MSR_EFER, readMsr(MSR_EFER) | 0x100);
         }
         
-        static void enablePaging()
+        public static void enablePaging()
         {
             cr0 = cr0 | 0x80000000;
         }

@@ -26,6 +26,13 @@ SECTIONS
     
     .rodata : AT(ADDR(.rodata) - 0xffffffff80000000 + 0x1000000)
     {
+        start_ctors = .;
+		*(.ctor*)
+		end_ctors = .;
+		start_dtors = .;
+		*(.dtor*);
+		end_dtors = .;
+		
         rodata = .;
 		*(.rodata)
 		. = ALIGN(4096);

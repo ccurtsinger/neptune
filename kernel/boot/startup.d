@@ -52,10 +52,10 @@ extern(C) void _startup(ulong loader, ulong* isrtable)
     gdt_setup();
     
     // Initialize the CPU Local APIC
-    cpu.apic = APIC();
+    CPU.apic = APIC();
     
     // Turn on interrupts to catch page faults, GP faults, etc...
-    cpu.enableInterrupts();
+    CPU.enableInterrupts();
     
     // Initialize the screen
     screen = new Screen(0xFFFF8300000B8000);
@@ -64,8 +64,14 @@ extern(C) void _startup(ulong loader, ulong* isrtable)
     stdout = screen;
     
     // Run module constructors and unit tests
+    writeln("Running module constructors");
     _moduleCtor();
-    _moduleUnitTests();
+    
+    debug
+    {
+        writeln("Running module unit tests");
+        _moduleUnitTests();
+    }
     
     // Initialize the keyboard device
     kb.init(33);
@@ -97,7 +103,7 @@ extern(C) void _startup(ulong loader, ulong* isrtable)
     localscope.setHandler(128, &syscall);
  
     // Start the APIC timer on the same interrupt as the previously initialized timer device
-    cpu.apic.setTimer(127, true, 10);
+    CPU.apic.setTimer(127, true, 10);
     
     // Idle until a task switch is performed
     for(;;){}
@@ -106,7 +112,7 @@ extern(C) void _startup(ulong loader, ulong* isrtable)
 public bool syscall(Context* context)
 {
     writefln("syscall!");
-    writefln("%p", cpu.pagetable);
+    writefln("%p", CPU.pagetable);
     
     for(size_t i=0; i<10000000; i++)
     {
@@ -118,12 +124,12 @@ public bool syscall(Context* context)
 
 public void gdt_setup()
 {
-    cpu.gdt.init(m_alloc(ulong.sizeof*256));
+    CPU.gdt.init(m_alloc(ulong.sizeof*256));
     
-    NullDescriptor* n = cpu.gdt.getEntry!(NullDescriptor);
+    NullDescriptor* n = CPU.gdt.getEntry!(NullDescriptor);
     *n = NullDescriptor();
     
-    Descriptor* kc = cpu.gdt.getEntry!(Descriptor);
+    Descriptor* kc = CPU.gdt.getEntry!(Descriptor);
     *kc = Descriptor(true);
     kc.base = 0;
     kc.limit = 0xFFFFFF;
@@ -133,13 +139,13 @@ public void gdt_setup()
     kc.longmode = true;
     kc.operand = false;
     
-    Descriptor* kd = cpu.gdt.getEntry!(Descriptor);
+    Descriptor* kd = CPU.gdt.getEntry!(Descriptor);
     *kd = Descriptor(false);
     kd.privilege = 0;
     kd.writable = true;
     kd.present = true;
     
-    Descriptor* uc = cpu.gdt.getEntry!(Descriptor);
+    Descriptor* uc = CPU.gdt.getEntry!(Descriptor);
     *uc = Descriptor(true);
     uc.base = 0;
     uc.limit = 0xFFFFFF;
@@ -149,40 +155,40 @@ public void gdt_setup()
     uc.longmode = true;
     uc.operand = false;
     
-    Descriptor* ud = cpu.gdt.getEntry!(Descriptor);
+    Descriptor* ud = CPU.gdt.getEntry!(Descriptor);
     *ud = Descriptor(false);
     ud.privilege = 3;
     ud.writable = true;
     ud.present = true;
     
-    cpu.tss.init();
+    CPU.tss.init();
     
-    cpu.tss.selector = cpu.gdt.getSelector();
+    CPU.tss.selector = CPU.gdt.getSelector();
   
-    SystemDescriptor* t = cpu.gdt.getEntry!(SystemDescriptor);
+    SystemDescriptor* t = CPU.gdt.getEntry!(SystemDescriptor);
     *t = SystemDescriptor();
-    t.base = cpu.tss.address;
+    t.base = CPU.tss.address;
     t.limit = 0x68;
     t.type = DescriptorType.TSS;
     t.privilege = 0;
     t.present = true;
     t.granularity = false;
    
-    cpu.tss.rsp0 = 0xFFFF81FFFFFFFFF0;
+    CPU.tss.rsp0 = 0xFFFF81FFFFFFFFF0;
     
-    cpu.gdt.install();
+    CPU.gdt.install();
     
-    cpu.tss.install();
+    CPU.tss.install();
 }
 
 public void interrupt_setup(ulong* isrtable)
 {
-    cpu.idt.init(0xFFFD);
+    CPU.idt.init(0xFFFD);
     localscope.init();
     
     for(size_t i=0; i<256; i++)
     {
-        GateDescriptor* d = cpu.idt[i];
+        GateDescriptor* d = CPU.idt[i];
        
         *d = GateDescriptor();
      
@@ -197,7 +203,7 @@ public void interrupt_setup(ulong* isrtable)
             d.privilege = 3;
     }
     
-    cpu.idt.install();
+    CPU.idt.install();
 }
 
 public void memory_setup()
@@ -223,33 +229,33 @@ public void memory_setup()
         }
     }
     
-    cpu.pagetable = cast(PageTable*)ptov(loaderData.L4);
+    CPU.pagetable = cast(PageTable*)ptov(loaderData.L4);
     
-    Page* p = (*cpu.pagetable)[0xFFFF81FFFFFFF000];
+    Page* p = (*CPU.pagetable)[0xFFFF81FFFFFFF000];
     p.address = p_alloc();
     p.writable = true;
     p.present = true;
     p.user = true;
     p.invalidate();
     
-    p = (*cpu.pagetable)[0xFFFF81FFFFFFE000];
+    p = (*CPU.pagetable)[0xFFFF81FFFFFFE000];
     p.address = p_alloc();
     p.writable = true;
     p.present = true;
     p.user = true;
     p.invalidate();
     
-    m_init(cpu.pagetable, 0xFFFF820000000000);
+    m_init(CPU.pagetable, 0xFFFF820000000000);
 }
 
 public bool pagefault_handler(Context* context)
 {
-    ulong addr = cpu.cr2;
+    ulong addr = CPU.cr2;
     
     if(addr >= LINEAR_MEM_BASE && addr < LINEAR_MEM_BASE + PHYSICAL_MEM_LIMIT)
     {
         // Demand page memory in the linear-mapped region
-        Page* p = (*cpu.pagetable)[addr];
+        Page* p = (*CPU.pagetable)[addr];
         p.address = addr - LINEAR_MEM_BASE;
         p.writable = true;
         p.present = true;
@@ -260,7 +266,7 @@ public bool pagefault_handler(Context* context)
     else if(addr >= m_base() && addr < m_limit())
     {
         // Demand page the kernel heap
-        Page* p = (*cpu.pagetable)[addr];
+        Page* p = (*CPU.pagetable)[addr];
         p.address = p_alloc();
         p.writable = true;
         p.present = true;

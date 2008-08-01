@@ -1,6 +1,11 @@
 all:
 	scons
 
+info: all
+	analysis/sizes.py --tree build/x86_64/kernel
+
+clean: cleanall
+
 cleanall:
 	scons -c
 

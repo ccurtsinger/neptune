@@ -15,16 +15,17 @@ import util.arch.paging;
 import util.spec.elf64;
 
 import kernel.core.env;
-
 import kernel.mem.virtual;
-
 import kernel.task.scheduler;
+
+import std.stdio;
 
 class Process
 {
     size_t id;
     PageTable* pagetable;
-    Context context;
+    
+    Thread thread;
     
     VirtualAllocator stack_mem;
     
@@ -45,21 +46,46 @@ class Process
 
         elf.load(pagetable, true);
         
-        Range stack = stack_mem.allocate();
+        thread = new Thread(elf.entry, stack_mem.allocate(), kernel_stack_mem.allocate());
         
-        /*for(size_t i=0; i<stack.size; i+=FRAME_SIZE)
+        /*for(size_t i=0; i<thread.kernel_stack.size; i+=FRAME_SIZE)
         {
-            Page* stack_page = (*pagetable)[stack.base + i];
-            stack_page.address = p_alloc();
-            stack_page.writable = true;
-            stack_page.present = true;
-            stack_page.user = true;
+            Page* p = (*pagetable)[thread.kernel_stack.base + i];
+            p.address = p_alloc();
+            p.writable = true;
+            p.present = true;
+            p.user = false;
         }*/
+    }
+    
+    public void run(Context* current)
+    {
+        CPU.pagetable = pagetable;
         
-        context.rip = elf.entry;
+        thread.run(current);
+    }
+    
+    public void save(Context* current)
+    {
+        thread.save(current);
+    }
+}
+
+class Thread
+{
+    private Context context;
+    
+    public Range stack;
+    public Range kernel_stack;
+    
+    public this(size_t entry, Range stack, Range kernel_stack)
+    {
+        this.stack = stack;
+        this.kernel_stack = kernel_stack;
+        
+        context.rip = entry;
         context.rbp = stack.top - 2 * ulong.sizeof;
         context.rsp = context.rbp;
-        context.rdi = context.rsp;
         context.rflags = 0x000000000000202;
         context.cs = 0x18 | 3;
         context.ss = 0x20 | 3;
@@ -67,7 +93,7 @@ class Process
     
     public void run(Context* current)
     {
-        CPU.pagetable = pagetable;
+        CPU.tss.rsp0 = kernel_stack.top - 2 * ulong.sizeof;
         
         *current = context;
     }

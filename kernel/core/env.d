@@ -18,6 +18,7 @@ import std.demangle;
 import kernel.dev.screen;
 import kernel.dev.kb;
 import kernel.dev.timer;
+import kernel.mem.virtual;
 import kernel.core.interrupt;
 import kernel.task.scheduler;
 
@@ -51,6 +52,8 @@ LoaderData* loaderData;
 Scheduler scheduler;
 
 Timer timer;
+
+VirtualAllocator kernel_stack_mem = VirtualAllocator(KERNEL_STACK, false);
 
 /**
  * Data passed from the 32 bit loader

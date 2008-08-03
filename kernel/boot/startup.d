@@ -99,6 +99,8 @@ extern(C) void _startup(ulong loader, ulong* isrtable)
     }
     
     localscope.setHandler(128, &syscall);
+    
+    CPU.idt[14].stack = 1;
  
     // Start the APIC timer on the same interrupt as the previously initialized timer device
     CPU.apic.setTimer(127, true, 10);
@@ -110,7 +112,6 @@ extern(C) void _startup(ulong loader, ulong* isrtable)
 public bool syscall(Context* context)
 {
     writeln("syscall!");
-    writefln("%p", CPU.pagetable);
     
     for(size_t i=0; i<10000000; i++)
     {
@@ -167,10 +168,10 @@ public void gdt_setup()
     t.privilege = 0;
     t.present = true;
     t.granularity = false;
-   
-    CPU.tss.rsp0 = 0xFFFF81FFFFFFFFF0;
     
     CPU.gdt.install();
+    
+    CPU.tss.ist[1] = 0xFFFF85FFFFFFFFF0;
     
     CPU.tss.install();
 }
@@ -225,19 +226,17 @@ public void memory_setup()
     
     CPU.pagetable = cast(PageTable*)ptov(loaderData.L4);
     
-    Page* p = (*CPU.pagetable)[0xFFFF81FFFFFFF000];
+    Page* p = (*CPU.pagetable)[0xFFFF85FFFFFFF000];
     p.address = p_alloc();
     p.writable = true;
     p.present = true;
-    p.user = true;
-    p.invalidate();
+    p.user = false;
     
-    p = (*CPU.pagetable)[0xFFFF81FFFFFFE000];
+    p = (*CPU.pagetable)[0xFFFF81FFFFFFF000];
     p.address = p_alloc();
     p.writable = true;
     p.present = true;
-    p.user = true;
-    p.invalidate();
+    p.user = false;
     
     m_init(CPU.pagetable);
 }
@@ -268,7 +267,7 @@ public bool pagefault_handler(Context* context)
         
         return true;
     }
-    else if(addr >= scheduler.current.stack_mem.base() && addr < scheduler.current.stack_mem.limit())
+    else if(addr >= scheduler.current.thread.stack.base && addr < scheduler.current.thread.stack.top)
     {
         Page* stack_page = (*CPU.pagetable)[addr];
         stack_page.address = p_alloc();
@@ -278,12 +277,20 @@ public bool pagefault_handler(Context* context)
         
         return true;
     }
+    else if(addr >= scheduler.current.thread.kernel_stack.base && addr < scheduler.current.thread.kernel_stack.top)
+    {
+        Page* p = (*CPU.pagetable)[addr];
+        p.address = p_alloc();
+        p.writable = true;
+        p.present = true;
+        p.user = true;
+        
+        return true;
+    }
         
     writefln("Unhandled page fault at address %p", addr);
     writefln("Error code %#x", context.error);
     writefln("%%rip: %p", context.rip);
-    
-    //heap.debugDump();
     
     version(unwind)
     {

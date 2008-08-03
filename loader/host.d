@@ -41,6 +41,16 @@ extern(C) void m_free(void* p)
     // Do nothing here
 }
 
+extern(C) void* ptov(size_t s)
+{
+    return cast(void*)s;
+}
+
+extern(C) size_t vtop(void* p)
+{
+    return cast(size_t)p;
+}
+
 extern(C) void _d_error(char[] msg, char[] file, size_t line)
 {
     write(msg);

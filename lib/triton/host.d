@@ -21,3 +21,6 @@ extern(C) void abort()
 {
     _d_abort();
 }
+
+extern(C) void* ptov(size_t);
+extern(C) size_t vtop(void*);

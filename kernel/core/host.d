@@ -44,6 +44,34 @@ extern(C) void _d_abort()
 }
 
 /**
+ * Convert a physical address to an accessible virtual address
+ *
+ * Params:
+ *  address = Physical address
+ *
+ * Returns: Virtual address in the linear-mapped range that points
+ *  to the provided physical address
+ */
+extern(C) void* ptov(ulong address)
+{
+    return cast(void*)(address + LINEAR_MEM.base);
+}
+
+/**
+ * Convert a virtual address in the linear-mapped range to its 
+ * corresponding physical address.
+ *
+ * Params:
+ *  address = Virtual address to convert
+ *
+ * Returns: Physical address pointed to by the given virtual address
+ */
+extern(C) ulong vtop(void* address)
+{
+    return cast(ulong)address - LINEAR_MEM.base;
+}
+
+/**
  * Unit tests for the physical page frame allocator
  */
 unittest

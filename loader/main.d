@@ -19,6 +19,7 @@ import std.string;
 import std.mem;
 
 import loader.host;
+import kernel.core.env;
 
 extern(C) LoaderData _data;
 
@@ -66,13 +67,13 @@ extern(C) ulong _setup(MultibootInfo* boot, uint magic)
     Elf64Header* elf;
     
     _data.numMemoryRegions = 0;
-    _data.memoryRegions = cast(ulong)(&_mem) + LINEAR_MEM_BASE;
+    _data.memoryRegions = cast(ulong)(&_mem) + LINEAR_MEM.base;
     
     _data.numUsedRegions = 0;
-    _data.usedRegions = cast(ulong)(&_used_mem) + LINEAR_MEM_BASE;
+    _data.usedRegions = cast(ulong)(&_used_mem) + LINEAR_MEM.base;
     
     _data.numModules = 0;
-    _data.modules = cast(ulong)&_modules + LINEAR_MEM_BASE;
+    _data.modules = cast(ulong)&_modules + LINEAR_MEM.base;
     
     readMemInfo(boot);
 
@@ -105,14 +106,14 @@ extern(C) ulong _setup(MultibootInfo* boot, uint magic)
         }
         else
         {
-            _modules[_data.numModules].base = mod.getBase() + LINEAR_MEM_BASE;
+            _modules[_data.numModules].base = mod.getBase() + LINEAR_MEM.base;
             _modules[_data.numModules].size = mod.getSize();
             
             char[] name = mod.getString();
             char[] copy = new char[name.length];
             copy[0..length] = name[0..length];
             
-            _modules[_data.numModules].name = cast(ulong)copy.ptr + LINEAR_MEM_BASE;
+            _modules[_data.numModules].name = cast(ulong)copy.ptr + LINEAR_MEM.base;
             
             _data.numModules++;
         }
@@ -136,7 +137,7 @@ extern(C) ulong _setup(MultibootInfo* boot, uint magic)
         gdt_setup();
         startLongMode();
 
-        _data.elfHeader = LINEAR_MEM_BASE + cast(ulong)elf;
+        _data.elfHeader = LINEAR_MEM.base + cast(ulong)elf;
         
         addUsedRegion(used_base, nextPage - used_base);
 
@@ -158,7 +159,7 @@ public void mapData(ulong virtual, size_t physical, ubyte[] data)
         limit = data.length;
     }
     
-    (cast(ubyte*)ptov(physical))[0..limit] = data[0..limit];
+    (cast(ubyte*)physical)[0..limit] = data[0..limit];
     
     Page* p = (*CPU.pagetable)[virtual];
     p.address = physical;
@@ -172,7 +173,6 @@ public void mapData(ulong virtual, size_t physical, ubyte[] data)
 
 void gdt_setup()
 {
-    //CPU.gdt = GDT(ptov(loader.host.p_alloc()));
     CPU.gdt.init(gdt_data.ptr);
     
     NullDescriptor* n = CPU.gdt.getEntry!(NullDescriptor);
@@ -232,14 +232,14 @@ void startLongMode()
     mapDir(0x00400000, 0x00400000);
     mapDir(0x00600000, 0x00600000);
 
-	writefln("Linear mapping physical memory to %#X00000000", LINEAR_MEM_BASE>>32);
+	writefln("Linear mapping physical memory to %#X00000000", LINEAR_MEM.base>>32);
 	
 	// Map to twice the upper limit of memory used.  Need to leave enough memory mapped
 	// to set up the paging system in the kernel.  After that point, linear-mapped 
 	// memory can be demand paged.
     for(ulong c = 0; c < 2*nextPage; c += 0x200000)
     {
-	    mapDir(LINEAR_MEM_BASE + c, c);
+	    mapDir(LINEAR_MEM.base + c, c);
 	}
 	
     CPU.enableLongMode();

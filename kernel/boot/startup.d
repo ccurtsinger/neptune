@@ -58,7 +58,7 @@ extern(C) void _startup(ulong loader, ulong* isrtable)
     CPU.enableInterrupts();
     
     // Initialize the screen
-    screen = new Screen(0xFFFF8300000B8000);
+    screen = new Screen(SCREEN_MEM);
     
     screen.clear();
     stdout = screen;
@@ -129,8 +129,6 @@ public void gdt_setup()
     
     Descriptor* kc = CPU.gdt.getEntry!(Descriptor);
     *kc = Descriptor(true);
-    kc.base = 0;
-    kc.limit = 0xFFFFFF;
     kc.conforming = false;
     kc.privilege = 0;
     kc.present = true;
@@ -145,8 +143,6 @@ public void gdt_setup()
     
     Descriptor* uc = CPU.gdt.getEntry!(Descriptor);
     *uc = Descriptor(true);
-    uc.base = 0;
-    uc.limit = 0xFFFFFF;
     uc.conforming = false;
     uc.privilege = 3;
     uc.present = true;
@@ -243,18 +239,18 @@ public void memory_setup()
     p.user = true;
     p.invalidate();
     
-    m_init(CPU.pagetable, 0xFFFF820000000000);
+    m_init(CPU.pagetable);
 }
 
 public bool pagefault_handler(Context* context)
 {
     ulong addr = CPU.cr2;
     
-    if(addr >= LINEAR_MEM_BASE && addr < LINEAR_MEM_BASE + PHYSICAL_MEM_LIMIT)
+    if(addr >= LINEAR_MEM.base && addr < LINEAR_MEM.top)
     {
         // Demand page memory in the linear-mapped region
         Page* p = (*CPU.pagetable)[addr];
-        p.address = addr - LINEAR_MEM_BASE;
+        p.address = addr - LINEAR_MEM.base;
         p.writable = true;
         p.present = true;
         p.user = false;

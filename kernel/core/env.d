@@ -21,6 +21,23 @@ import kernel.dev.timer;
 import kernel.core.interrupt;
 import kernel.task.scheduler;
 
+/// Memory range for physical memory (only support 4GB for now to allow for bitmap allocator)
+const Range PHYSICAL_MEM = Range(0, 0x100000000);
+
+/// Memory range for linear-mapped physical memory
+const Range LINEAR_MEM = Range(0xFFFF830000000000, 0xFFFF830000000000 + 0x100000000);
+
+/// Memory range for allocation of kernel-mode thread stacks
+const Range KERNEL_STACK = Range(0xFFFF810000000000, 0xFFFF820000000000);
+
+/// Memory range for the kernel's heap
+const Range KERNEL_HEAP = Range(0xFFFF820000000000, 0xFFFF830000000000);
+
+const ulong KERNEL_BASE = 0xFFFFFFFF80000000;
+
+/// Base address for VGA text-mode memory
+const ulong SCREEN_MEM = LINEAR_MEM.base + 0xB8000;
+
 Screen screen;
 Keyboard kb;
 
@@ -71,7 +88,7 @@ version(unwind)
     {
         size_t i=1;
       
-        while(rbp[1] >= 0xFFFFFFFF80000000)
+        while(rbp[1] >= KERNEL_BASE)
         {
             rsp = rbp;
             rbp = cast(ulong*)rsp[0];

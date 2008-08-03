@@ -6,6 +6,8 @@
 
 module kernel.mem.heap;
 
+import kernel.core.env;
+
 import util.arch.arch;
 import util.arch.paging;
 
@@ -14,12 +16,12 @@ PageTable* pagetable;
 void* watermark;
 void* limit;
 
-extern(C) void m_init(PageTable* init_pagetable, ulong init_watermark)
+extern(C) void m_init(PageTable* init_pagetable)
 {
-    start = init_watermark;
+    start = KERNEL_HEAP.base;
     
     pagetable = init_pagetable;
-    watermark = cast(void*)init_watermark;
+    watermark = cast(void*)KERNEL_HEAP.base;
     limit = watermark;
 }
 
@@ -31,6 +33,8 @@ extern(C) void* m_alloc(size_t size)
     
     while(limit - watermark < size)
     {
+        assert(cast(size_t)limit < KERNEL_HEAP.top, "Kernel heap overlow");
+        
         Page* p = (*pagetable)[cast(ulong)limit];
         p.address = p_alloc();
         p.writable = true;

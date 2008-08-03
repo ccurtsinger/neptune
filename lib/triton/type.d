@@ -22,3 +22,27 @@ else
 {
     static assert(false, "Unsupported version");
 }
+
+struct Range
+{
+    ulong base;
+    ulong top;
+    
+    public static Range opCall(ulong base, ulong top)
+    {
+        Range r;
+        r.base = base;
+        r.top = top;
+        return r;
+    }
+    
+    public ulong size()
+    {
+        return top - base;
+    }
+    
+    public void size(ulong s)
+    {
+        top = base + s;
+    }
+}

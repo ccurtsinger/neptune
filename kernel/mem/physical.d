@@ -15,9 +15,7 @@ import kernel.core.env;
 
 const ulong PAGE_BLOCK_SIZE = FRAME_SIZE * 8 * FRAME_SIZE; // The number of bytes that can tracked by a page-sized bitmap
 
-const ulong MAX_MEMORY = 0x100000000; // 4GB for now
-
-const ulong PAGE_BLOCKS = MAX_MEMORY / PAGE_BLOCK_SIZE;
+const ulong PAGE_BLOCKS = PHYSICAL_MEM.top / PAGE_BLOCK_SIZE;
 
 struct PageBlock
 {

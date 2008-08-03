@@ -16,7 +16,7 @@ import kernel.task.process;
 class Scheduler
 {
     private Process[] queue;
-    private Process current;
+    public Process current;
     
     public this()
     {

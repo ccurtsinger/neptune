@@ -268,6 +268,16 @@ public bool pagefault_handler(Context* context)
         
         return true;
     }
+    else if(addr >= scheduler.current.stack_mem.base() && addr < scheduler.current.stack_mem.limit())
+    {
+        Page* stack_page = (*CPU.pagetable)[addr];
+        stack_page.address = p_alloc();
+        stack_page.writable = true;
+        stack_page.present = true;
+        stack_page.user = true;
+        
+        return true;
+    }
         
     writefln("Unhandled page fault at address %p", addr);
     writefln("Error code %#x", context.error);

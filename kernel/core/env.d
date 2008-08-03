@@ -30,6 +30,9 @@ const Range LINEAR_MEM = Range(0xFFFF830000000000, 0xFFFF830000000000 + 0x100000
 /// Memory range for allocation of kernel-mode thread stacks
 const Range KERNEL_STACK = Range(0xFFFF810000000000, 0xFFFF820000000000);
 
+/// Memory range for allocation of user-mode thread stacks
+const Range USER_STACK = Range(0x40000000, 0x80000000);
+
 /// Memory range for the kernel's heap
 const Range KERNEL_HEAP = Range(0xFFFF820000000000, 0xFFFF830000000000);
 

@@ -26,13 +26,13 @@ class Process
     PageTable* pagetable;
     Context context;
     
-    VirtualAllocator stack;
+    VirtualAllocator stack_mem;
     
     public this(size_t id, Elf64Header* elf)
     {
         this.id = id;
         
-        stack = VirtualAllocator(0x400000, 0x800000, false);;
+        stack_mem = VirtualAllocator(USER_STACK, false);
         
         pagetable = cast(PageTable*)ptov(p_alloc());
 
@@ -45,17 +45,19 @@ class Process
 
         elf.load(pagetable, true);
         
-        size_t stack_base = stack.allocate();
-        size_t stack_top = stack_base + FRAME_SIZE;
+        Range stack = stack_mem.allocate();
         
-        Page* stack_page = (*pagetable)[stack_base];
-        stack_page.address = p_alloc();
-        stack_page.writable = true;
-        stack_page.present = true;
-        stack_page.user = true;
+        /*for(size_t i=0; i<stack.size; i+=FRAME_SIZE)
+        {
+            Page* stack_page = (*pagetable)[stack.base + i];
+            stack_page.address = p_alloc();
+            stack_page.writable = true;
+            stack_page.present = true;
+            stack_page.user = true;
+        }*/
         
         context.rip = elf.entry;
-        context.rbp = stack_top - 2 * ulong.sizeof;
+        context.rbp = stack.top - 2 * ulong.sizeof;
         context.rsp = context.rbp;
         context.rdi = context.rsp;
         context.rflags = 0x000000000000202;

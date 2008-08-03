@@ -10,24 +10,22 @@ import util.arch.arch;
 
 struct VirtualAllocator
 {
-    private size_t bottom;
+    private Range range;
     private size_t ptr;
-    private size_t top;
     
     private bool ascending;
     
-    public static VirtualAllocator opCall(size_t bottom, size_t top, bool ascending = true)
+    public static VirtualAllocator opCall(Range range, bool ascending = true)
     {
         VirtualAllocator v;
         
-        v.bottom = bottom;
-        v.top = top;
+        v.range = range;
         v.ascending = ascending;
         
         if(ascending)
-            v.ptr = bottom;
+            v.ptr = range.base;
         else
-            v.ptr = top;
+            v.ptr = range.top;
         
         return v;
     }
@@ -35,7 +33,7 @@ struct VirtualAllocator
     public size_t base()
     {
         if(ascending)
-            return bottom;
+            return range.base;
         else
             return ptr;
     }
@@ -45,10 +43,10 @@ struct VirtualAllocator
         if(ascending)
             return ptr;
         else
-            return top;
+            return range.top;
     }
     
-    public size_t allocate(size_t size = FRAME_SIZE)
+    public Range allocate(size_t size = FRAME_SIZE)
     {
         size_t ret;
         if(ascending)
@@ -62,8 +60,8 @@ struct VirtualAllocator
             ret = ptr;
         }
         
-        assert(ret >= bottom && ret <= top - FRAME_SIZE, "Out of virtual memory");
+        assert(ret >= range.base && ret <= range.top - FRAME_SIZE, "Out of virtual memory");
         
-        return ret;
+        return Range(ret, ret + size);
     }
 }

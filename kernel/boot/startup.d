@@ -285,7 +285,7 @@ public bool pagefault_handler(Context* context)
     writefln("Unhandled page fault at address %p", addr);
     writefln("Error code %#x", context.error);
     writefln("%%rip: %p", context.rip);
-    for(;;){}
+
     version(unwind)
     {
         writefln("%p: %s", context.rip, getSymbol(context.rip));

@@ -232,12 +232,6 @@ public void memory_setup()
     p.present = true;
     p.user = false;
     
-    p = (*CPU.pagetable)[0xFFFF81FFFFFFF000];
-    p.address = p_alloc();
-    p.writable = true;
-    p.present = true;
-    p.user = false;
-    
     m_init(CPU.pagetable);
 }
 
@@ -291,7 +285,7 @@ public bool pagefault_handler(Context* context)
     writefln("Unhandled page fault at address %p", addr);
     writefln("Error code %#x", context.error);
     writefln("%%rip: %p", context.rip);
-    
+    for(;;){}
     version(unwind)
     {
         writefln("%p: %s", context.rip, getSymbol(context.rip));

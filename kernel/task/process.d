@@ -35,9 +35,7 @@ class Process
         
         stack_mem = VirtualAllocator(USER_STACK, false);
         
-        pagetable = cast(PageTable*)ptov(p_alloc());
-
-        pagetable.table[128..512] = CPU.pagetable.table[128..512];
+        pagetable = CPU.pagetable.clone();
         
         for(size_t i=0; i<128; i++)
         {
@@ -47,15 +45,6 @@ class Process
         elf.load(pagetable, true);
         
         thread = new Thread(elf.entry, stack_mem.allocate(), kernel_stack_mem.allocate());
-        
-        /*for(size_t i=0; i<thread.kernel_stack.size; i+=FRAME_SIZE)
-        {
-            Page* p = (*pagetable)[thread.kernel_stack.base + i];
-            p.address = p_alloc();
-            p.writable = true;
-            p.present = true;
-            p.user = false;
-        }*/
     }
     
     public void run(Context* current)

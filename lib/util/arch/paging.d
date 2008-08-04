@@ -295,6 +295,30 @@ struct PageTable
         
         return t[0..512];
     }
+    
+    public PageTable* clone()
+    {
+        for(size_t i=256; i<512; i++)
+        {
+            Page* p = &(table[i]);
+            
+            if(!p.present)
+            {
+                p.address = p_alloc();
+                p.writable = true;
+                p.present = true;
+                p.user = true;
+            }
+        }
+        
+        PageTable* pagetable = cast(PageTable*)ptov(p_alloc());
+        
+        pagetable.table[0..256] = Page();
+
+        pagetable.table[256..512] = table[256..512];
+        
+        return pagetable;
+    }
 }
 
 /**

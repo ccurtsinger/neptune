@@ -139,6 +139,7 @@ extern(C) void _isr_common_stub()
     asm
     {
         naked;
+        // Save register state
         "push %%r15";
         "push %%r14";
         "push %%r13";
@@ -153,10 +154,15 @@ extern(C) void _isr_common_stub()
         "push %%rcx";
         "push %%rbx";
         "push %%rax";
+        
+        // Set parameters for interrupt handler
+        // rbp holds the interrupt number, and the stack points to the interrupt context
         "mov %%rbp, %%rdi";
         "mov %%rsp, %%rsi";
         "lea _common_interrupt(%%rip), %%rax";
         "call *%%rax";
+        
+        // Restore register state
         "pop %%rax";
         "pop %%rbx";
         "pop %%rcx";
@@ -172,6 +178,8 @@ extern(C) void _isr_common_stub()
         "pop %%r14";
         "pop %%r15";
         "pop %%rbp";
+        
+        // Shift the stack beyond the pushed error code and resume execution
         "add $8, %%rsp";
         "iretq";
     }
@@ -300,4 +308,14 @@ mixin(isr!(46));
 mixin(isr!(47));
 
 mixin(isr!(127));
-mixin(isr!(128));
+//mixin(isr!(128));
+
+extern(C) void isr_128()
+{
+    asm
+    {
+        naked;
+        "call test_syscall";
+        "iretq";
+    }
+}

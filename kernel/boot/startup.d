@@ -85,8 +85,6 @@ extern(C) void _startup(ulong loader)
         
         scheduler.add(p);
     }
-    
-    localscope.setHandler(128, &syscall);
  
     // Start the APIC timer on the same interrupt as the previously initialized timer device
     CPU.apic.setTimer(127, true, 10);
@@ -95,7 +93,7 @@ extern(C) void _startup(ulong loader)
     for(;;){}
 }
 
-public bool syscall(Context* context)
+extern(C) void test_syscall()
 {
     writeln("syscall!");
     
@@ -103,8 +101,6 @@ public bool syscall(Context* context)
     {
         asm{"pause";}
     }
-    
-    return true;
 }
 
 public bool pagefault_handler(Context* context)

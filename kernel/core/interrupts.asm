@@ -1,7 +1,7 @@
 section .text
 
 extern _common_interrupt
-global _isrtable
+global _isr_common_stub
 
 %macro PUSHL 0
 	push r15
@@ -38,23 +38,6 @@ global _isrtable
 	pop rbp
 %endmacro
 
-%macro INTR 1
-global _isr%1
-_isr%1:
-	push 0	    ;Push dummy error code
-	push rbp    ;Save the frame register
-	mov rbp, %1 ;Put the interrupt number in the frame register (everything else is unsaved)
-	jmp _isr_common_stub
-%endmacro
-
-%macro INTR_EC 1
-global _isr%1
-_isr%1:
-	push rbp    ;Save the frame register
-	mov rbp, %1 ;Put the interrupt number in the frame register (everything else is unsaved)
-	jmp _isr_common_stub
-%endmacro
-
 _isr_common_stub:
     PUSHL
     mov rdi, rbp
@@ -64,57 +47,3 @@ _isr_common_stub:
     POPL
     add rsp, 8
     iretq
-
-INTR 0
-INTR 1
-INTR 2
-INTR 3
-INTR 4
-INTR 5
-INTR 6
-INTR 7
-INTR_EC 8
-INTR 9
-INTR_EC 10
-INTR_EC 11
-INTR_EC 12
-INTR_EC 13
-INTR_EC 14
-INTR 15
-INTR 16
-INTR 17
-INTR 18
-INTR 19
-INTR 20
-INTR 21
-INTR 22
-INTR 23
-INTR 24
-INTR 25
-INTR 26
-INTR 27
-INTR 28
-INTR 29
-INTR 30
-INTR 31
-INTR 32
-INTR 33
-
-%assign i 34
-%rep 255 - 34 + 1
-INTR i
-%assign i i+1
-%endrep
-
-%macro ISRREF 1
-dq _isr%1
-%endmacro
-
-section .data
-
-_isrtable:
-%assign i 0
-%rep 256
-ISRREF i
-%assign i i+1
-%endrep

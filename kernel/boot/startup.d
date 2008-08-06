@@ -36,14 +36,21 @@ import kernel.task.process;
 import kernel.mem.physical : p_init, p_set;
 import kernel.mem.heap : m_init, m_base, m_limit;
 
-extern(C) void _startup(ulong loader, ulong* isrtable)
+extern(C) void _startup(ulong loader)
 {
     // Set the global loader data pointer
     loaderData = cast(LoaderData*)ptov(loader);
     
     // Set up basic runtime and hardware structures
     memory_setup();
-    interrupt_setup(isrtable);
+    
+    // Initialize the screen
+    screen = new Screen(SCREEN_MEM);
+    
+    screen.clear();
+    stdout = screen;
+    
+    interrupt_setup();
     
     // Set a page fault handler
     localscope.setHandler(14, &pagefault_handler);
@@ -56,12 +63,6 @@ extern(C) void _startup(ulong loader, ulong* isrtable)
     
     // Turn on interrupts to catch page faults, GP faults, etc...
     CPU.enableInterrupts();
-    
-    // Initialize the screen
-    screen = new Screen(SCREEN_MEM);
-    
-    screen.clear();
-    stdout = screen;
     
     // Run module constructors and unit tests
     writeln("Running module constructors");
@@ -176,7 +177,7 @@ public void gdt_setup()
     CPU.tss.install();
 }
 
-public void interrupt_setup(ulong* isrtable)
+public void interrupt_setup()
 {
     CPU.idt.init(0xFFFD);
     localscope.init();
@@ -186,7 +187,7 @@ public void interrupt_setup(ulong* isrtable)
         GateDescriptor* d = CPU.idt[i];
        
         *d = GateDescriptor();
-     
+
         d.target = isrtable[i];
         d.selector = 0x08;
         d.type = DescriptorType.INTERRUPT;

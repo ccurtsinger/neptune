@@ -6,7 +6,6 @@
 
 module kernel.core.env;
 
-import util.arch.arch;
 import util.arch.cpu;
 
 import util.spec.elf64;

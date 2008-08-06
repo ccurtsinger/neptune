@@ -6,7 +6,7 @@
 
 module kernel.mem.virtual;
 
-import util.arch.arch;
+import util.arch.paging;
 
 struct VirtualAllocator
 {

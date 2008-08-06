@@ -6,7 +6,6 @@
  
 module kernel.core.arch;
 
-import util.arch.arch;
 import util.arch.cpu;
 import util.arch.apic;
 import util.arch.descriptor;

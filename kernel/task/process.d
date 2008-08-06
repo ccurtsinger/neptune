@@ -10,7 +10,6 @@ import std.context;
 import std.activation;
 
 import util.arch.cpu;
-import util.arch.arch;
 import util.arch.paging;
 import util.spec.elf64;
 

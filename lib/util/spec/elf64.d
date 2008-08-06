@@ -6,7 +6,6 @@
  
 module spec.elf64;
 
-import util.arch.arch;
 import util.arch.paging;
 
 import std.stdio;

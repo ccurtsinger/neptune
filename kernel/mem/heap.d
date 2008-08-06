@@ -8,7 +8,6 @@ module kernel.mem.heap;
 
 import kernel.core.env;
 
-import util.arch.arch;
 import util.arch.paging;
 
 ulong start;

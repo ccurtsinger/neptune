@@ -12,7 +12,6 @@ import kernel.mem.physical : p_init, p_set;
 import kernel.mem.heap : m_init, m_base, m_limit;
 
 import util.arch.cpu;
-import util.arch.arch;
 import util.arch.paging;
 
 public void memory_setup()

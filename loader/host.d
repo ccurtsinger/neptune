@@ -7,10 +7,11 @@
 
 module loader.host;
 
-import util.arch.arch;
 import std.port;
 import std.mem;
 import std.stdio;
+
+import util.arch.paging;
 
 /// Memory address of the last allocated physical page
 uint nextPage;

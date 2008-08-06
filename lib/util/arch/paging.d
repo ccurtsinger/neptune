@@ -6,11 +6,11 @@
 
 module util.arch.paging;
 
-import util.arch.arch;
-
 import std.bitarray;
 import std.integer;
 import std.mem;
+
+const ulong FRAME_SIZE = 0x1000;
 
 /**
  * Page table entry abstraction

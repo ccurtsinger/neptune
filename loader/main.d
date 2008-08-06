@@ -4,7 +4,6 @@
  * Copyright: 2008 The Neptune Project
  */
 
-import util.arch.arch;
 import util.arch.cpu;
 import util.arch.gdt;
 import util.arch.descriptor;

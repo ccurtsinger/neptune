@@ -6,7 +6,6 @@
 
 module util.arch.cpu;
 
-import util.arch.arch;
 import util.arch.apic;
 import util.arch.gdt;
 import util.arch.idt;

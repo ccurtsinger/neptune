@@ -6,7 +6,6 @@
 
 module util.arch.apic;
 
-import util.arch.arch;
 import util.arch.cpu;
 
 const uint APIC_ID =        0x20;   // APIC ID register

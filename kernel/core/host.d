@@ -10,7 +10,7 @@ module kernel.core.host;
 import std.stdio;
 
 import util.arch.cpu;
-import util.arch.arch;
+import util.arch.paging;
 
 import kernel.core.env;
 

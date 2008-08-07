@@ -1,8 +1,7 @@
 # Grab the build environment
 Import('env')
 
-obj_list  = [env.gdc('activation.o',    'activation.d')]
-obj_list += [env.gdc('atomic.o', 		'atomic.d')]
+obj_list  = [env.gdc('atomic.o', 		'atomic.d')]
 obj_list += [env.gdc('bit.o',      		'bit.d')]
 obj_list += [env.gdc('bitarray.o', 		'bitarray.d')]
 obj_list += [env.gdc('context.o', 		'context.d')]

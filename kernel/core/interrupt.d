@@ -9,6 +9,7 @@ module kernel.core.interrupt;
 import util.arch.cpu;
 import util.arch.idt;
 import util.arch.apic;
+import util.arch.descriptor;
 
 import std.port;
 import std.stdio;
@@ -16,7 +17,64 @@ import std.context;
 
 import kernel.core.env;
 
-ulong[256] isrtable;
+public void interrupt_setup()
+{
+    CPU.idt.init(0xFFFD);
+    localscope.init();
+    
+    set_isr(0, &isr_0);
+    set_isr(1, &isr_1);
+    set_isr(2, &isr_2);
+    set_isr(3, &isr_3);
+    set_isr(4, &isr_4);
+    set_isr(5, &isr_5);
+    set_isr(6, &isr_6);
+    set_isr(7, &isr_7);
+    set_isr(8, &isr_8);
+    set_isr(10, &isr_10);
+    set_isr(11, &isr_11);
+    set_isr(12, &isr_12);
+    set_isr(13, &isr_13);
+    set_isr(14, &isr_14, 0, 1);
+    set_isr(16, &isr_16);
+    set_isr(17, &isr_17);
+    set_isr(18, &isr_18);
+    set_isr(19, &isr_19);
+    
+    set_isr(32, &isr_32);
+    set_isr(33, &isr_33);
+    set_isr(34, &isr_34);
+    set_isr(35, &isr_35);
+    set_isr(36, &isr_36);
+    set_isr(37, &isr_37);
+    set_isr(38, &isr_38);
+    set_isr(39, &isr_39);
+    set_isr(40, &isr_40);
+    set_isr(41, &isr_41);
+    set_isr(42, &isr_42);
+    set_isr(43, &isr_43);
+    set_isr(44, &isr_44);
+    set_isr(45, &isr_45);
+    set_isr(46, &isr_46);
+    set_isr(47, &isr_47);
+    
+    set_isr(127, &isr_127);
+    set_isr(128, &isr_128, 3);
+    
+    CPU.idt.install();
+}
+
+public void set_isr(size_t interrupt, void* isr, size_t privilege = 0, size_t ist = 0)
+{
+    GateDescriptor* d = CPU.idt[interrupt];
+    
+    d.target = cast(size_t)isr;
+    d.selector = 0x08;
+    d.type = DescriptorType.INTERRUPT;
+    d.privilege = privilege;
+    d.stack = ist;
+    d.present = true;
+}
 
 /**
  * Abstraction for function and delegate interrupt handlers
@@ -53,50 +111,6 @@ struct InterruptScope
         {
             handlers[i].set = false;
         }
-        
-        for(size_t i=0; i<256; i++)
-        {
-            isrtable[i] = cast(ulong)&isr_0;
-        }
-        
-        isrtable[0] = cast(ulong)&isr_0;
-        isrtable[1] = cast(ulong)&isr_1;
-        isrtable[2] = cast(ulong)&isr_2;
-        isrtable[3] = cast(ulong)&isr_3;
-        isrtable[4] = cast(ulong)&isr_4;
-        isrtable[5] = cast(ulong)&isr_5;
-        isrtable[6] = cast(ulong)&isr_6;
-        isrtable[7] = cast(ulong)&isr_7;
-        isrtable[8] = cast(ulong)&isr_8;
-        isrtable[10] = cast(ulong)&isr_10;
-        isrtable[11] = cast(ulong)&isr_11;
-        isrtable[12] = cast(ulong)&isr_12;
-        isrtable[13] = cast(ulong)&isr_13;
-        isrtable[14] = cast(ulong)&isr_14;
-        isrtable[16] = cast(ulong)&isr_16;
-        isrtable[17] = cast(ulong)&isr_17;
-        isrtable[18] = cast(ulong)&isr_18;
-        isrtable[19] = cast(ulong)&isr_19;
-
-        isrtable[32] = cast(ulong)&isr_32;
-        isrtable[33] = cast(ulong)&isr_33;
-        isrtable[34] = cast(ulong)&isr_34;
-        isrtable[35] = cast(ulong)&isr_35;
-        isrtable[36] = cast(ulong)&isr_36;
-        isrtable[37] = cast(ulong)&isr_37;
-        isrtable[38] = cast(ulong)&isr_38;
-        isrtable[39] = cast(ulong)&isr_39;
-        isrtable[40] = cast(ulong)&isr_40;
-        isrtable[41] = cast(ulong)&isr_41;
-        isrtable[42] = cast(ulong)&isr_42;
-        isrtable[43] = cast(ulong)&isr_43;
-        isrtable[44] = cast(ulong)&isr_44;
-        isrtable[45] = cast(ulong)&isr_45;
-        isrtable[46] = cast(ulong)&isr_46;
-        isrtable[47] = cast(ulong)&isr_47;
-        
-        isrtable[127] = cast(ulong)&isr_127;
-        isrtable[128] = cast(ulong)&isr_128;
     }
     
     /**

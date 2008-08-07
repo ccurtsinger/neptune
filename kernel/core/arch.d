@@ -88,28 +88,3 @@ public void gdt_setup()
     
     CPU.tss.install();
 }
-
-public void interrupt_setup()
-{
-    CPU.idt.init(0xFFFD);
-    localscope.init();
-    
-    for(size_t i=0; i<256; i++)
-    {
-        GateDescriptor* d = CPU.idt[i];
-       
-        *d = GateDescriptor();
-
-        d.target = isrtable[i];
-        d.selector = 0x08;
-        d.type = DescriptorType.INTERRUPT;
-        d.stack = 0;
-        d.privilege = 0;
-        d.present = true;
-    }
-    
-    CPU.idt[128].privilege = 3;
-    CPU.idt[14].stack = 1;
-    
-    CPU.idt.install();
-}

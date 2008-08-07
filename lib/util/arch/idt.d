@@ -20,6 +20,11 @@ struct IDT
     public void init(ushort irqmask)
     {
         remapPic(32, irqmask);
+        
+        for(size_t i=0; i<data.length; i++)
+        {
+            data[i] = GateDescriptor();
+        }
     }
     
     /**

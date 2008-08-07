@@ -7,7 +7,17 @@ class TypeInfo_l : TypeInfo
 {
     size_t tsize()
     {
-	return long.sizeof;
+        return long.sizeof;
+    }
+    
+    int compare(void *p1, void *p2)
+    {
+        if(*cast(long*)p1 < *cast(long*)p2)
+            return -1;
+        else if(*cast(long*)p1 > *cast(long*)p2)
+            return 1;
+            
+        return 0;
     }
 }
 

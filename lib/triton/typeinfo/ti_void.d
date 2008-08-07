@@ -9,4 +9,14 @@ class TypeInfo_v : TypeInfo
     {
         return void.sizeof;
     }
+    
+    int compare(void *p1, void *p2)
+    {
+        if(*cast(byte*)p1 < *cast(byte*)p2)
+            return -1;
+        else if(*cast(byte*)p1 > *cast(byte*)p2)
+            return 1;
+            
+        return 0;
+    }
 }

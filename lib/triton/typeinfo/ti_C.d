@@ -31,4 +31,26 @@ class TypeInfo_C : TypeInfo
     {
         return Object.sizeof;
     }
+    
+    int compare(void *p1, void *p2)
+    {
+        Object o1 = *cast(Object*)p1;
+        Object o2 = *cast(Object*)p2;
+        int c = 0;
+
+        // Regard null references as always being "less than"
+        if (!(o1 is o2))
+        {
+            if (o1)
+            {
+                if (!o2)
+                    c = 1;
+                else
+                    c = o1.opCmp(o2);
+            }
+            else
+                c = -1;
+        }
+        return c;
+    }
 }

@@ -1,10 +1,11 @@
 # Grab the build environment
 Import('env')
 
-obj_list  = [env.gdc('env.o', 'env.d')]
-obj_list += [env.gdc('arch.o', 'arch.d')]
-obj_list += [env.gdc('mem.o', 'mem.d')]
-obj_list += [env.gdc('interrupt.o', 'interrupt.d')]
+obj_list  = [env.gdc('arch.o', 'arch.d')]
+obj_list += [env.gdc('env.o', 'env.d')]
+obj_list += [env.gdc('event.o', 'event.d')]
 obj_list += [env.gdc('host.o', 'host.d')]
+obj_list += [env.gdc('interrupt.o', 'interrupt.d')]
+obj_list += [env.gdc('mem.o', 'mem.d')]
 
 Return('obj_list')

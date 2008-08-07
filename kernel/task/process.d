@@ -7,7 +7,6 @@
 module kernel.task.process;
 
 import std.context;
-import std.activation;
 
 import util.arch.cpu;
 import util.arch.paging;

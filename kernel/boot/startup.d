@@ -18,6 +18,7 @@ import kernel.core.env;
 import kernel.core.arch;
 import kernel.core.mem;
 import kernel.core.interrupt;
+import kernel.core.event;
 
 import util.arch.cpu;
 import util.arch.paging;
@@ -85,12 +86,27 @@ extern(C) void _startup(ulong loader)
         
         scheduler.add(p);
     }
+    
+    root = EventDomain();
+    
+    root.addHandler("test.event", EventHandler(0, &test_event_handler));
+    
+    root.raiseEvent("test.event");
+    root.raiseEvent("test.event.a");
+    root.raiseEvent("test");
+    
+    for(;;){}
  
     // Start the APIC timer on the same interrupt as the previously initialized timer device
     CPU.apic.setTimer(127, true, 10);
     
     // Idle until a task switch is performed
     for(;;){}
+}
+
+void test_event_handler(char[] domain)
+{
+    writefln("Fired event %s", domain);
 }
 
 extern(C) void test_syscall()

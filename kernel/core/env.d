@@ -17,9 +17,13 @@ import std.demangle;
 import kernel.dev.screen;
 import kernel.dev.kb;
 import kernel.dev.timer;
+
 import kernel.mem.virtual;
-import kernel.core.interrupt;
+
 import kernel.task.scheduler;
+
+import kernel.core.event;
+import kernel.core.interrupt;
 
 /// Memory range for physical memory (only support 4GB for now to allow for bitmap allocator)
 const Range PHYSICAL_MEM = Range(0, 0x100000000);
@@ -53,6 +57,8 @@ Scheduler scheduler;
 Timer timer;
 
 VirtualAllocator kernel_stack_mem = VirtualAllocator(KERNEL_STACK, false);
+
+EventDomain root;
 
 /**
  * Data passed from the 32 bit loader

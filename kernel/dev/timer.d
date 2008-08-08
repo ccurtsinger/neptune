@@ -7,6 +7,7 @@
 module kernel.dev.timer;
 
 import kernel.core.env;
+import kernel.core.event;
 import kernel.task.scheduler;
 
 import std.stdio;
@@ -16,19 +17,20 @@ class Timer
 {
     private ulong time;
     
-    public this(ubyte interrupt)
+    public this()
     {
         time = 0;
 
-        localscope.setHandler(interrupt, &timer_interrupt);
+        root.addHandler("dev.timer", new DelegateEventHandler(&this.timer_interrupt));
     }
     
-    public bool timer_interrupt(Context* context)
+    public void timer_interrupt(char[] domain, EventSource source)
     {
         time++;
         
-        scheduler.tick(context);
+        InterruptEventSource i = cast(InterruptEventSource)source;
         
-        return true;
+        if(i !is null)
+            scheduler.tick(i.context);
     }
 }

@@ -232,7 +232,7 @@ struct Keyboard
     {
         caps = false;
         
-        localscope.setHandler(interrupt, &handler);
+        //localscope.setHandler(interrupt, &handler);
     }
     
     public char getc()

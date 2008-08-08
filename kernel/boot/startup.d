@@ -38,10 +38,7 @@ extern(C) void _startup(ulong loader)
     // Set up basic runtime and hardware structures
     memory_setup();
     
-    arch_setup();
-    
-    // Set a page fault handler
-    localscope.setHandler(14, &pagefault_handler);
+    root = new EventDomain();
     
     // Initialize the screen
     screen = new Screen(SCREEN_MEM);
@@ -49,8 +46,14 @@ extern(C) void _startup(ulong loader)
     screen.clear();
     stdout = screen;
     
+    arch_setup();
+    
+    root.addHandler("int.pagefault", new FunctionEventHandler(&pagefault_handler));
+    
     // Turn on interrupts to catch page faults, GP faults, etc...
     CPU.enableInterrupts();
+    
+    CPU.apic.setTimer(127, true, 10);
     
     // Run module constructors and unit tests
     writeln("Running module constructors");
@@ -69,7 +72,7 @@ extern(C) void _startup(ulong loader)
     scheduler = new Scheduler();
     
     // Initialize the timer device
-    timer = new Timer(127);
+    timer = new Timer();
     
     Elf64Header* elf;
     Elf64Header* exec;
@@ -87,26 +90,8 @@ extern(C) void _startup(ulong loader)
         scheduler.add(p);
     }
     
-    root = EventDomain();
-    
-    root.addHandler("test.event", EventHandler(0, &test_event_handler));
-    
-    root.raiseEvent("test.event");
-    root.raiseEvent("test.event.a");
-    root.raiseEvent("test");
-    
-    for(;;){}
- 
-    // Start the APIC timer on the same interrupt as the previously initialized timer device
-    CPU.apic.setTimer(127, true, 10);
-    
     // Idle until a task switch is performed
     for(;;){}
-}
-
-void test_event_handler(char[] domain)
-{
-    writefln("Fired event %s", domain);
 }
 
 extern(C) void test_syscall()
@@ -119,8 +104,10 @@ extern(C) void test_syscall()
     }
 }
 
-public bool pagefault_handler(Context* context)
+void pagefault_handler(char[] domain, EventSource source)
 {
+    auto s = cast(InterruptEventSource)source;
+    
     ulong addr = CPU.cr2;
     
     if(addr >= LINEAR_MEM.base && addr < LINEAR_MEM.top)
@@ -131,8 +118,6 @@ public bool pagefault_handler(Context* context)
         p.writable = true;
         p.present = true;
         p.user = false;
-        
-        return true;
     }
     else if(addr >= m_base() && addr < m_limit())
     {
@@ -142,8 +127,6 @@ public bool pagefault_handler(Context* context)
         p.writable = true;
         p.present = true;
         p.user = false;
-        
-        return true;
     }
     else if(addr >= scheduler.current.thread.stack.base && addr < scheduler.current.thread.stack.top)
     {
@@ -152,8 +135,6 @@ public bool pagefault_handler(Context* context)
         stack_page.writable = true;
         stack_page.present = true;
         stack_page.user = true;
-        
-        return true;
     }
     else if(addr >= scheduler.current.thread.kernel_stack.base && addr < scheduler.current.thread.kernel_stack.top)
     {
@@ -162,21 +143,19 @@ public bool pagefault_handler(Context* context)
         p.writable = true;
         p.present = true;
         p.user = true;
-        
-        return true;
     }
-        
-    writefln("Unhandled page fault at address %p", addr);
-    writefln("Error code %#x", context.error);
-    writefln("%%rip: %p", context.rip);
+    else
+    {  
+        writefln("Unhandled page fault at address %p", addr);
+        writefln("Error code %#x", s.context.error);
+        writefln("%%rip: %p", s.context.rip);
 
-    version(unwind)
-    {
-        writefln("%p: %s", context.rip, getSymbol(context.rip));
-        stackUnwind(cast(ulong*)context.rsp, cast(ulong*)context.rbp);
+        version(unwind)
+        {
+            writefln("%p: %s", s.context.rip, getSymbol(s.context.rip));
+            stackUnwind(cast(ulong*)s.context.rsp, cast(ulong*)s.context.rbp);
+        }
+        
+        for(;;){}
     }
-    
-    for(;;){}
-    
-    return false;
 }

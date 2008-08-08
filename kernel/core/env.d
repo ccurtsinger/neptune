@@ -48,8 +48,6 @@ const ulong SCREEN_MEM = LINEAR_MEM.base + 0xB8000;
 Screen screen;
 Keyboard kb;
 
-InterruptScope localscope;
-
 LoaderData* loaderData;
 
 Scheduler scheduler;

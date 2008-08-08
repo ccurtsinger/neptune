@@ -16,11 +16,13 @@ import std.stdio;
 import std.context;
 
 import kernel.core.env;
+import kernel.core.event;
+
+char[][256] interrupt_events;
 
 public void interrupt_setup()
 {
     CPU.idt.init(0xFFFD);
-    localscope.init();
     
     set_isr(0, &isr_0);
     set_isr(1, &isr_1);
@@ -61,6 +63,15 @@ public void interrupt_setup()
     set_isr(127, &isr_127);
     set_isr(128, &isr_128, 3);
     
+    for(size_t i=0; i<interrupt_events.length; i++)
+    {
+        interrupt_events[i].length = 0;
+    }
+    
+    interrupt_events[14] = "int.pagefault";
+    interrupt_events[39] = "irq.ignore";
+    interrupt_events[127] = "dev.timer";
+    
     CPU.idt.install();
 }
 
@@ -74,78 +85,6 @@ public void set_isr(size_t interrupt, void* isr, size_t privilege = 0, size_t is
     d.privilege = privilege;
     d.stack = ist;
     d.present = true;
-}
-
-/**
- * Abstraction for function and delegate interrupt handlers
- */
-struct InterruptHandler
-{
-    bool set = false;
-    bool func;
-   
-    bool function(Context*) f;
-    bool delegate(Context*) d;
-   
-    /**
-     * Call the interrupt handler
-     */
-    bool call(Context* s)
-    {
-        assert(set, "Attempted to call null InterruptHandler");
-       
-        if(func)
-            return f(s);
-        else
-            return d(s);
-    }
-}
-
-struct InterruptScope
-{
-    InterruptHandler[256] handlers;
-    
-    public void init()
-    {
-        for(size_t i=0; i<handlers.length; i++)
-        {
-            handlers[i].set = false;
-        }
-    }
-    
-    /**
- 	 * Set a function as an interrupt handler
- 	 */
- 	void setHandler(ulong interrupt, bool function(Context*) handler)
- 	{
- 	    if(handler !is null)
- 	    {
- 	        handlers[interrupt].set = true;
- 	        handlers[interrupt].func = true;
- 	        handlers[interrupt].f = handler;
- 	    }
- 	    else
- 	    {
- 	        handlers[interrupt].set = false;
- 	    }
- 	}
- 	
- 	/**
- 	 * Set a delegate as an interrupt handler
- 	 */
- 	void setHandler(ulong interrupt, bool delegate(Context*) handler)
- 	{
- 	    if(handler !is null)
- 	    {
- 	        handlers[interrupt].set = true;
- 	        handlers[interrupt].func = false;
- 	        handlers[interrupt].d = handler;
- 	    }
- 	    else
- 	    {
- 	        handlers[interrupt].set = false;
- 	    }
- 	}
 }
 
 extern(C) void _isr_common_stub()
@@ -201,14 +140,11 @@ extern(C) void _isr_common_stub()
 
 extern(C) void _common_interrupt(ulong interrupt, Context* stack)
 {
-    if(localscope.handlers[interrupt].set)
+    if(interrupt_events[interrupt].length != 0)
     {
-        if(!localscope.handlers[interrupt].call(stack))
-        {
-            host._d_error("Failed interrupt service", "(interrupt)", interrupt);
-        }
+        root.raiseEvent(interrupt_events[interrupt], new InterruptEventSource(stack));
     }
-    else if(interrupt < 32)
+    else
     {
         CPU.disableInterrupts();
         
@@ -322,7 +258,6 @@ mixin(isr!(46));
 mixin(isr!(47));
 
 mixin(isr!(127));
-//mixin(isr!(128));
 
 extern(C) void isr_128()
 {
